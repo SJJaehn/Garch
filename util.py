@@ -1,5 +1,6 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+import riskfolio as rp
 from arch import arch_model
 
 
@@ -13,12 +14,16 @@ def estimate_cov_matrix_garch(returns, prediction_window=21, p=1, q=1):
 
     for i in range(n_assets):
         series = returns.iloc[:, i].dropna()
-        scaled_series = series * 100  # Scale returns to allow for better convergence in GARCH estimation and to get rid of warning messages
-        model = arch_model(scaled_series, vol='Garch', p=p, q=q)
-        result = model.fit(disp='off', show_warning=False)
+        scaled_series = (
+            series * 100
+        )  # Scale returns to allow for better convergence in GARCH estimation and to get rid of warning messages
+        model = arch_model(scaled_series, vol="Garch", p=p, q=q)
+        result = model.fit(disp="off", show_warning=False)
         if result.convergence_flag == 0:
             forecast = result.forecast(horizon=prediction_window)
-            variances[i] = forecast.variance.iloc[-1].mean() / (100 ** 2)  # Mean forecasted variance over the horizon, undo scaling
+            variances[i] = forecast.variance.iloc[-1].mean() / (
+                100**2
+            )  # Mean forecasted variance over the horizon, undo scaling
         else:
             variances[i] = series.var()
 
@@ -52,7 +57,9 @@ def get_mvp_weights(cov_matrix):
     n = len(cov_matrix)
     ones = np.ones(n)
     cov = np.array(cov_matrix)
-    cov = cov + np.eye(n) * 1e-8  # Regularize to avoid numerical issues with near-singular matrices
+    cov = (
+        cov + np.eye(n) * 1e-8
+    )  # Regularize to avoid numerical issues with near-singular matrices
 
     weights = np.linalg.solve(cov, ones)
     weights = weights / np.sum(weights)
@@ -72,7 +79,9 @@ def get_erc_weights(cov_matrix):
 
     for _ in range(1000):
         risk_contributions = weights * (cov @ weights)
-        risk_contributions = np.maximum(risk_contributions, 1e-12)  # Avoid division by zero
+        risk_contributions = np.maximum(
+            risk_contributions, 1e-12
+        )  # Avoid division by zero
         total_risk = risk_contributions.sum()
         target_contributions = total_risk / n
         weights *= target_contributions / risk_contributions
@@ -81,13 +90,71 @@ def get_erc_weights(cov_matrix):
     return pd.Series(weights, index=cov_matrix.index)
 
 
-def get_naive_weights(cov_matrix):
+def get_hrp_weights(cov_matrix):
     """
-    Computes the weights of the Naive Portfolio (equal weights).
+    Computes the weights of the Hierarchical Risk Parity (HRP) Portfolio.
     """
     n = len(cov_matrix)
-    weights = np.ones(n) / n
-    return pd.Series(weights, index=cov_matrix.index)
+    if n == 0:
+        return pd.Series(dtype=float)
+
+    if isinstance(cov_matrix, pd.DataFrame):
+        cov = cov_matrix.copy().astype(float)
+    else:
+        cov = pd.DataFrame(np.asarray(cov_matrix, dtype=float))
+
+    # Ensure numerical stability and symmetry
+    cov = (cov + cov.T) / 2.0
+    cov += np.eye(n) * 1e-12
+
+    # Correlation and distance matrix
+    std = np.sqrt(np.clip(np.diag(cov.values), 1e-12, None))
+    corr = cov.values / np.outer(std, std)
+    corr = np.clip(corr, -1.0, 1.0)
+    dist = np.sqrt(np.clip(0.5 * (1.0 - corr), 0.0, 1.0))
+
+    try:
+        from scipy.cluster.hierarchy import leaves_list, linkage
+
+        condensed_dist = dist[np.triu_indices(n, k=1)]
+        link = linkage(condensed_dist, method="single")
+        sort_ix = leaves_list(link)
+    except Exception:
+        # Fallback: inverse-volatility weights if clustering is unavailable
+        inv_var = 1.0 / np.clip(np.diag(cov.values), 1e-12, None)
+        w = inv_var / inv_var.sum()
+        return pd.Series(w, index=cov.index)
+
+    sorted_assets = list(cov.index[sort_ix])
+    weights = pd.Series(1.0, index=sorted_assets)
+
+    def _cluster_variance(cluster_assets):
+        sub_cov = cov.loc[cluster_assets, cluster_assets].values
+        ivp = 1.0 / np.clip(np.diag(sub_cov), 1e-12, None)
+        ivp = ivp / ivp.sum()
+        return float(ivp @ sub_cov @ ivp)
+
+    clusters = [sorted_assets]
+    while clusters:
+        cluster = clusters.pop(0)
+        if len(cluster) <= 1:
+            continue
+
+        split = len(cluster) // 2
+        c1, c2 = cluster[:split], cluster[split:]
+
+        v1 = _cluster_variance(c1)
+        v2 = _cluster_variance(c2)
+        alpha = v2 / (v1 + v2) if (v1 + v2) > 0 else 0.5
+
+        weights[c1] *= alpha
+        weights[c2] *= 1.0 - alpha
+
+        clusters.append(c1)
+        clusters.append(c2)
+
+    weights = weights / weights.sum()
+    return weights.reindex(cov.index)
 
 
 def calculate_metrics(returns, weights):
@@ -96,11 +163,13 @@ def calculate_metrics(returns, weights):
     """
     portfolio_returns = returns @ weights
     mean_return = portfolio_returns.mean()
-    volatility = portfolio_returns.std()
-    sharpe_ratio = mean_return / volatility if volatility > 0 else 0  # Not annualized, assumes returns are at the same frequency
+    std_dev = portfolio_returns.std()
+    sharpe_ratio = (
+        mean_return / std_dev if std_dev > 0 else 0
+    )  # Not annualized, assumes returns are at the same frequency
     return {
         "per_period_returns": portfolio_returns,
         "mean_return": mean_return,
-        "volatility": volatility,
+        "std_dev": std_dev,
         "sharpe_ratio": sharpe_ratio,
     }

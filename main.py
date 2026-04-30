@@ -7,6 +7,7 @@ from util import (
     get_mvp_weights,
     get_erc_weights,
     calculate_metrics,
+    get_hrp_weights
 )
 
 TRAIN_WINDOW = 252  # 1 year of trading days
@@ -33,6 +34,8 @@ def compute_portfolio_returns(train_returns, test_returns):
     cov_hist = estimate_cov_matrix_historical(train_returns)
 
     portfolios = {
+        "HRP GARCH":      get_hrp_weights(cov_garch),
+        "HRP Historical": get_hrp_weights(cov_hist),
         "MVP GARCH":      get_mvp_weights(cov_garch),
         "MVP Historical": get_mvp_weights(cov_hist),
         "ERC GARCH":      get_erc_weights(cov_garch),
@@ -47,7 +50,8 @@ def compute_portfolio_returns(train_returns, test_returns):
 
 
 def run_rolling_backtest(returns):
-    results = {"MVP GARCH": [], "MVP Historical": [], "ERC GARCH": [], "ERC Historical": [], "Naive": []}
+    results = {"HRP GARCH": [], "HRP Historical": [], "MVP GARCH": [], "MVP Historical": [], "ERC GARCH": [], "ERC Historical": [], "Naive": []}
+    metrics_df = pd.DataFrame(columns=["Model", "Covariance Type", "#Rolling Windows", "Sharpe Ratio", "Mean Return", "Std Dev"])
 
     for start in range(0, len(returns) - TRAIN_WINDOW - PREDICTION_WINDOW, PREDICTION_WINDOW):
         train = returns.iloc[start : start + TRAIN_WINDOW]
@@ -62,8 +66,17 @@ def run_rolling_backtest(returns):
         for name, metrics in window_metrics.items():
             # Keep each period return from the prediction window instead of collapsing to one mean return.
             results[name].extend(metrics["per_period_returns"].tolist())
+            metrics_df.loc[len(metrics_df)] = {
+                "Model": name.split()[0],  # "MVP", "ERC", or "Naive"
+                "Covariance Type": name.split()[1] if len(name.split()) > 1 else "N/A",  # "GARCH", "Historical", or "N/A" for Naive
+                "#Rolling Windows": start // PREDICTION_WINDOW,  # Number of complete prediction windows processed for this model
+                "Sharpe Ratio": metrics["sharpe_ratio"],
+                "Mean Return": metrics["mean_return"],
+                "Std Dev": metrics["std_dev"],
+            }
 
-    return results
+
+    return results, metrics_df
 
 
 def to_cumulative(returns_dict, start_value=100):
@@ -95,13 +108,10 @@ def plot_results(cumulative):
 
 def main():
     returns = load_returns("SP500_Daily.csv")
-    returns = returns.sample(n=min(100, returns.shape[1]), axis=1, random_state=42)
-    results = run_rolling_backtest(returns)
+    # returns = returns.sample(n=min(100, returns.shape[1]), axis=1, random_state=42)
+    results, metrics = run_rolling_backtest(returns)
 
-    for name, rets in results.items():
-        print(f"Sharpe Ratio for {name}: {np.mean(rets) / np.std(rets) if np.std(rets) > 0 else 0:.4f} \n" +
-              f"Mean Return: {np.mean(rets):.4f} \n" +
-              f"Std Dev: {np.std(rets):.4f} \n")
+    metrics.to_csv("backtest_metrics.csv", index=False)
 
     if not any(results.values()):
         print("No valid rolling windows to plot.")
