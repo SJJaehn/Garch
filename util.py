@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import riskfolio as rp
 from arch import arch_model
 
 
@@ -17,7 +16,7 @@ def estimate_cov_matrix_garch(returns, prediction_window=21, p=1, q=1):
         scaled_series = (
             series * 100
         )  # Scale returns to allow for better convergence in GARCH estimation and to get rid of warning messages
-        model = arch_model(scaled_series, vol="Garch", p=p, q=q)
+        model = arch_model(scaled_series, vol="GARCH", p=p, q=q)
         result = model.fit(disp="off", show_warning=False)
         if result.convergence_flag == 0:
             forecast = result.forecast(horizon=prediction_window)
@@ -97,17 +96,20 @@ def get_hrp_weights(cov_matrix):
     n = len(cov_matrix)
     if n == 0:
         return pd.Series(dtype=float)
+    if n == 1:
+        return pd.Series([1.0], index=cov_matrix.index)
 
     if isinstance(cov_matrix, pd.DataFrame):
         cov = cov_matrix.copy().astype(float)
     else:
         cov = pd.DataFrame(np.asarray(cov_matrix, dtype=float))
 
-    # Ensure numerical stability and symmetry
+    # HRP assumes a symmetric covariance matrix. Small diagonal jitter keeps
+    # the clustering step numerically stable when variances are tiny.
     cov = (cov + cov.T) / 2.0
     cov += np.eye(n) * 1e-12
 
-    # Correlation and distance matrix
+    # Convert covariance into a correlation-distance matrix for clustering.
     std = np.sqrt(np.clip(np.diag(cov.values), 1e-12, None))
     corr = cov.values / np.outer(std, std)
     corr = np.clip(corr, -1.0, 1.0)
@@ -120,7 +122,7 @@ def get_hrp_weights(cov_matrix):
         link = linkage(condensed_dist, method="single")
         sort_ix = leaves_list(link)
     except Exception:
-        # Fallback: inverse-volatility weights if clustering is unavailable
+        # If clustering is unavailable, fall back to inverse-variance weights.
         inv_var = 1.0 / np.clip(np.diag(cov.values), 1e-12, None)
         w = inv_var / inv_var.sum()
         return pd.Series(w, index=cov.index)
@@ -129,11 +131,13 @@ def get_hrp_weights(cov_matrix):
     weights = pd.Series(1.0, index=sorted_assets)
 
     def _cluster_variance(cluster_assets):
+        # Estimate the variance of a sub-cluster using inverse-variance weights.
         sub_cov = cov.loc[cluster_assets, cluster_assets].values
         ivp = 1.0 / np.clip(np.diag(sub_cov), 1e-12, None)
         ivp = ivp / ivp.sum()
         return float(ivp @ sub_cov @ ivp)
 
+    # Start with the full dendrogram ordering and split it into balanced halves.
     clusters = [sorted_assets]
     while clusters:
         cluster = clusters.pop(0)
@@ -143,6 +147,7 @@ def get_hrp_weights(cov_matrix):
         split = len(cluster) // 2
         c1, c2 = cluster[:split], cluster[split:]
 
+        # Allocate more weight to the side with lower variance.
         v1 = _cluster_variance(c1)
         v2 = _cluster_variance(c2)
         alpha = v2 / (v1 + v2) if (v1 + v2) > 0 else 0.5
