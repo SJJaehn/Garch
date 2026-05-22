@@ -14,7 +14,7 @@ from util import (
 )
 
 TRAIN_WINDOW = 2 * 252  # 2 years of trading days
-PREDICTION_WINDOW = 21  # ~1 month of trading days
+PREDICTION_WINDOW = 5  # ~1 month of trading days
 
 
 def load_returns(filepath):
@@ -62,7 +62,7 @@ def run_rolling_backtest(returns):
             continue
 
         cov_garch = estimate_cov_matrix_garch(
-            train, prediction_window=PREDICTION_WINDOW
+            train, prediction_window=0
         )
         cov_hist = estimate_cov_matrix_historical(train)
 
@@ -133,6 +133,15 @@ def main():
         f"Abbildungen/{TRAIN_WINDOW}_{PREDICTION_WINDOW}/backtest_metrics.csv",
         index=False,
     )
+
+    avg_sharpe = (
+        metrics.groupby(["Model", "Covariance Type"], dropna=False)["Sharpe Ratio"]
+        .mean()
+        .reset_index()
+        .sort_values(["Model", "Covariance Type"])
+    )
+    print("Average Sharpe ratios by model and covariance type:")
+    print(avg_sharpe.to_string(index=False))
 
     if not any(results.values()):
         print("No valid rolling windows to plot.")

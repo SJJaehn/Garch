@@ -18,11 +18,16 @@ def estimate_cov_matrix_garch(returns, prediction_window=21, p=1, q=1):
         )  # Scale returns to allow for better convergence in GARCH estimation and to get rid of warning messages
         model = arch_model(scaled_series, vol="GARCH", p=p, q=q)
         result = model.fit(disp="off", show_warning=False)
-        if result.convergence_flag == 0:
-            forecast = result.forecast(horizon=prediction_window)
-            variances[i] = forecast.variance.iloc[-1].mean() / (
-                100**2
-            )  # Mean forecasted variance over the horizon, undo scaling
+        if result.convergence_flag == 0: # Only use GARCH forecast if the model converged successfully
+            if prediction_window == 0:
+                variances[i] = result.conditional_volatility.iloc[-1]**2 / (
+                    100**2
+                )  # Undo scaling
+            else:
+                forecast = result.forecast(horizon=prediction_window)
+                variances[i] = forecast.variance.iloc[-1].mean() / (
+                    100**2
+                )  # Mean forecasted variance over the horizon, undo scaling
         else:
             variances[i] = series.var()
 
