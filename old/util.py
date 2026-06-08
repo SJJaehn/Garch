@@ -3,40 +3,48 @@ import pandas as pd
 from arch import arch_model
 
 
-def estimate_cov_matrix_garch(returns, prediction_window=21, p=1, q=1, window_label=""):
+def estimate_cov_matrix_garch(returns, prediction_window=21, p=1, q=1):
+    """
+    Estimates a covariance matrix using GARCH variances and return correlations.
+    """
+
     n_assets = returns.shape[1]
-    variances = np.full(n_assets, np.nan)
+    variances = np.zeros(n_assets)
 
     for i in range(n_assets):
         series = returns.iloc[:, i].dropna()
-        result = arch_model(series * 100, vol="GARCH", p=p, q=q).fit(disp="off", show_warning=False)
-        if result.convergence_flag != 0:
-            label = f"  [{window_label}]" if window_label else ""
-            print(f"  GARCH no convergence: {returns.columns[i]}{label} — asset excluded from GARCH portfolios")
-            continue
-        if prediction_window == 0:
-            variances[i] = result.forecast(horizon=1).variance.iloc[-1].mean() / (100**2)
+        scaled_series = (
+            series * 100
+        )  # Scale returns to allow for better convergence in GARCH estimation and to get rid of warning messages
+        model = arch_model(scaled_series, vol="GARCH", p=p, q=q)
+        result = model.fit(disp="off", show_warning=False)
+        if result.convergence_flag == 0: # Only use GARCH forecast if the model converged successfully
+            if prediction_window == 0:
+                variances[i] = result.conditional_volatility.iloc[-1]**2 / (
+                    100**2
+                )  # Undo scaling
+            else:
+                forecast = result.forecast(horizon=prediction_window)
+                variances[i] = forecast.variance.iloc[-1].mean() / (
+                    100**2
+                )  # Mean forecasted variance over the horizon, undo scaling
         else:
-            variances[i] = result.forecast(horizon=prediction_window).variance.iloc[-1].mean() / (100**2)
+            variances[i] = series.var()
 
-    valid = ~np.isnan(variances)
-    cols = returns.columns[valid]
-    variances = variances[valid]
-    n_valid = len(cols)
+    corr_matrix = returns.corr().values
+    cov_matrix = np.zeros((n_assets, n_assets))
 
-    corr_matrix = returns[cols].corr().fillna(0).values
-    np.fill_diagonal(corr_matrix, 1.0)
-    cov_matrix = np.zeros((n_valid, n_valid))
-
-    for i in range(n_valid):
+    for i in range(n_assets):
         cov_matrix[i, i] = variances[i]
-        for j in range(i + 1, n_valid):
+        for j in range(i + 1, n_assets):
             cov_ij = corr_matrix[i, j] * np.sqrt(variances[i] * variances[j])
             cov_matrix[i, j] = cov_ij
             cov_matrix[j, i] = cov_ij
 
-    cov_matrix += np.eye(n_valid) * 1e-8
-    return pd.DataFrame(cov_matrix, index=cols, columns=cols)
+    # Small regularization to avoid numerical issues (e.g. when passing to an optimizer)
+    cov_matrix += np.eye(n_assets) * 1e-8
+
+    return pd.DataFrame(cov_matrix, index=returns.columns, columns=returns.columns)
 
 
 def estimate_cov_matrix_historical(returns):
@@ -48,20 +56,18 @@ def estimate_cov_matrix_historical(returns):
 
 def get_mvp_weights(cov_matrix):
     """
-    Computes the weights of the long-only Minimum Variance Portfolio (MVP).
+    Computes the weights of the Minimum Variance Portfolio (MVP).
     """
-    from scipy.optimize import minimize
     n = len(cov_matrix)
-    cov = np.array(cov_matrix) + np.eye(n) * 1e-8
-    result = minimize(
-        lambda w: w @ cov @ w,
-        x0=np.ones(n) / n,
-        method="SLSQP",
-        bounds=[(0, 1)] * n,
-        constraints={"type": "eq", "fun": lambda w: w.sum() - 1},
-        options={"ftol": 1e-12},
-    )
-    return pd.Series(result.x, index=cov_matrix.index)
+    ones = np.ones(n)
+    cov = np.array(cov_matrix)
+    cov = (
+        cov + np.eye(n) * 1e-8
+    )  # Regularize to avoid numerical issues with near-singular matrices
+
+    weights = np.linalg.solve(cov, ones)
+    weights = weights / np.sum(weights)
+    return pd.Series(weights, index=cov_matrix.index)
 
 
 def get_erc_weights(cov_matrix):
@@ -76,14 +82,14 @@ def get_erc_weights(cov_matrix):
     weights = np.ones(n) / n
 
     for _ in range(1000):
-        prev = weights.copy()
         risk_contributions = weights * (cov @ weights)
-        risk_contributions = np.maximum(risk_contributions, 1e-12)
+        risk_contributions = np.maximum(
+            risk_contributions, 1e-12
+        )  # Avoid division by zero
         total_risk = risk_contributions.sum()
-        weights *= (total_risk / n) / risk_contributions
+        target_contributions = total_risk / n
+        weights *= target_contributions / risk_contributions
         weights /= weights.sum()
-        if np.abs(weights - prev).max() < 1e-8:
-            break
 
     return pd.Series(weights, index=cov_matrix.index)
 
@@ -162,39 +168,18 @@ def get_hrp_weights(cov_matrix):
 
 
 def calculate_metrics(returns, weights):
+    """
+    Calculates performance metrics for a given portfolio.
+    """
     portfolio_returns = returns @ weights
+    mean_return = portfolio_returns.mean()
+    std_dev = portfolio_returns.std()
+    sharpe_ratio = (
+        mean_return / std_dev if std_dev > 0 else 0
+    )  # Not annualized, assumes returns are at the same frequency
     return {
         "per_period_returns": portfolio_returns,
-        "mean_return": portfolio_returns.mean(),
-        "std_dev": portfolio_returns.std(),
-    }
-
-
-def calculate_summary_metrics(daily_returns: np.ndarray) -> dict:
-    arr = daily_returns
-    ann_ret = np.prod(1 + arr) ** (252 / len(arr)) - 1  # CAGR
-    ann_std = arr.std() * np.sqrt(252)
-
-    # Sortino: downside semi-deviation as denominator (only penalises negative returns)
-    semi_dev = np.sqrt(np.mean(np.minimum(arr, 0) ** 2)) * np.sqrt(252)
-
-    # Max drawdown
-    cum = np.cumprod(1 + arr)
-    drawdowns = cum / np.maximum.accumulate(cum) - 1
-    max_dd = drawdowns.min()
-
-    # CVaR at 95% confidence (expected loss in the worst 5% of days)
-    var_95 = np.percentile(arr, 5)
-    cvar_95 = arr[arr <= var_95].mean()
-
-    return {
-        "Ann. Return":       ann_ret,
-        "Ann. Std":          ann_std,
-        "Ann. Sharpe":       ann_ret / ann_std          if ann_std  > 0 else np.nan,
-        "Ann. Sortino":      ann_ret / semi_dev         if semi_dev > 0 else np.nan,
-        "Max Drawdown":      max_dd,
-        "Calmar Ratio":      ann_ret / abs(max_dd)      if max_dd   < 0 else np.nan,
-        "CVaR (95%)":        cvar_95,
-        "Skewness":          pd.Series(arr).skew(),
-        "Excess Kurtosis":   pd.Series(arr).kurt(),
+        "mean_return": mean_return,
+        "std_dev": std_dev,
+        "sharpe_ratio": sharpe_ratio,
     }
