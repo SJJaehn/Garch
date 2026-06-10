@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-MAX_WORKERS = 6
-
 from util import (
     calculate_metrics,
     calculate_summary_metrics,
@@ -19,14 +17,15 @@ from util import (
 
 # --- Configuration -----------------------------------------------------------
 
-DATASETS: dict[str, tuple[str, bool]] = {       # (filepath, dayfirst)
-    "TRBC":  ("TRBC_Daily.csv",  False),          # yyyy-mm-dd
-    "SP500": ("S&P500_Adj.csv",  True),            # dd.mm.yyyy
+DATASETS: dict[str, tuple[str, str]] = {                  # (filepath, date_format)
+    "TRBC":  ("TRBC_Business_Sectors_clean.csv", "%Y-%m-%d"),  # yyyy-mm-dd
+    "SP500": ("S&P500_Adj.csv",                  "%d.%m.%y"),  # dd.mm.yy
 }
 
+MAX_WORKERS = 6
 DATASET              = "TRBC"
-TRAIN_WINDOW         = 2*252
-PREDICTION_WINDOW    = 21
+TRAIN_WINDOW         = 1*252
+PREDICTION_WINDOW    = 1
 USE_RESAMPLING_GARCH = True
 
 _GARCH_MODE = "resampled" if USE_RESAMPLING_GARCH else "spot"
@@ -44,9 +43,9 @@ _MODEL_TYPE: dict[str, tuple[str, str]] = {
 
 # --- Load data ---------------------------------------------------------------
 
-filepath, dayfirst = DATASETS[DATASET]
+filepath, date_format = DATASETS[DATASET]
 prices = pd.read_csv(filepath, index_col=0)
-prices.index = pd.to_datetime(prices.index, dayfirst=dayfirst, errors="coerce")
+prices.index = pd.to_datetime(prices.index, format=date_format, errors="coerce")
 prices = prices[prices.index.notna()]
 prices = prices.loc[prices.notna().sum(axis=1) >= int(0.5 * prices.shape[1])]
 returns = prices.pct_change(fill_method=None).iloc[1:]
@@ -67,7 +66,7 @@ def process_window(start):
     train = train[test.columns]
 
     if train.empty or test.empty or train.shape[1] == 0:
-        return {}, []
+        return {}, [], []
 
     garch_horizon = PREDICTION_WINDOW if USE_RESAMPLING_GARCH else 0
     label = f"{train.index[0].date()} – {train.index[-1].date()}"
@@ -102,66 +101,75 @@ def process_window(start):
             "Mean Return": m["mean_return"],
             "Forecasted Std": forecasted_std,
         })
-    return per_period, recs
+    return per_period, recs, list(test.index)
 
 
-if __name__ != "__main__":
-    raise SystemExit  # workers only need the module-level definitions above
+def main():
+    results: dict[str, list] = {n: [] for n in _MODEL_TYPE}
+    records = []
+    period_dates: list = []
 
-results: dict[str, list] = {n: [] for n in _MODEL_TYPE}
-records = []
+    starts = list(range(0, len(returns) - TRAIN_WINDOW - PREDICTION_WINDOW, PREDICTION_WINDOW))
+    total = len(starts)
+    with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        for i, (per_period, recs, dates) in enumerate(executor.map(process_window, starts), start=1):
+            records.extend(recs)
+            period_dates.extend(dates)
+            for name, rets in per_period.items():
+                results[name].extend(rets)
+            print(f"\r{i}/{total} windows completed", end="", flush=True)
+    print()
 
-starts = list(range(0, len(returns) - TRAIN_WINDOW - PREDICTION_WINDOW, PREDICTION_WINDOW))
-with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
-    for per_period, recs in executor.map(process_window, starts):
-        records.extend(recs)
-        for name, rets in per_period.items():
-            results[name].extend(rets)
+    metrics = pd.DataFrame(records)
 
-metrics = pd.DataFrame(records)
+    # --- Summary -------------------------------------------------------------
 
-# --- Summary -----------------------------------------------------------------
+    os.makedirs(_OUTPUT_DIR, exist_ok=True)
+    metrics.to_csv(f"{_OUTPUT_DIR}/backtest_metrics.csv", index=False)
 
-os.makedirs(_OUTPUT_DIR, exist_ok=True)
-metrics.to_csv(f"{_OUTPUT_DIR}/backtest_metrics.csv", index=False)
+    summary_rows = []
+    for name, rets in results.items():
+        if not rets:
+            continue
+        model, cov_type = _MODEL_TYPE[name]
+        mask = (metrics["Model"] == model) & (metrics["Covariance Type"] == cov_type)
+        avg_forecasted_ann = metrics.loc[mask, "Forecasted Std"].mean() * np.sqrt(252)
+        row = calculate_summary_metrics(np.array(rets))
+        ann_std = row["Ann. Std"]
+        row["Model"] = model
+        row["Covariance Type"] = cov_type
+        row["Ann. Std (fcst)"] = avg_forecasted_ann
+        row["Real / Fcst Std"] = ann_std / avg_forecasted_ann if avg_forecasted_ann > 0 else np.nan
+        summary_rows.append(row)
 
-summary_rows = []
-for name, rets in results.items():
-    if not rets:
-        continue
-    model, cov_type = _MODEL_TYPE[name]
-    mask = (metrics["Model"] == model) & (metrics["Covariance Type"] == cov_type)
-    avg_forecasted_ann = metrics.loc[mask, "Forecasted Std"].mean() * np.sqrt(252)
-    row = calculate_summary_metrics(np.array(rets))
-    ann_std = row["Ann. Std"]
-    row["Model"] = model
-    row["Covariance Type"] = cov_type
-    row["Ann. Std (fcst)"] = avg_forecasted_ann
-    row["Real / Fcst Std"] = ann_std / avg_forecasted_ann if avg_forecasted_ann > 0 else np.nan
-    summary_rows.append(row)
+    col_order = ["Model", "Covariance Type", "Ann. Return", "Ann. Std", "Ann. Std (fcst)",
+                 "Real / Fcst Std", "Ann. Sharpe", "Ann. Sortino", "Max Drawdown",
+                 "Calmar Ratio", "CVaR (95%)", "Skewness", "Excess Kurtosis"]
+    summary = pd.DataFrame(summary_rows).sort_values(["Model", "Covariance Type"])[col_order]
+    summary.to_csv(f"{_OUTPUT_DIR}/summary.csv", index=False)
+    print("Annualized performance summary:")
+    print(summary.to_string(index=False))
 
-col_order = ["Model", "Covariance Type", "Ann. Return", "Ann. Std", "Ann. Std (fcst)",
-             "Real / Fcst Std", "Ann. Sharpe", "Ann. Sortino", "Max Drawdown",
-             "Calmar Ratio", "CVaR (95%)", "Skewness", "Excess Kurtosis"]
-summary = pd.DataFrame(summary_rows).sort_values(["Model", "Covariance Type"])[col_order]
-summary.to_csv(f"{_OUTPUT_DIR}/summary.csv", index=False)
-print("Annualized performance summary:")
-print(summary.to_string(index=False))
+    # --- Plot ----------------------------------------------------------------
 
-# --- Plot --------------------------------------------------------------------
+    if not any(results.values()):
+        print("No valid rolling windows to plot.")
+        return
 
-if not any(results.values()):
-    print("No valid rolling windows to plot.")
-else:
     cumulative = {name: 100 * np.cumprod(1 + np.array(rets)) for name, rets in results.items()}
-    n = len(next(iter(cumulative.values())))
+    x_axis = pd.to_datetime(period_dates)
     fig, ax = plt.subplots(figsize=(12, 6))
     for name, values in cumulative.items():
-        ax.plot(np.arange(1, n + 1), values, label=name)
+        ax.plot(x_axis, values, label=name)
     ax.set_title("Portfolio Value Starting at 100")
-    ax.set_xlabel("Period Number")
+    ax.set_xlabel("Date")
     ax.set_ylabel("Portfolio Value")
     ax.legend()
     ax.grid(True)
+    fig.autofmt_xdate()
     fig.tight_layout()
     plt.savefig(f"{_OUTPUT_DIR}/Simulation.png")
+
+
+if __name__ == "__main__":
+    main()
