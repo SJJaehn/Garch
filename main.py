@@ -24,7 +24,7 @@ DATASETS: dict[str, tuple[str, str]] = {                  # (filepath, date_form
 
 MAX_WORKERS = 6
 DATASET           = "TRBC"
-TRAIN_WINDOW      = 3*252
+TRAIN_WINDOW      = int(0.5*252)
 PREDICTION_WINDOW = 1
 RISK_FREE_RATE    = 0.0   # annualised; set to 0 for now
 GARCH_P           = 1     # GARCH lag order p
