@@ -23,13 +23,16 @@ DATASETS: dict[str, tuple[str, str]] = {                  # (filepath, date_form
 }
 
 MAX_WORKERS = 6
-DATASET              = "TRBC"
-TRAIN_WINDOW         = 3*252
-PREDICTION_WINDOW    = 1
-USE_RESAMPLING_GARCH = True
+DATASET           = "TRBC"
+TRAIN_WINDOW      = 3*252
+PREDICTION_WINDOW = 1
+RISK_FREE_RATE    = 0.0   # annualised; set to 0 for now
+GARCH_P           = 1     # GARCH lag order p
+GARCH_Q           = 1     # GARCH lag order q
 
-_GARCH_MODE = "resampled" if USE_RESAMPLING_GARCH else "spot"
-_OUTPUT_DIR = f"Abbildungen/{DATASET}/{TRAIN_WINDOW}_{PREDICTION_WINDOW}_{_GARCH_MODE}"
+# Non-default GARCH orders get a folder tag so they don't overwrite the (1,1) runs.
+_GARCH_TAG = "" if (GARCH_P, GARCH_Q) == (1, 1) else f"_g{GARCH_P}-{GARCH_Q}"
+_OUTPUT_DIR = f"Abbildungen/{DATASET}/{TRAIN_WINDOW}_{PREDICTION_WINDOW}{_GARCH_TAG}"
 
 _MODEL_TYPE: dict[str, tuple[str, str]] = {
     "HRP GARCH":     ("HRP",   "GARCH"),
@@ -68,9 +71,8 @@ def process_window(start):
     if train.empty or test.empty or train.shape[1] == 0:
         return {}, [], []
 
-    garch_horizon = PREDICTION_WINDOW if USE_RESAMPLING_GARCH else 0
     label = f"{train.index[0].date()} – {train.index[-1].date()}"
-    cov_garch  = estimate_cov_matrix_garch(train, prediction_window=garch_horizon, window_label=label)
+    cov_garch  = estimate_cov_matrix_garch(train, prediction_window=PREDICTION_WINDOW, p=GARCH_P, q=GARCH_Q, window_label=label)
     cov_hist   = estimate_cov_matrix_historical(train)
     test_garch = test[cov_garch.columns]
     test_hist  = test[cov_hist.columns]
@@ -97,7 +99,7 @@ def process_window(start):
         recs.append({
             "Model": model,
             "Covariance Type": cov_type,
-            "#Rolling Windows": start // PREDICTION_WINDOW,
+            "Window Index": start // PREDICTION_WINDOW,
             "Mean Return": m["mean_return"],
             "Forecasted Std": forecasted_std,
         })
@@ -109,7 +111,7 @@ def main():
     records = []
     period_dates: list = []
 
-    starts = list(range(0, len(returns) - TRAIN_WINDOW - PREDICTION_WINDOW, PREDICTION_WINDOW))
+    starts = list(range(0, len(returns) - TRAIN_WINDOW - PREDICTION_WINDOW + 1, PREDICTION_WINDOW))
     total = len(starts)
     with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
         for i, (per_period, recs, dates) in enumerate(executor.map(process_window, starts), start=1):
@@ -127,6 +129,12 @@ def main():
     os.makedirs(_OUTPUT_DIR, exist_ok=True)
     metrics.to_csv(f"{_OUTPUT_DIR}/backtest_metrics.csv", index=False)
 
+    # Per-period returns per model (rows = dates), so any subset can be replotted later.
+    if period_dates:
+        returns_df = pd.DataFrame(results, index=pd.to_datetime(period_dates))
+        returns_df.index.name = "Date"
+        returns_df.to_csv(f"{_OUTPUT_DIR}/returns.csv")
+
     summary_rows = []
     for name, rets in results.items():
         if not rets:
@@ -134,7 +142,7 @@ def main():
         model, cov_type = _MODEL_TYPE[name]
         mask = (metrics["Model"] == model) & (metrics["Covariance Type"] == cov_type)
         avg_forecasted_ann = metrics.loc[mask, "Forecasted Std"].mean() * np.sqrt(252)
-        row = calculate_summary_metrics(np.array(rets))
+        row = calculate_summary_metrics(np.array(rets), risk_free_rate=RISK_FREE_RATE)
         ann_std = row["Ann. Std"]
         row["Model"] = model
         row["Covariance Type"] = cov_type

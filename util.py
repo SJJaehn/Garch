@@ -168,13 +168,20 @@ def calculate_metrics(returns, weights):
     }
 
 
-def calculate_summary_metrics(daily_returns: np.ndarray) -> dict:
+def calculate_summary_metrics(daily_returns: np.ndarray, risk_free_rate: float = 0.0) -> dict:
     arr = daily_returns
-    ann_ret = np.prod(1 + arr) ** (252 / len(arr)) - 1  # CAGR
-    ann_std = arr.std() * np.sqrt(252)
+    rf_daily = risk_free_rate / 252            # annualised risk-free rate -> daily
+    excess = arr - rf_daily
 
-    # Sortino: downside semi-deviation as denominator (only penalises negative returns)
-    semi_dev = np.sqrt(np.mean(np.minimum(arr, 0) ** 2)) * np.sqrt(252)
+    ann_ret = np.prod(1 + arr) ** (252 / len(arr)) - 1  # CAGR
+    ann_std = arr.std(ddof=1) * np.sqrt(252)            # sample std (ddof=1)
+
+    # Annualised arithmetic excess return, matched to the arithmetic std used in the
+    # Sharpe/Sortino denominators (keeps numerator and denominator consistent).
+    ann_excess = excess.mean() * 252
+
+    # Sortino: downside semi-deviation of excess returns (only penalises shortfalls)
+    semi_dev = np.sqrt(np.mean(np.minimum(excess, 0) ** 2)) * np.sqrt(252)
 
     # Max drawdown
     cum = np.cumprod(1 + arr)
@@ -188,8 +195,8 @@ def calculate_summary_metrics(daily_returns: np.ndarray) -> dict:
     return {
         "Ann. Return":       ann_ret,
         "Ann. Std":          ann_std,
-        "Ann. Sharpe":       ann_ret / ann_std          if ann_std  > 0 else np.nan,
-        "Ann. Sortino":      ann_ret / semi_dev         if semi_dev > 0 else np.nan,
+        "Ann. Sharpe":       ann_excess / ann_std       if ann_std  > 0 else np.nan,
+        "Ann. Sortino":      ann_excess / semi_dev      if semi_dev > 0 else np.nan,
         "Max Drawdown":      max_dd,
         "Calmar Ratio":      ann_ret / abs(max_dd)      if max_dd   < 0 else np.nan,
         "CVaR (95%)":        cvar_95,
