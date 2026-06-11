@@ -24,7 +24,7 @@ DATASETS: dict[str, tuple[str, str]] = {                  # (filepath, date_form
 
 MAX_WORKERS = 6
 DATASET              = "TRBC"
-TRAIN_WINDOW         = 1*252
+TRAIN_WINDOW         = 3*252
 PREDICTION_WINDOW    = 1
 USE_RESAMPLING_GARCH = True
 

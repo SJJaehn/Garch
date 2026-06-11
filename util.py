@@ -14,10 +14,8 @@ def estimate_cov_matrix_garch(returns, prediction_window=21, p=1, q=1, window_la
             label = f"  [{window_label}]" if window_label else ""
             print(f"  GARCH no convergence: {returns.columns[i]}{label} — asset excluded from GARCH portfolios")
             continue
-        if prediction_window == 0:
-            variances[i] = result.forecast(horizon=1).variance.iloc[-1].mean() / (100**2)
-        else:
-            variances[i] = result.forecast(horizon=prediction_window).variance.iloc[-1].mean() / (100**2)
+        horizon = max(prediction_window, 1)
+        variances[i] = result.forecast(horizon=horizon).variance.iloc[-1].mean() / (100**2)
 
     valid = ~np.isnan(variances)
     cols = returns.columns[valid]
@@ -72,7 +70,7 @@ def get_erc_weights(cov_matrix):
     if n == 0:
         return pd.Series(dtype=float)
 
-    cov = np.array(cov_matrix)
+    cov = np.array(cov_matrix) + np.eye(n) * 1e-8
     weights = np.ones(n) / n
 
     for _ in range(1000):
