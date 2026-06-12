@@ -1,3 +1,16 @@
+"""
+Rolling-window portfolio backtest.
+
+We compare three portfolio construction methods (MVP, HRP, ERC) using three
+covariance estimators (historical sample covariance, GARCH with constant
+correlation, and DCC-GARCH with dynamic correlation), plus a naive 1/N
+benchmark.
+
+Returns are LOG returns for the modelling part (GARCH/DCC like additive,
+well-behaved returns). For evaluation and plotting we convert back to SIMPLE
+returns, because a portfolio return is a weighted sum of *simple* asset returns,
+not of log returns.
+"""
 import os
 from concurrent.futures import ProcessPoolExecutor
 
@@ -6,10 +19,11 @@ import numpy as np
 import pandas as pd
 
 from util import (
-    calculate_metrics,
     calculate_summary_metrics,
-    estimate_cov_matrix_garch,
+    cov_constant_correlation,
+    cov_dcc,
     estimate_cov_matrix_historical,
+    fit_garch_univariate,
     get_erc_weights,
     get_hrp_weights,
     get_mvp_weights,
@@ -17,32 +31,23 @@ from util import (
 
 # --- Configuration -----------------------------------------------------------
 
-DATASETS: dict[str, tuple[str, str]] = {                  # (filepath, date_format)
-    "TRBC":  ("TRBC_Business_Sectors_clean.csv", "%Y-%m-%d"),  # yyyy-mm-dd
-    "SP500": ("S&P500_Adj.csv",                  "%d.%m.%y"),  # dd.mm.yy
+DATASETS = {  # name: (filepath, date_format)
+    "TRBC":  ("TRBC_Business_Sectors_clean.csv", "%Y-%m-%d"),
+    "SP500": ("S&P500_Adj.csv",                  "%d.%m.%y"),
 }
 
-MAX_WORKERS = 6
+MAX_WORKERS       = 6
 DATASET           = "TRBC"
-TRAIN_WINDOW      = int(0.5*252)
+TRAIN_WINDOW      = int(8 * 252)
 PREDICTION_WINDOW = 1
-RISK_FREE_RATE    = 0.0   # annualised; set to 0 for now
-GARCH_P           = 1     # GARCH lag order p
-GARCH_Q           = 1     # GARCH lag order q
+RISK_FREE_FILE    = "Price History_20260611_1835.csv"  # Fed Funds total-return index
+GARCH_P           = 1
+GARCH_Q           = 1
+COV_METHODS       = ["Historical", "GARCH", "DCC"]    # covariance estimators to run
+MODELS            = ["MVP", "HRP", "ERC"]             # portfolio construction methods
 
-# Non-default GARCH orders get a folder tag so they don't overwrite the (1,1) runs.
-_GARCH_TAG = "" if (GARCH_P, GARCH_Q) == (1, 1) else f"_g{GARCH_P}-{GARCH_Q}"
-_OUTPUT_DIR = f"Abbildungen/{DATASET}/{TRAIN_WINDOW}_{PREDICTION_WINDOW}{_GARCH_TAG}"
-
-_MODEL_TYPE: dict[str, tuple[str, str]] = {
-    "HRP GARCH":     ("HRP",   "GARCH"),
-    "HRP Historical":("HRP",   "Historical"),
-    "MVP GARCH":     ("MVP",   "GARCH"),
-    "MVP Historical":("MVP",   "Historical"),
-    "ERC GARCH":     ("ERC",   "GARCH"),
-    "ERC Historical":("ERC",   "Historical"),
-    "Naive":         ("Naive", "N/A"),
-}
+_GARCH_TAG  = "" if (GARCH_P, GARCH_Q) == (1, 1) else f"_g{GARCH_P}-{GARCH_Q}"
+_OUTPUT_DIR = f"Ergebnisse/{DATASET}/{TRAIN_WINDOW}_{PREDICTION_WINDOW}{_GARCH_TAG}"
 
 # --- Load data ---------------------------------------------------------------
 
@@ -51,103 +56,164 @@ prices = pd.read_csv(filepath, index_col=0)
 prices.index = pd.to_datetime(prices.index, format=date_format, errors="coerce")
 prices = prices[prices.index.notna()]
 prices = prices.loc[prices.notna().sum(axis=1) >= int(0.5 * prices.shape[1])]
-returns = prices.pct_change(fill_method=None).iloc[1:]
-zero_frac = (returns == 0).sum() / returns.notna().sum()
-returns = returns.loc[:, zero_frac < 0.5]
+
+# log returns for modelling:  r_t = ln(P_t / P_{t-1})
+log_returns = np.log(prices / prices.shift(1)).iloc[1:]
+
+# drop assets that are flat (zero return) more than half the time
+zero_frac = (log_returns == 0).sum() / log_returns.notna().sum()
+log_returns = log_returns.loc[:, zero_frac < 0.5]
+
+
+def load_risk_free(price_index):
+    """
+    Daily risk-free return from the Fed Funds total-return index, aligned to the
+    given price dates.
+
+    The metrics work on SIMPLE returns, so the risk-free is the SIMPLE daily
+    return of the index level (I_t / I_{t-1} - 1).  We align the index *level* to
+    the price dates first and then take the percentage change, so the risk-free
+    accrual covers exactly the same day spacing as the portfolio returns.
+    """
+    rf = pd.read_csv(RISK_FREE_FILE, sep=";", decimal=",", encoding="utf-8-sig")
+    dates = rf["Exchange Date"]
+    for de, en in {"Mär": "Mar", "Mai": "May", "Okt": "Oct", "Dez": "Dec"}.items():
+        dates = dates.str.replace(de, en, regex=False)  # German -> English months
+    level = pd.Series(rf["Close"].values, index=pd.to_datetime(dates, format="%d-%b-%Y"))
+    level = level.sort_index().reindex(price_index).ffill()
+    return level.pct_change()
+
+
+rf_daily = load_risk_free(prices.index)
+
+
+# --- Small dispatch helper ---------------------------------------------------
+
+def get_weights(model, cov):
+    if model == "MVP":
+        return get_mvp_weights(cov)
+    if model == "HRP":
+        return get_hrp_weights(cov)
+    if model == "ERC":
+        return get_erc_weights(cov)
+    raise ValueError(f"unknown model: {model}")
+
 
 # --- Rolling backtest --------------------------------------------------------
 
-
 def process_window(start):
-    """Process a single rolling window; returns (per_period_returns, records)."""
-    train = returns.iloc[start : start + TRAIN_WINDOW]
-    test  = returns.iloc[start + TRAIN_WINDOW : start + TRAIN_WINDOW + PREDICTION_WINDOW]
+    """Run one rolling window. Returns (per_period_returns, records, dates)."""
+    train = log_returns.iloc[start : start + TRAIN_WINDOW]
+    test  = log_returns.iloc[start + TRAIN_WINDOW : start + TRAIN_WINDOW + PREDICTION_WINDOW]
 
-    # Per window, drop stocks with <90% observations; rows are kept as-is.
-    train = train.loc[:, train.notna().mean(axis=0) >= 0.9]
-    test  = test[train.columns].dropna(axis=1)
-    train = train[test.columns]
-
-    if train.empty or test.empty or train.shape[1] == 0:
+    # Universe is decided from TRAINING information only (no look-ahead into the
+    # test window): assets with >=90% observations in the window and a valid
+    # observation on the last training day (i.e. tradeable at formation time).
+    train = train.loc[:, train.notna().mean() >= 0.9]
+    train = train.loc[:, train.iloc[-1].notna()]
+    if train.shape[1] == 0 or test.empty:
         return {}, [], []
 
-    label = f"{train.index[0].date()} – {train.index[-1].date()}"
-    cov_garch  = estimate_cov_matrix_garch(train, prediction_window=PREDICTION_WINDOW, p=GARCH_P, q=GARCH_Q, window_label=label)
-    cov_hist   = estimate_cov_matrix_historical(train)
-    test_garch = test[cov_garch.columns]
-    test_hist  = test[cov_hist.columns]
+    # same universe in the test window; a missing test return means the asset did
+    # not trade that day, so its return is 0 (we don't drop it after the fact).
+    test = test[train.columns]
+    test_simple = (np.exp(test) - 1).fillna(0.0)
 
-    portfolios = {
-        "HRP GARCH":     (get_hrp_weights(cov_garch), test_garch),
-        "HRP Historical":(get_hrp_weights(cov_hist),  test_hist),
-        "MVP GARCH":     (get_mvp_weights(cov_garch), test_garch),
-        "MVP Historical":(get_mvp_weights(cov_hist),  test_hist),
-        "ERC GARCH":     (get_erc_weights(cov_garch), test_garch),
-        "ERC Historical":(get_erc_weights(cov_hist),  test_hist),
-        "Naive":         (pd.Series(np.ones(len(train.columns)) / len(train.columns), index=train.columns), test_hist),
-    }
+    # build the requested covariance matrices; fit GARCH only once and reuse it
+    cov_by_method = {}
+    if "Historical" in COV_METHODS:
+        cov_by_method["Historical"] = estimate_cov_matrix_historical(train)
+    if "GARCH" in COV_METHODS or "DCC" in COV_METHODS:
+        variances, std_resid = fit_garch_univariate(train, PREDICTION_WINDOW, GARCH_P, GARCH_Q)
+        if "GARCH" in COV_METHODS:
+            cov_by_method["GARCH"] = cov_constant_correlation(train, variances)
+        if "DCC" in COV_METHODS:
+            cov_by_method["DCC"] = cov_dcc(variances, std_resid)
 
-    per_period: dict[str, list] = {}
-    recs = []
-    for name, (weights, test_slice) in portfolios.items():
-        m = calculate_metrics(test_slice, weights)
+    # historical cov is also used for the naive portfolio's forecast std
+    cov_hist_full = cov_by_method.get("Historical")
+    if cov_hist_full is None:
+        cov_hist_full = estimate_cov_matrix_historical(train)
+
+    # list of (model, cov_type, weights, cov) to evaluate
+    naive_w = pd.Series(1.0 / train.shape[1], index=train.columns)
+    jobs = [("Naive", "N/A", naive_w, cov_hist_full)]
+    for method, cov in cov_by_method.items():
+        if cov is None or cov.shape[1] == 0:
+            continue
+        for model in MODELS:
+            jobs.append((model, method, get_weights(model, cov), cov))
+
+    per_period = {}
+    records = []
+    for model, cov_type, weights, cov in jobs:
+        name = "Naive" if model == "Naive" else f"{model} {cov_type}"
+        cols = list(weights.index)
+        port_returns = test_simple[cols] @ weights
+        per_period[name] = port_returns.values.tolist()
+
         w = weights.values
-        cov = (cov_garch if _MODEL_TYPE[name][1] == "GARCH" else cov_hist).values
-        forecasted_std = float(np.sqrt(w @ cov @ w))
-        per_period[name] = m["per_period_returns"].values.tolist()
-        model, cov_type = _MODEL_TYPE[name]
-        recs.append({
+        forecasted_std = float(np.sqrt(w @ cov.loc[cols, cols].values @ w))
+        records.append({
             "Model": model,
             "Covariance Type": cov_type,
             "Window Index": start // PREDICTION_WINDOW,
-            "Mean Return": m["mean_return"],
+            "Mean Return": port_returns.mean(),
             "Forecasted Std": forecasted_std,
         })
-    return per_period, recs, list(test.index)
+    return per_period, records, list(test.index)
 
 
 def main():
-    results: dict[str, list] = {n: [] for n in _MODEL_TYPE}
-    records = []
-    period_dates: list = []
-
-    starts = list(range(0, len(returns) - TRAIN_WINDOW - PREDICTION_WINDOW + 1, PREDICTION_WINDOW))
+    starts = list(range(0, len(log_returns) - TRAIN_WINDOW - PREDICTION_WINDOW + 1, PREDICTION_WINDOW))
     total = len(starts)
+
+    results = {}          # name -> list of simple period returns
+    records = []
+    period_dates = []
     with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
         for i, (per_period, recs, dates) in enumerate(executor.map(process_window, starts), start=1):
             records.extend(recs)
             period_dates.extend(dates)
             for name, rets in per_period.items():
-                results[name].extend(rets)
+                results.setdefault(name, []).extend(rets)
             print(f"\r{i}/{total} windows completed", end="", flush=True)
     print()
 
-    metrics = pd.DataFrame(records)
-
-    # --- Summary -------------------------------------------------------------
+    if not records:
+        print("No valid rolling windows (train window longer than the data?).")
+        return
 
     os.makedirs(_OUTPUT_DIR, exist_ok=True)
+    metrics = pd.DataFrame(records)
     metrics.to_csv(f"{_OUTPUT_DIR}/backtest_metrics.csv", index=False)
 
-    # Per-period returns per model (rows = dates), so any subset can be replotted later.
+    # per-period returns per model (rows = dates), so any subset can be replotted later
     if period_dates:
         returns_df = pd.DataFrame(results, index=pd.to_datetime(period_dates))
         returns_df.index.name = "Date"
         returns_df.to_csv(f"{_OUTPUT_DIR}/returns.csv")
 
+    # --- summary -------------------------------------------------------------
+
+    # average forecast (annualised) std per model/cov type
+    avg_fcst = metrics.groupby(["Model", "Covariance Type"])["Forecasted Std"].mean() * np.sqrt(252)
+
+    # daily risk-free return aligned to the evaluated dates (same order as results)
+    rf_aligned = rf_daily.reindex(pd.to_datetime(period_dates)).fillna(0.0).values
+
     summary_rows = []
     for name, rets in results.items():
-        if not rets:
+        rets = np.array(rets)
+        if rets.size == 0:
             continue
-        model, cov_type = _MODEL_TYPE[name]
-        mask = (metrics["Model"] == model) & (metrics["Covariance Type"] == cov_type)
-        avg_forecasted_ann = metrics.loc[mask, "Forecasted Std"].mean() * np.sqrt(252)
-        row = calculate_summary_metrics(np.array(rets), risk_free_rate=RISK_FREE_RATE)
-        ann_std = row["Ann. Std"]
+        model, cov_type = ("Naive", "N/A") if name == "Naive" else name.rsplit(" ", 1)
+        row = calculate_summary_metrics(rets, rf_aligned)
+        fcst = avg_fcst.get((model, cov_type), np.nan)
         row["Model"] = model
         row["Covariance Type"] = cov_type
-        row["Ann. Std (fcst)"] = avg_forecasted_ann
-        row["Real / Fcst Std"] = ann_std / avg_forecasted_ann if avg_forecasted_ann > 0 else np.nan
+        row["Ann. Std (fcst)"] = fcst
+        row["Real / Fcst Std"] = row["Ann. Std"] / fcst if fcst and fcst > 0 else np.nan
         summary_rows.append(row)
 
     col_order = ["Model", "Covariance Type", "Ann. Return", "Ann. Std", "Ann. Std (fcst)",
@@ -158,17 +224,16 @@ def main():
     print("Annualized performance summary:")
     print(summary.to_string(index=False))
 
-    # --- Plot ----------------------------------------------------------------
+    # --- plot ----------------------------------------------------------------
 
     if not any(results.values()):
         print("No valid rolling windows to plot.")
         return
 
-    cumulative = {name: 100 * np.cumprod(1 + np.array(rets)) for name, rets in results.items()}
     x_axis = pd.to_datetime(period_dates)
     fig, ax = plt.subplots(figsize=(12, 6))
-    for name, values in cumulative.items():
-        ax.plot(x_axis, values, label=name)
+    for name, rets in results.items():
+        ax.plot(x_axis, 100 * np.cumprod(1 + np.array(rets)), label=name)
     ax.set_title("Portfolio Value Starting at 100")
     ax.set_xlabel("Date")
     ax.set_ylabel("Portfolio Value")
