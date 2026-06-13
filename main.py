@@ -36,10 +36,10 @@ DATASETS = {  # name: (filepath, date_format)
     "SP500": ("S&P500_Adj.csv",                  "%d.%m.%y"),
 }
 
-MAX_WORKERS       = 6
-DATASET           = "TRBC"
+MAX_WORKERS       = 3
+DATASET           = "SP500"
 TRAIN_WINDOW      = int(8 * 252)
-PREDICTION_WINDOW = 1
+PREDICTION_WINDOW = 10
 RISK_FREE_FILE    = "Price History_20260611_1835.csv"  # Fed Funds total-return index
 GARCH_P           = 1
 GARCH_Q           = 1
