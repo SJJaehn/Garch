@@ -264,10 +264,12 @@ def calculate_summary_metrics(daily_returns, rf_daily=0.0):
     excess = arr - rf
 
     ann_ret = np.prod(1 + arr) ** (252 / len(arr)) - 1   # CAGR (geometric)
-    ann_std = arr.std(ddof=1) * np.sqrt(252)             # sample std
+    ann_std = arr.std(ddof=1) * np.sqrt(252)             # sample std (raw, = portfolio vol)
 
     # arithmetic annualised excess return, consistent with the std used below
     ann_excess = excess.mean() * 252
+    # std of the EXCESS returns for the Sharpe denominator (textbook definition)
+    ann_excess_std = excess.std(ddof=1) * np.sqrt(252)
     # downside deviation of the excess returns
     semi_dev = np.sqrt(np.mean(np.minimum(excess, 0) ** 2)) * np.sqrt(252)
 
@@ -281,7 +283,7 @@ def calculate_summary_metrics(daily_returns, rf_daily=0.0):
     return {
         "Ann. Return":     ann_ret,
         "Ann. Std":        ann_std,
-        "Ann. Sharpe":     ann_excess / ann_std  if ann_std > 0 else np.nan,
+        "Ann. Sharpe":     ann_excess / ann_excess_std if ann_excess_std > 0 else np.nan,
         "Ann. Sortino":    ann_excess / semi_dev if semi_dev > 0 else np.nan,
         "Max Drawdown":    max_dd,
         "Calmar Ratio":    ann_ret / abs(max_dd) if max_dd < 0 else np.nan,

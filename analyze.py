@@ -100,12 +100,12 @@ def per_combo_charts():
         rf = main.rf_daily.reindex(ret.index).fillna(0.0)
         excess = ret.sub(rf, axis=0)
 
-        roll = (excess.rolling(WINDOW).mean() / ret.rolling(WINDOW).std()) * np.sqrt(252)
+        roll = (excess.rolling(WINDOW).mean() / excess.rolling(WINDOW).std()) * np.sqrt(252)
         if SMOOTH > 1:
             roll = roll.rolling(SMOOTH).mean()
         roll = roll.dropna(how="all")
 
-        cum = (excess.expanding(MIN_PERIODS).mean() / ret.expanding(MIN_PERIODS).std()) * np.sqrt(252)
+        cum = (excess.expanding(MIN_PERIODS).mean() / excess.expanding(MIN_PERIODS).std()) * np.sqrt(252)
         cum = cum.dropna(how="all")
 
         if not roll.empty:
@@ -133,7 +133,7 @@ def framed_sharpe(returns_path):
         return {}
     rf = main.rf_daily.reindex(ret.index).fillna(0.0)
     excess = ret.sub(rf, axis=0)
-    sharpe = (excess.mean() * 252) / (ret.std(ddof=1) * np.sqrt(252))
+    sharpe = (excess.mean() * 252) / (excess.std(ddof=1) * np.sqrt(252))
     return sharpe.to_dict()
 
 
@@ -224,23 +224,20 @@ def plot_sharpe_bar(table, out):
     plt.close(fig)
 
 
-def summary_outputs():
-    os.makedirs(SUMMARY_DIR, exist_ok=True)
-    table = build_table()
-    table.to_excel(f"{SUMMARY_DIR}/aggregate_results.xlsx", index=False)
-    print(f"table: {len(table)} rows -> {SUMMARY_DIR}/aggregate_results.xlsx")
-
+def dataset_charts(table, out_dir):
+    """All overview charts for a single dataset's slice of the table."""
+    os.makedirs(out_dir, exist_ok=True)
     frame = f"  [{DATE_START or 'start'} .. {DATE_END or 'end'}]"
 
     # --- overall charts (averaged over the other axis) -----------------------
-    plot_sharpe_vs(table, "Prediction Horizon", f"{SUMMARY_DIR}/sharpe_vs_prediction.png",
+    plot_sharpe_vs(table, "Prediction Horizon", f"{out_dir}/sharpe_vs_prediction.png",
                    "Mean annualised Sharpe vs prediction horizon" + frame)
-    plot_sharpe_vs(table, "Training Period", f"{SUMMARY_DIR}/sharpe_vs_training.png",
+    plot_sharpe_vs(table, "Training Period", f"{out_dir}/sharpe_vs_training.png",
                    "Mean annualised Sharpe vs training period" + frame)
-    plot_sharpe_bar(table, f"{SUMMARY_DIR}/sharpe_by_model_cov.png")
+    plot_sharpe_bar(table, f"{out_dir}/sharpe_by_model_cov.png")
 
     # --- per prediction horizon: Sharpe vs training period -------------------
-    d = f"{SUMMARY_DIR}/sharpe_vs_training_by_pred"
+    d = f"{out_dir}/sharpe_vs_training_by_pred"
     os.makedirs(d, exist_ok=True)
     for pred in sorted(table["Prediction Horizon"].unique()):
         sub = table[table["Prediction Horizon"] == pred]
@@ -250,7 +247,7 @@ def summary_outputs():
                        f"Sharpe vs training period  |  prediction horizon = {pred}{frame}")
 
     # --- per training period: Sharpe vs prediction horizon -------------------
-    d = f"{SUMMARY_DIR}/sharpe_vs_prediction_by_train"
+    d = f"{out_dir}/sharpe_vs_prediction_by_train"
     os.makedirs(d, exist_ok=True)
     for train in sorted(table["Training Period"].unique()):
         sub = table[table["Training Period"] == train]
@@ -259,7 +256,23 @@ def summary_outputs():
         plot_sharpe_vs(sub, "Prediction Horizon", f"{d}/train_{train}.png",
                        f"Sharpe vs prediction horizon  |  training period = {train}{frame}")
 
-    print(f"summary charts -> {SUMMARY_DIR}/  (frame: {DATE_START} .. {DATE_END})")
+
+def summary_outputs():
+    os.makedirs(SUMMARY_DIR, exist_ok=True)
+    table = build_table()
+
+    # one overall Excel covering every dataset
+    table.to_excel(f"{SUMMARY_DIR}/aggregate_results.xlsx", index=False)
+    print(f"table: {len(table)} rows -> {SUMMARY_DIR}/aggregate_results.xlsx")
+
+    # charts generated separately per dataset (TRBC, SP500, ...)
+    for dataset in sorted(table["Dataset"].unique()):
+        sub = table[table["Dataset"] == dataset]
+        out_dir = f"{SUMMARY_DIR}/{dataset}"
+        dataset_charts(sub, out_dir)
+        print(f"summary charts ({dataset}) -> {out_dir}/")
+
+    print(f"frame: {DATE_START} .. {DATE_END}")
 
 
 if __name__ == "__main__":
