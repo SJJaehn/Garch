@@ -13,16 +13,12 @@ import pandas as pd
 import main
 
 # (TRAIN_WINDOW, PREDICTION_WINDOW) combinations per dataset.
+# Day-ahead forecast (pred=1) with a 1008-day (~4y) train window on every
+# artificial dataset.
 COMBOS = {
-    "TRBC": [
-    (train, pred)
-    for train in [i * 252 for i in range(1, 11)]
-    for pred in (1, 5, 10, 21)
-    ]
-    #"SP500": [
-    #    (252, 1), (252, 21),
-    #    (504, 1), (504, 10), (504, 21),
-    #],
+    "MonteCarlo": [(1008, 1)],
+    "GARCH_sim":  [(1008, 1)],
+    "DCC_sim":    [(1008, 1)],
 }
 
 

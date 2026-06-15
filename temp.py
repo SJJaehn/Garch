@@ -1,7 +1,7 @@
 import pandas as pd
 
-INPUT = "TRBC_Business_Sectors.csv"
-OUTPUT = "TRBC_Business_Sectors_clean.csv"
+INPUT = "DATA/Empirical/TRBC_Business_Sectors.csv"
+OUTPUT = "DATA/Empirical/TRBC_Business_Sectors_clean.csv"
 
 # Datastream export is German-locale: ";" separator, literal "NULL" for missing,
 # and the first column holds Excel serial date numbers (e.g. 46182).
