@@ -1,50 +1,33 @@
-"""Temporary batch runner: regenerates every Abbildungen/{dataset}/{train}_{pred}
-combination with the current main.py logic.
-
-Safe to delete. Uses the 'fork' start method so the worker processes inherit the
-config/data we set on the `main` module (with 'spawn' they would re-import main.py
-and fall back to its default constants).
 """
-import multiprocessing as mp
+Batch runner: run the backtest over several (dataset, train, pred) combinations.
 
-import numpy as np
-import pandas as pd
+Unlike the old version, this mutates no global state — each run is an independent
+BacktestConfig and the data is loaded once per dataset.
 
-import main
+    python run_all.py
+"""
+from garch.backtest.engine import run_backtest
+from garch.config import BacktestConfig
+from garch.data.loaders import load_dataset
 
-# (TRAIN_WINDOW, PREDICTION_WINDOW) combinations per dataset.
-# Day-ahead forecast (pred=1) with a 1008-day (~4y) train window on every
-# artificial dataset.
+# TRBC: every training window (252-day steps, ~1..10 years) x prediction horizon.
+TRBC_TRAIN = [252 * i for i in range(1, 11)]   # 252, 504, ..., 2520
+TRBC_PRED  = [1, 5, 10, 21]
+
+# (train_window, prediction_window) combinations per dataset.
 COMBOS = {
-    "MonteCarlo": [(1008, 1)],
-    "GARCH_sim":  [(1008, 1)],
-    "DCC_sim":    [(1008, 1)],
+    "TRBC": [(train, pred) for train in TRBC_TRAIN for pred in TRBC_PRED],
 }
 
 
-def load_dataset(dataset):
-    """Reload main.prices/main.log_returns for `dataset` (main loads only once at import)."""
-    main.DATASET = dataset
-    filepath, date_format = main.DATASETS[dataset]
-    prices = pd.read_csv(filepath, index_col=0)
-    prices.index = pd.to_datetime(prices.index, format=date_format, errors="coerce")
-    prices = prices[prices.index.notna()]
-    prices = prices.loc[prices.notna().sum(axis=1) >= int(0.5 * prices.shape[1])]
-    log_returns = np.log(prices / prices.shift(1)).iloc[1:]
-    zero_frac = (log_returns == 0).sum() / log_returns.notna().sum()
-    log_returns = log_returns.loc[:, zero_frac < 0.5]
-    main.prices = prices
-    main.log_returns = log_returns
-    main.rf_daily = main.load_risk_free(prices.index)  # risk-free aligned to these dates
+def main():
+    for dataset, combos in COMBOS.items():
+        _, log_returns, rf = load_dataset(dataset)
+        for train, pred in combos:
+            config = BacktestConfig(dataset=dataset, train_window=train, prediction_window=pred)
+            print(f"\n=== {dataset} {train}_{pred} ===", flush=True)
+            run_backtest(config, log_returns, rf)
 
 
 if __name__ == "__main__":
-    mp.set_start_method("fork", force=True)
-    for dataset, combos in COMBOS.items():
-        load_dataset(dataset)
-        for train, pred in combos:
-            main.TRAIN_WINDOW = train
-            main.PREDICTION_WINDOW = pred
-            main._OUTPUT_DIR = f"Ergebnisse/{dataset}/{train}_{pred}"
-            print(f"\n=== {dataset} {train}_{pred} ===", flush=True)
-            main.main()
+    main()

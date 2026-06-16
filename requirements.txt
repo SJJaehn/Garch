@@ -1,0 +1,15 @@
+# Pinned to the versions this project is developed against.
+numpy==2.3.5
+pandas==2.3.3
+scipy==1.16.3
+matplotlib==3.10.7
+arch==8.0.0            # univariate GARCH
+riskfolio-lib==7.2.0  # MVP / ERC portfolio optimisation
+cvxpy==1.7.3          # riskfolio's solver backend (see note below)
+openpyxl==3.1.5       # aggregate_results.xlsx export
+
+# NOTE: cvxpy's default C++ canonicalisation backend can abort (SIGABRT) with
+# numpy 2.x. We route every riskfolio solve through the SciPy backend instead
+# (garch/config.py: SOL_PARAMS canon_backend="SCIPY"), so this works out of the
+# box. If you would rather fix it at the source, reinstall a matching cvxpy:
+#   pip install --force-reinstall --no-cache-dir cvxpy
