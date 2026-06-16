@@ -10,13 +10,13 @@ from garch.backtest.engine import run_backtest
 from garch.config import BacktestConfig
 from garch.data.loaders import load_dataset
 
-# TRBC: every training window (252-day steps, ~1..10 years) x prediction horizon.
-TRBC_TRAIN = [252 * i for i in range(1, 11)]   # 252, 504, ..., 2520
-TRBC_PRED  = [1, 5, 10, 21]
+# Full grid: every training window (252-day steps, ~1..10 years) x prediction horizon.
+GRID_TRAIN = [252 * i for i in range(1, 11)]   # 252, 504, ..., 2520
+GRID_PRED  = [1, 5, 10, 21]
 
 # (train_window, prediction_window) combinations per dataset.
 COMBOS = {
-    "TRBC": [(train, pred) for train in TRBC_TRAIN for pred in TRBC_PRED],
+    "Dow": [(train, pred) for train in GRID_TRAIN for pred in GRID_PRED],
 }
 
 

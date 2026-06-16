@@ -35,7 +35,7 @@ from garch import config
 # CONFIG  -- everything that defines the data-generating process
 # =============================================================================
 
-N_OBS    = 4000          # number of price rows (dates)
+N_OBS    = 6000          # number of price rows (dates)
 N_ASSETS = 20            # number of assets (columns)
 SEED     = 42
 OUTPUT_DIR = config.ARTIFICIAL_DIR
