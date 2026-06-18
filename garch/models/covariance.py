@@ -57,6 +57,7 @@ def dcc_covariance(variances, std_resid):
 
     # too few assets / observations for a correlation model -> diagonal cov
     if n < 2 or n_obs < n + 2:
+        print(f"[fallback] DCC->diagonal covariance (n={n}, n_obs={n_obs})", flush=True)
         cov = np.diag(std ** 2) + np.eye(n) * 1e-8
         return pd.DataFrame(cov, index=cols, columns=cols)
 
@@ -85,6 +86,7 @@ def dcc_covariance(variances, std_resid):
                    bounds=[(1e-4, 0.3), (1e-4, 0.999)], options={"maxiter": 50})
     a, b = opt.x
     if not (a > 0 and b > 0 and a + b < 1):
+        print(f"[fallback] DCC optimizer misbehaved (a={a:.3g}, b={b:.3g}); using a=0.02, b=0.95", flush=True)
         a, b = 0.02, 0.95  # typical values if the optimizer misbehaves
 
     # roll the recursion through the sample to get the next-step correlation

@@ -1,10 +1,14 @@
 """
-Aggregate every summary.csv into one table and a few overview charts, saved into
+Aggregate every summary.csv into one table and overview charts, saved into
 Ergebnisse/Zusammenfassung/:
   aggregate_results.xlsx
-  sharpe_vs_prediction.png   (Sharpe vs prediction horizon, per model)
-  sharpe_vs_training.png     (Sharpe vs training period, per model)
-  sharpe_by_model_cov.png    (mean Sharpe by model x covariance, bars)
+  {metric}/{dataset}/...     one subfolder per metric (Sharpe, realised volatility,
+                             QLIKE, covariance RMSE, ERC risk-contribution RMSE),
+                             each with the same chart set:
+    vs_prediction.png        (metric vs prediction horizon, per model)
+    vs_training.png          (metric vs training period, per model)
+    by_model_cov.png         (mean metric by model x covariance, bars)
+    vs_training_by_pred/, vs_prediction_by_train/   (per-horizon / per-window breakdowns)
 """
 import glob
 import os
@@ -81,14 +85,25 @@ def build_table():
 _AXIS_DE = {"Prediction Horizon": "Prognosehorizont", "Training Period": "Trainingszeitraum"}
 
 
-def plot_sharpe_vs(table, axis_col, out, title):
-    """One subplot per model: mean Sharpe vs `axis_col`, one line per covariance type."""
-    naive = table[table["Model"] == "Naive"].groupby(axis_col)[SHARPE_COL].mean()
+# metrics to chart, each into its own Zusammenfassung subfolder:
+#   (column in the table, output subfolder, axis/title label)
+METRICS = [
+    (SHARPE_COL,     "Sharpe",           "Durchschnittlicher Sharpe (annualisiert)"),
+    ("Ann. Std",     "Realisierte_Vola", "Realisierte Volatilität (annualisiert)"),
+    ("Avg QLIKE",    "QLIKE",            "Durchschnittlicher QLIKE"),
+    ("Avg Cov RMSE", "Kovarianz_RMSE",   "Durchschnittlicher Kovarianz-RMSE"),
+    ("ERC RC RMSE",  "ERC_RC_RMSE",      "ERC Risikobeitrags-RMSE"),
+]
+
+
+def plot_metric_vs(table, axis_col, metric_col, ylabel, out, title):
+    """One subplot per model: mean `metric_col` vs `axis_col`, one line per covariance type."""
+    naive = table[table["Model"] == "Naive"].groupby(axis_col)[metric_col].mean()
     fig, axes = plt.subplots(1, len(MODELS), figsize=(5 * len(MODELS), 5), sharey=True)
     for ax, mdl in zip(axes, MODELS):
         sub = table[table["Model"] == mdl]
         for cov in COVS:
-            s = sub[sub["Covariance Type"] == cov].groupby(axis_col)[SHARPE_COL].mean()
+            s = sub[sub["Covariance Type"] == cov].groupby(axis_col)[metric_col].mean()
             if not s.empty:
                 ax.plot(s.index, s.values, marker="o", label=cov, color=COV_COLORS[cov])
         if not naive.empty:
@@ -96,7 +111,7 @@ def plot_sharpe_vs(table, axis_col, out, title):
         ax.set_title(mdl)
         ax.set_xlabel(_AXIS_DE.get(axis_col, axis_col))
         ax.grid(True, alpha=0.3)
-    axes[0].set_ylabel("Durchschnittlicher Sharpe (annualisiert)")
+    axes[0].set_ylabel(ylabel)
     axes[-1].legend(fontsize=8)
     fig.suptitle(title)
     fig.tight_layout()
@@ -104,9 +119,9 @@ def plot_sharpe_vs(table, axis_col, out, title):
     plt.close(fig)
 
 
-def plot_sharpe_bar(table, out):
-    """Grouped bars: mean Sharpe by model x covariance type, with Naive reference."""
-    g = table.groupby(["Model", "Covariance Type"])[SHARPE_COL].mean()
+def plot_metric_bar(table, metric_col, ylabel, out, title):
+    """Grouped bars: mean `metric_col` by model x covariance type, with Naive reference."""
+    g = table.groupby(["Model", "Covariance Type"])[metric_col].mean()
     x = np.arange(len(MODELS))
     width = 0.25
     fig, ax = plt.subplots(figsize=(9, 5))
@@ -115,11 +130,11 @@ def plot_sharpe_bar(table, out):
         ax.bar(x + (i - 1) * width, vals, width, label=cov, color=COV_COLORS[cov])
     naive = g.get(("Naive", "N/A"), np.nan)
     if not np.isnan(naive):
-        ax.axhline(naive, color="black", linestyle="--", linewidth=1, label=f"Naive ({naive:.2f})")
+        ax.axhline(naive, color="black", linestyle="--", linewidth=1, label=f"Naive ({naive:.3g})")
     ax.set_xticks(x)
     ax.set_xticklabels(MODELS)
-    ax.set_ylabel("Durchschnittlicher Sharpe (annualisiert)")
-    ax.set_title(f"Durchschnittlicher Sharpe nach Modell und Kovarianztyp  [{DATE_START or 'Start'} .. {DATE_END or 'Ende'}]")
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
     ax.legend(fontsize=8)
     ax.grid(True, axis="y", alpha=0.3)
     fig.tight_layout()
@@ -127,37 +142,38 @@ def plot_sharpe_bar(table, out):
     plt.close(fig)
 
 
-def dataset_charts(table, out_dir):
-    """All overview charts for a single dataset's slice of the table."""
+def dataset_charts(table, out_dir, metric_col, label):
+    """The full chart set for one dataset's slice and one metric."""
     os.makedirs(out_dir, exist_ok=True)
     frame = f"  [{DATE_START or 'Start'} .. {DATE_END or 'Ende'}]"
 
     # --- overall charts (averaged over the other axis) -----------------------
-    plot_sharpe_vs(table, "Prediction Horizon", f"{out_dir}/sharpe_vs_prediction.png",
-                   "Durchschnittlicher Sharpe (annualisiert) vs. Prognosehorizont" + frame)
-    plot_sharpe_vs(table, "Training Period", f"{out_dir}/sharpe_vs_training.png",
-                   "Durchschnittlicher Sharpe (annualisiert) vs. Trainingszeitraum" + frame)
-    plot_sharpe_bar(table, f"{out_dir}/sharpe_by_model_cov.png")
+    plot_metric_vs(table, "Prediction Horizon", metric_col, label,
+                   f"{out_dir}/vs_prediction.png", f"{label} vs. Prognosehorizont" + frame)
+    plot_metric_vs(table, "Training Period", metric_col, label,
+                   f"{out_dir}/vs_training.png", f"{label} vs. Trainingszeitraum" + frame)
+    plot_metric_bar(table, metric_col, label, f"{out_dir}/by_model_cov.png",
+                    f"{label} nach Modell und Kovarianztyp" + frame)
 
-    # --- per prediction horizon: Sharpe vs training period -------------------
-    d = f"{out_dir}/sharpe_vs_training_by_pred"
+    # --- per prediction horizon: metric vs training period -------------------
+    d = f"{out_dir}/vs_training_by_pred"
     os.makedirs(d, exist_ok=True)
     for pred in sorted(table["Prediction Horizon"].unique()):
         sub = table[table["Prediction Horizon"] == pred]
         if sub["Training Period"].nunique() < 2:
             continue  # nothing to plot "over training" with a single training period
-        plot_sharpe_vs(sub, "Training Period", f"{d}/pred_{pred}.png",
-                       f"Sharpe vs. Trainingszeitraum  |  Prognosehorizont = {pred}{frame}")
+        plot_metric_vs(sub, "Training Period", metric_col, label, f"{d}/pred_{pred}.png",
+                       f"{label} vs. Trainingszeitraum  |  Prognosehorizont = {pred}{frame}")
 
-    # --- per training period: Sharpe vs prediction horizon -------------------
-    d = f"{out_dir}/sharpe_vs_prediction_by_train"
+    # --- per training period: metric vs prediction horizon -------------------
+    d = f"{out_dir}/vs_prediction_by_train"
     os.makedirs(d, exist_ok=True)
     for train in sorted(table["Training Period"].unique()):
         sub = table[table["Training Period"] == train]
         if sub["Prediction Horizon"].nunique() < 2:
             continue  # nothing to plot "over prediction" with a single horizon
-        plot_sharpe_vs(sub, "Prediction Horizon", f"{d}/train_{train}.png",
-                       f"Sharpe vs. Prognosehorizont  |  Trainingszeitraum = {train}{frame}")
+        plot_metric_vs(sub, "Prediction Horizon", metric_col, label, f"{d}/train_{train}.png",
+                       f"{label} vs. Prognosehorizont  |  Trainingszeitraum = {train}{frame}")
 
 
 def summary_outputs():
@@ -169,11 +185,19 @@ def summary_outputs():
     table.to_excel(f"{summary_dir}/aggregate_results.xlsx", index=False)
     print(f"table: {len(table)} rows -> {summary_dir}/aggregate_results.xlsx")
 
-    # charts generated separately per dataset (TRBC, SP500, ...)
-    for dataset in sorted(table["Dataset"].unique()):
-        sub = table[table["Dataset"] == dataset]
-        out_dir = f"{summary_dir}/{dataset}"
-        dataset_charts(sub, out_dir)
-        print(f"summary charts ({dataset}) -> {out_dir}/")
+    # one subfolder per metric; inside it the same chart set per dataset
+    datasets = sorted(table["Dataset"].unique())
+    for metric_col, folder, label in METRICS:
+        if metric_col not in table.columns or table[metric_col].notna().sum() == 0:
+            print(f"skip {folder}: no '{metric_col}' values in the results")
+            continue
+        done = []
+        for dataset in datasets:
+            sub = table[table["Dataset"] == dataset]
+            if sub[metric_col].notna().sum() == 0:
+                continue  # this dataset has no values for the metric yet -> skip
+            dataset_charts(sub, f"{summary_dir}/{folder}/{dataset}", metric_col, label)
+            done.append(dataset)
+        print(f"summary charts ({folder}) -> {summary_dir}/{folder}/  {done}")
 
     print(f"frame: {DATE_START} .. {DATE_END}")

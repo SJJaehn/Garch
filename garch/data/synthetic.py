@@ -59,19 +59,12 @@ ANNUAL_VOL_HIGH = 0.35
 # --- unconditional correlation (one-factor structure) -----------------------
 AVG_CORRELATION = 0.35       # target average pairwise correlation (0..1)
 
-# --- fat tails: Student-t innovations ---------------------------------------
-# real equity returns are leptokurtic even after GARCH filtering.  Innovations
-# are a standardized multivariate-t, so days have fatter tails AND extreme days
-# tend to hit all assets together (tail dependence).  Lower dof = fatter tails.
-INNOV_DOF = 7                # Student-t degrees of freedom (>2); ~6-8 is typical
-
-# --- GJR-GARCH volatility dynamics (shared by the garch & dcc datasets) ------
-# GJR adds a leverage effect: negative shocks raise tomorrow's variance more
-# than positive ones (alpha + gamma vs alpha).  omega is set per asset so the
-# unconditional variance matches uncond_var.  Persistence = alpha+gamma/2+beta.
-GARCH_ALPHA = 0.03           # ARCH: reaction to any shock
-GARCH_GAMMA = 0.10           # leverage: EXTRA reaction to negative shocks
-GARCH_BETA  = 0.90           # GARCH: persistence of variance (persistence = 0.98)
+# --- GARCH(1,1) volatility dynamics (shared by the garch & dcc datasets) -----
+# omega is set per asset so the unconditional variance matches uncond_var.
+# alpha+beta is the persistence; a larger alpha means stronger volatility
+# clustering -> a bigger edge for GARCH over a static historical covariance.
+GARCH_ALPHA = 0.08           # ARCH: reaction to last shock
+GARCH_BETA  = 0.90           # GARCH: persistence of variance (alpha+beta = 0.98)
 
 # --- DCC dynamic-correlation params (dcc dataset only) ----------------------
 # bigger DCC_A -> correlation swings harder in response to shocks.  Values are
@@ -105,10 +98,9 @@ def build_parameters(rng):
     corr = np.outer(loadings, loadings)
     np.fill_diagonal(corr, 1.0)
 
-    # GJR-GARCH: with symmetric innovations E[gamma*1(eps<0)*eps^2] = gamma/2*var,
-    # so the unconditional variance is omega/(1-alpha-gamma/2-beta).  Pin omega so
-    # that unconditional variance equals uncond_var.
-    omega = uncond_var * (1.0 - GARCH_ALPHA - 0.5 * GARCH_GAMMA - GARCH_BETA)
+    # GARCH(1,1): pin omega so the unconditional variance omega/(1-alpha-beta)
+    # equals uncond_var.
+    omega = uncond_var * (1.0 - GARCH_ALPHA - GARCH_BETA)
 
     return {
         "mu": mu,
@@ -116,19 +108,8 @@ def build_parameters(rng):
         "corr": corr,
         "omega": omega,
         "alpha": GARCH_ALPHA,
-        "gamma": GARCH_GAMMA,
         "beta": GARCH_BETA,
     }
-
-
-def draw_std_t(chol, dof, rng):
-    """
-    One standardized multivariate-t innovation with correlation R = chol@chol.T
-    (unit variances, fat tails, common tail shock -> tail dependence).
-    """
-    g = chol @ rng.standard_normal(chol.shape[0])      # N(0, R)
-    w = rng.chisquare(dof) / dof                       # common mixing variable
-    return g / np.sqrt(w) * np.sqrt((dof - 2) / dof)   # rescale to unit variance
 
 
 # =============================================================================
@@ -136,35 +117,33 @@ def draw_std_t(chol, dof, rng):
 # =============================================================================
 
 def simulate_monte_carlo(p, n, rng):
-    """Constant mean and covariance (fat-tailed): the null with no dynamics."""
+    """Constant mean and covariance: the null with no second-moment dynamics."""
     std = np.sqrt(p["uncond_var"])
-    chol = np.linalg.cholesky(p["corr"])
-    out = np.empty((n, N_ASSETS))
-    for t in range(n):
-        out[t] = p["mu"] + std * draw_std_t(chol, INNOV_DOF, rng)
-    return out
+    cov = p["corr"] * np.outer(std, std)
+    return rng.multivariate_normal(p["mu"], cov, size=n)
 
 
 def simulate_garch(p, n, rng):
-    """GJR-GARCH marginals with a STATIC correlation between the innovations."""
-    mu, omega, alpha, gamma, beta = p["mu"], p["omega"], p["alpha"], p["gamma"], p["beta"]
+    """GARCH(1,1) marginals with a STATIC correlation between the innovations."""
+    mu, omega, alpha, beta = p["mu"], p["omega"], p["alpha"], p["beta"]
     chol = np.linalg.cholesky(p["corr"])
+    # correlated standardized innovations z_t = L u_t,  u_t ~ N(0, I)
+    z = rng.standard_normal((n, N_ASSETS)) @ chol.T
 
     out = np.empty((n, N_ASSETS))
     h = p["uncond_var"].copy()                  # start at the unconditional variance
     eps_prev = np.zeros(N_ASSETS)
     for t in range(n):
-        neg = (eps_prev < 0.0)                   # leverage: bigger jump after a loss
-        h = omega + (alpha + gamma * neg) * eps_prev ** 2 + beta * h
-        eps = np.sqrt(h) * draw_std_t(chol, INNOV_DOF, rng)
+        h = omega + alpha * eps_prev ** 2 + beta * h
+        eps = np.sqrt(h) * z[t]
         out[t] = mu + eps
         eps_prev = eps
     return out
 
 
 def simulate_dcc(p, n, rng):
-    """GJR-GARCH marginals + a DCC recursion driving a time-varying correlation."""
-    mu, omega, alpha, gamma, beta = p["mu"], p["omega"], p["alpha"], p["gamma"], p["beta"]
+    """GARCH(1,1) marginals + a DCC recursion driving a time-varying correlation."""
+    mu, omega, alpha, beta = p["mu"], p["omega"], p["alpha"], p["beta"]
     q_bar = p["corr"]                           # unconditional correlation target
     omega_q = (1.0 - DCC_A - DCC_B) * q_bar
 
@@ -180,12 +159,11 @@ def simulate_dcc(p, n, rng):
         R = Q / np.outer(d, d)
         L = np.linalg.cholesky(R + np.eye(N_ASSETS) * 1e-10)
 
-        # 2) draw correlated, fat-tailed standardized residuals z_t (corr = R_t)
-        z_t = draw_std_t(L, INNOV_DOF, rng)
+        # 2) draw correlated standardized residuals z_t ~ N(0, R_t)
+        z_t = L @ rng.standard_normal(N_ASSETS)
 
-        # 3) GJR-GARCH conditional variance per asset -> returns
-        neg = (eps_prev < 0.0)
-        h = omega + (alpha + gamma * neg) * eps_prev ** 2 + beta * h
+        # 3) GARCH conditional variance per asset -> returns
+        h = omega + alpha * eps_prev ** 2 + beta * h
         eps = np.sqrt(h) * z_t
         out[t] = mu + eps
 
@@ -215,9 +193,9 @@ def main():
     columns = [f"A{i + 1:02d}" for i in range(N_ASSETS)]
     dates = pd.bdate_range(start=START_DATE, periods=N_OBS)   # N_OBS price rows
     n_ret = N_OBS - 1                                          # one fewer return
-    persistence = p["alpha"] + 0.5 * p["gamma"] + p["beta"]
+    persistence = p["alpha"] + p["beta"]
     print(f"Generating {N_OBS} dates x {N_ASSETS} assets "
-          f"(GJR persistence={persistence:.2f}, DCC a+b={DCC_A + DCC_B:.2f}, t-dof={INNOV_DOF}).")
+          f"(GARCH persistence={persistence:.2f}, DCC a+b={DCC_A + DCC_B:.2f}).")
 
     for name, sim in [("monte_carlo", simulate_monte_carlo),
                       ("garch",       simulate_garch),

@@ -16,9 +16,9 @@ GRID_PRED  = [1, 5, 10, 21]
 
 # (train_window, prediction_window) combinations per dataset.
 COMBOS = {
-    #"DCC_sim": [(1008, 1)],  # just one combo for the synthetic DCC data
-    #"GARCH_sim": [(1008, 1)],  # just one combo for the synthetic GARCH data
-    #"MonteCarlo": [(1008, 1)],  # just one combo for the synthetic Monte Carlo data
+    "DCC_sim": [(1008, 1)],  # just one combo for the synthetic DCC data
+    "GARCH_sim": [(1008, 1)],  # just one combo for the synthetic GARCH data
+    "MonteCarlo": [(1008, 1)],  # just one combo for the synthetic Monte Carlo data
     "TRBC": [(train, pred) for train in GRID_TRAIN for pred in GRID_PRED],
 }
 

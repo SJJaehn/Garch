@@ -57,6 +57,8 @@ def fit_garch_univariate(returns, prediction_window=1, p=1, q=1):
                 var = None
 
         if var is None:  # GARCH failed / too little data -> EWMA fallback
+            reason = "insufficient data" if len(series) < 50 else "GARCH did not converge"
+            print(f"[fallback] GARCH->EWMA for {col} ({reason})", flush=True)
             var, sr = _ewma_fallback(series)
 
         variances[col] = var
