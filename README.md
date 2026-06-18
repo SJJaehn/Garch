@@ -12,25 +12,16 @@ A rolling-window backtest that compares **covariance estimators** against
 
 ## Layout
 
-```
-garch/                      importable package (all the logic)
-  config.py                 central configuration (BacktestConfig, dataset registry, paths)
-  data/loaders.py           load prices / log returns / risk-free series
-  data/synthetic.py         generate the artificial datasets (GJR-GARCH + Student-t)
-  data/cleaning.py          clean the raw TRBC Datastream export
-  models/garch.py           univariate GARCH fitting (arch)
-  models/covariance.py      historical / constant-correlation / DCC covariance
-  models/portfolio.py       MVP & ERC (riskfolio-lib), HRP (custom), naive
-  backtest/engine.py        the rolling-window backtest
-  backtest/metrics.py       annualised performance statistics
-  analysis/charts.py        per-combo time-series charts
-  analysis/aggregate.py     aggregate table + overview charts
+Four flat scripts at the repo root — no packages to navigate. The pipeline runs
+top-to-bottom: generate data → backtest → analyze.
 
-main.py                     run one backtest          (edit BacktestConfig)
-run_all.py                  run a batch of backtests   (edit COMBOS)
-artificial_data.py          (re)generate synthetic data
-analyze.py                  charts + aggregate summary
-clean_data.py               clean the raw TRBC export
+```
+config.py       params only: paths, dataset registry, solver settings,
+                BacktestConfig, and the COMBOS batch grid (no I/O at import)
+datagen.py      RUN: generate the synthetic datasets -> DATA/Artifical/
+backtest.py     RUN: data loaders + GARCH + covariance + portfolio + metrics
+                + the rolling-window engine + the COMBOS grid loop
+analyze.py      RUN: per-combo charts + aggregate Excel table + overview charts
 ```
 
 ## Setup
@@ -41,19 +32,22 @@ pip install -r requirements.txt
 
 > **cvxpy note:** riskfolio-lib (used for MVP/ERC) solves through cvxpy. cvxpy's
 > default C++ canonicalisation backend can abort with numpy 2.x, so every solve
-> is routed through the SciPy backend (`garch/config.py` → `SOL_PARAMS`). No
-> action needed; this just works.
+> is routed through the SciPy backend (`config.py` → `SOL_PARAMS`). No action
+> needed; this just works.
 
 ## Usage
 
 Run everything from the repository root:
 
 ```bash
-python artificial_data.py   # 1. (re)generate DATA/Artifical/{monte_carlo,garch,dcc}.csv
-python main.py              # 2. run one backtest -> Ergebnisse/<dataset>/<train>_<pred>/
-python run_all.py           # 2b. or run a batch of (dataset, train, pred) combos
-python analyze.py           # 3. charts per combo + Ergebnisse/Zusammenfassung/aggregate_results.xlsx
+python datagen.py    # 1. (re)generate DATA/Artifical/{monte_carlo,garch,dcc}.csv
+python backtest.py   # 2. run every (dataset, train, pred) in config.COMBOS
+                     #    -> Ergebnisse/<dataset>/<train>_<pred>/
+python analyze.py    # 3. charts per combo + Ergebnisse/Zusammenfassung/aggregate_results.xlsx
 ```
+
+A single backtest is just a one-entry `COMBOS` in `config.py`
+(e.g. `{"DCC_sim": [(1008, 1)]}`).
 
 ### Outputs
 
@@ -64,10 +58,15 @@ table + overview charts under `Ergebnisse/Zusammenfassung/`.
 
 ## Notes
 
-- **Configuration** is centralised in `garch/config.py`. The backtest takes a
-  single immutable `BacktestConfig`; nothing is loaded or mutated at import time.
+- **Configuration** is centralised in `config.py`. The backtest takes a single
+  immutable `BacktestConfig`; nothing is loaded or mutated at import time.
 - **Determinism:** the backtest contains no randomness, so results are
-  reproducible. The only RNG is in `data/synthetic.py` (`SEED = 42`).
+  reproducible. The only RNG is in `datagen.py` (`SEED = 42`).
+- **Risk-free rate** is read from `DATA/Empirical/FED_FUNDS.csv` — the Fed Funds
+  total-return index *level* (columns `Exchange Date`;`Close`, German number
+  format, starts at 100). The loaders take its `pct_change` to get the daily
+  *simple* risk-free return used for excess returns (Sharpe / Sortino). To update
+  it, replace the file keeping the same name and format (`config.RISK_FREE_FILE`).
 - **ERC** is solved by riskfolio-lib's risk-parity optimiser (true equal risk
   contribution). The previous fixed-point implementation could fail to converge,
   so ERC results differ from older runs; everything else matches.

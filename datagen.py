@@ -1,8 +1,9 @@
 """
-Generate *synthetic* artificial price data from parameters set below — no real
-data is read in. We build three datasets of the same shape (N_OBS x N_ASSETS),
-all sharing the same unconditional risk profile (long-run vols + correlation) so
-the only thing that differs is the second-moment *dynamics*:
+Generate the synthetic price datasets — no real data is read in.
+
+We build three datasets of the same shape (N_OBS x N_ASSETS), all sharing the
+same unconditional risk profile (long-run vols + correlation) so the only thing
+that differs is the second-moment *dynamics*:
 
   1) monte_carlo.csv : i.i.d. draws from a multivariate normal with a CONSTANT
                        mean and covariance.  -> the "null": a static historical
@@ -23,13 +24,15 @@ still commonly-seen) clustering and dynamic-correlation parameters so the
 
 Each path is converted to a price series and written to ./DATA/Artifical/ with a
 Date column followed by one column per asset (same layout the loaders expect).
+
+    python datagen.py
 """
 import os
 
 import numpy as np
 import pandas as pd
 
-from garch import config
+import config
 
 # =============================================================================
 # CONFIG  -- everything that defines the data-generating process
