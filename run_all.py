@@ -16,7 +16,10 @@ GRID_PRED  = [1, 5, 10, 21]
 
 # (train_window, prediction_window) combinations per dataset.
 COMBOS = {
-    "Dow": [(train, pred) for train in GRID_TRAIN for pred in GRID_PRED],
+    #"DCC_sim": [(1008, 1)],  # just one combo for the synthetic DCC data
+    #"GARCH_sim": [(1008, 1)],  # just one combo for the synthetic GARCH data
+    #"MonteCarlo": [(1008, 1)],  # just one combo for the synthetic Monte Carlo data
+    "TRBC": [(train, pred) for train in GRID_TRAIN for pred in GRID_PRED],
 }
 
 
@@ -24,7 +27,7 @@ def main():
     for dataset, combos in COMBOS.items():
         _, log_returns, rf = load_dataset(dataset)
         for train, pred in combos:
-            config = BacktestConfig(dataset=dataset, train_window=train, prediction_window=pred)
+            config = BacktestConfig(dataset=dataset, train_window=train, prediction_window=pred, max_workers=6)
             print(f"\n=== {dataset} {train}_{pred} ===", flush=True)
             run_backtest(config, log_returns, rf)
 

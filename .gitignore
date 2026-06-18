@@ -180,3 +180,5 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 SP500_Daily.csv
+
+*weights.csv

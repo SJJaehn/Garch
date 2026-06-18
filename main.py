@@ -13,7 +13,7 @@ from garch.data.loaders import load_dataset
 
 
 def main():
-    config = BacktestConfig(max_workers=5)  # defaults: DCC_sim, 1008-day train, 1-day horizon
+    config = BacktestConfig(dataset="DCC_sim", train_window=1008, prediction_window=1, max_workers=6)
     _, log_returns, rf = load_dataset(config.dataset)
     run_backtest(config, log_returns, rf)
 

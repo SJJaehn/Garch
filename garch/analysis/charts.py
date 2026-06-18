@@ -45,7 +45,7 @@ def plot_lines(df, title, ylabel, out, logy=False, zero_line=True):
     elif zero_line:
         ax.axhline(0, color="black", linewidth=0.8)
     ax.set_title(title)
-    ax.set_xlabel("Date")
+    ax.set_xlabel("Datum")
     ax.set_ylabel(ylabel)
     ax.legend(ncol=2, fontsize=8)
     ax.grid(True, which="both", alpha=0.3)
@@ -82,12 +82,12 @@ def per_combo_charts():
         cum = cum.dropna(how="all")
 
         if not roll.empty:
-            tag = f", {SMOOTH}d-smoothed" if SMOOTH > 1 else ""
-            plot_lines(roll, f"Rolling {WINDOW}-day annualised Sharpe{tag} - {combo}",
-                       "Sharpe ratio", f"{folder}/rolling_sharpe.png")
+            tag = f", {SMOOTH}T-geglättet" if SMOOTH > 1 else ""
+            plot_lines(roll, f"Rollierender {WINDOW}-Tage-Sharpe (annualisiert){tag} – {combo}",
+                       "Sharpe-Ratio", f"{folder}/rolling_sharpe.png")
         if not cum.empty:
-            plot_lines(cum, f"Cumulative annualised Sharpe - {combo}",
-                       "Sharpe ratio", f"{folder}/cumulative_sharpe.png")
-        plot_lines(100 * (1 + ret).cumprod(), f"Portfolio value (log scale) - {combo}",
-                   "Portfolio value (start = 100)", f"{folder}/portfolio_value.png", logy=True)
+            plot_lines(cum, f"Kumulierter Sharpe (annualisiert) – {combo}",
+                       "Sharpe-Ratio", f"{folder}/cumulative_sharpe.png")
+        plot_lines(100 * (1 + ret).cumprod(), f"Portfoliowert (log-Skala) – {combo}",
+                   "Portfoliowert (Start = 100)", f"{folder}/portfolio_value.png", logy=True)
         print(f"charts: {combo}")

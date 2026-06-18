@@ -67,6 +67,27 @@ def _qlike(cov, realized):
         return np.nan
 
 
+def _cov_rmse(cov, realized):
+    """
+    Frobenius RMSE of a forecast covariance ``cov`` (H) against the realized
+    second-moment proxy  S = (1/pw) * sum_t r_t r_t'  of the test-window returns:
+
+        Cov RMSE = sqrt( mean_{i,j} (H_ij - S_ij)^2 ) = ||H - S||_F / N
+
+    i.e. the typical per-element error between the forecast and realized covariance
+    (the Frobenius / Euclidean loss; Patton & Sheppard 2009). Lower is better. As
+    with QLIKE the realized proxy is noisy for pw=1, so the level is meaningful only
+    in relative terms across estimators (E[S] is the true covariance, so the noise
+    averages out across windows).
+    """
+    H = np.asarray(cov, dtype=float)
+    R = np.asarray(realized, dtype=float)
+    if H.shape[0] == 0 or R.shape[0] == 0:
+        return np.nan
+    S = R.T @ R / R.shape[0]
+    return float(np.sqrt(np.mean((H - S) ** 2)))
+
+
 def _risk_contribution_rmse(weights, realized):
     """
     RMSE of the realized risk contributions from the equal-risk target (1/N).
@@ -95,7 +116,8 @@ def run_window(start, log_returns, config):
     """
     Run one rolling window (pure: data + config in, results out).
 
-    Returns (per_period, records, dates, weights_info, formation_date, qlike_info).
+    Returns (per_period, records, dates, weights_info, formation_date, qlike_info,
+    covrmse_info).
     """
     tw, pw = config.train_window, config.prediction_window
     train = log_returns.iloc[start : start + tw]
@@ -107,7 +129,7 @@ def run_window(start, log_returns, config):
     train = train.loc[:, train.notna().mean() >= 0.9]
     train = train.loc[:, train.iloc[-1].notna()]
     if train.shape[1] == 0 or test.empty:
-        return {}, [], [], {}, None, {}
+        return {}, [], [], {}, None, {}, {}
 
     # same universe in the test window; a missing test return means the asset did
     # not trade that day, so its return is 0 (we don't drop it after the fact).
@@ -126,14 +148,16 @@ def run_window(start, log_returns, config):
         if "DCC" in config.cov_methods:
             cov_by_method["DCC"] = cov_mod.dcc_covariance(variances, std_resid)
 
-    # per-step covariance-forecast quality: QLIKE of each estimator's matrix
-    # against the realized test-window returns (lower is better).
+    # per-step covariance-forecast quality: QLIKE and Frobenius RMSE of each
+    # estimator's matrix against the realized test-window returns (lower is better).
     qlike_info = {}
+    covrmse_info = {}
     for method, cov in cov_by_method.items():
         if cov is None or cov.shape[1] == 0:
             continue
         realized = test[list(cov.columns)].fillna(0.0).values
         qlike_info[method] = _qlike(cov.values, realized)
+        covrmse_info[method] = _cov_rmse(cov.values, realized)
 
     # historical cov is also used for the naive portfolio's forecast std
     cov_hist_full = cov_by_method.get("Historical")
@@ -181,7 +205,8 @@ def run_window(start, log_returns, config):
             "Forecasted Std": forecasted_std,
             "RC RMSE": rc_rmse,
         })
-    return per_period, records, list(test.index), weights_info, formation_date, qlike_info
+    return (per_period, records, list(test.index), weights_info, formation_date,
+            qlike_info, covrmse_info)
 
 
 def run_backtest(config, log_returns, rf, verbose=True):
@@ -200,10 +225,11 @@ def run_backtest(config, log_returns, rf, verbose=True):
     weights_hist = {}     # name -> list of (formation_date, target weights) in window order
     end_hist = {}         # name -> list of drifted end-of-window weights (same order)
     qlike_hist = []       # list of (formation_date, {cov_type: qlike}) in window order
+    covrmse_hist = []     # list of (formation_date, {cov_type: cov rmse}) in window order
     with ProcessPoolExecutor(max_workers=config.max_workers,
                              initializer=_init_worker,
                              initargs=(log_returns, config)) as executor:
-        for i, (per_period, recs, dates, winfo, fdate, qinfo) in enumerate(
+        for i, (per_period, recs, dates, winfo, fdate, qinfo, crinfo) in enumerate(
                 executor.map(process_window, starts), start=1):
             records.extend(recs)
             period_dates.extend(dates)
@@ -214,6 +240,8 @@ def run_backtest(config, log_returns, rf, verbose=True):
                 end_hist.setdefault(name, []).append(end_w)
             if qinfo:
                 qlike_hist.append((fdate, qinfo))
+            if crinfo:
+                covrmse_hist.append((fdate, crinfo))
             if verbose:
                 print(f"\r{i}/{total} windows completed", end="", flush=True)
     if verbose:
@@ -247,7 +275,16 @@ def run_backtest(config, log_returns, rf, verbose=True):
         qlike_df.to_csv(f"{out_dir}/qlike.csv")
         avg_qlike = qlike_df.mean().to_dict()
 
-    summary = _build_summary(results, metrics, period_dates, rf, avg_turnover, avg_qlike)
+    # per-step Frobenius cov RMSE per covariance estimator + the average
+    avg_covrmse = {}
+    if covrmse_hist:
+        covrmse_df = pd.DataFrame([{"Date": fdate, **crinfo} for fdate, crinfo in covrmse_hist])
+        covrmse_df = covrmse_df.set_index("Date").sort_index()
+        covrmse_df.to_csv(f"{out_dir}/cov_rmse.csv")
+        avg_covrmse = covrmse_df.mean().to_dict()
+
+    summary = _build_summary(results, metrics, period_dates, rf, avg_turnover,
+                             avg_qlike, avg_covrmse)
     summary.to_csv(f"{out_dir}/summary.csv", index=False)
     if verbose:
         print("Annualized performance summary:")
@@ -295,7 +332,7 @@ def _write_weights(weights_hist, path):
     pd.DataFrame(weight_rows).to_csv(path, index=False)
 
 
-def _build_summary(results, metrics, period_dates, rf, avg_turnover, avg_qlike):
+def _build_summary(results, metrics, period_dates, rf, avg_turnover, avg_qlike, avg_covrmse):
     # average forecast (annualised) std per model/cov type
     avg_fcst = metrics.groupby(["Model", "Covariance Type"])["Forecasted Std"].mean() * np.sqrt(252)
     # average ERC risk-contribution RMSE per model/cov type (NaN for non-ERC)
@@ -315,17 +352,19 @@ def _build_summary(results, metrics, period_dates, rf, avg_turnover, avg_qlike):
         row["Covariance Type"] = cov_type
         row["Ann. Std (fcst)"] = fcst
         row["Real / Fcst Std"] = row["Ann. Std"] / fcst if fcst and fcst > 0 else np.nan
-        # QLIKE is a property of the covariance matrix; Naive uses the historical one
-        row["Avg QLIKE"] = avg_qlike.get("Historical" if cov_type == "N/A" else cov_type, np.nan)
+        # QLIKE and cov RMSE are properties of the covariance matrix; Naive uses the historical one
+        cov_key = "Historical" if cov_type == "N/A" else cov_type
+        row["Avg QLIKE"] = avg_qlike.get(cov_key, np.nan)
+        row["Avg Cov RMSE"] = avg_covrmse.get(cov_key, np.nan)
         # ERC risk-contribution RMSE (NaN for non-ERC models)
         row["ERC RC RMSE"] = avg_rc.get((model, cov_type), np.nan)
         row["Avg Turnover"] = avg_turnover.get(name, np.nan)
         summary_rows.append(row)
 
     col_order = ["Model", "Covariance Type", "Ann. Return", "Ann. Std", "Ann. Std (fcst)",
-                 "Real / Fcst Std", "Avg QLIKE", "ERC RC RMSE", "Avg Turnover", "Ann. Sharpe",
-                 "Ann. Sortino", "Max Drawdown", "Calmar Ratio", "CVaR (95%)", "Skewness",
-                 "Excess Kurtosis"]
+                 "Real / Fcst Std", "Avg QLIKE", "Avg Cov RMSE", "ERC RC RMSE", "Avg Turnover",
+                 "Ann. Sharpe", "Ann. Sortino", "Max Drawdown", "Calmar Ratio", "CVaR (95%)",
+                 "Skewness", "Excess Kurtosis"]
     return pd.DataFrame(summary_rows).sort_values(["Model", "Covariance Type"])[col_order]
 
 
@@ -338,9 +377,9 @@ def _plot_portfolio_value(results, period_dates, path):
     fig, ax = plt.subplots(figsize=(12, 6))
     for name, rets in results.items():
         ax.plot(x_axis, 100 * np.cumprod(1 + np.array(rets)), label=name)
-    ax.set_title("Portfolio Value Starting at 100")
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Portfolio Value")
+    ax.set_title("Portfoliowert (Start = 100)")
+    ax.set_xlabel("Datum")
+    ax.set_ylabel("Portfoliowert")
     ax.legend()
     ax.grid(True)
     fig.autofmt_xdate()

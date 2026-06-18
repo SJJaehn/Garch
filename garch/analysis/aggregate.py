@@ -77,6 +77,10 @@ def build_table():
     ).reset_index(drop=True)
 
 
+# German display labels for axis columns (the DataFrame columns keep their names)
+_AXIS_DE = {"Prediction Horizon": "Prognosehorizont", "Training Period": "Trainingszeitraum"}
+
+
 def plot_sharpe_vs(table, axis_col, out, title):
     """One subplot per model: mean Sharpe vs `axis_col`, one line per covariance type."""
     naive = table[table["Model"] == "Naive"].groupby(axis_col)[SHARPE_COL].mean()
@@ -90,9 +94,9 @@ def plot_sharpe_vs(table, axis_col, out, title):
         if not naive.empty:
             ax.plot(naive.index, naive.values, "k--", linewidth=1, label="Naive")
         ax.set_title(mdl)
-        ax.set_xlabel(axis_col)
+        ax.set_xlabel(_AXIS_DE.get(axis_col, axis_col))
         ax.grid(True, alpha=0.3)
-    axes[0].set_ylabel("Mean annualised Sharpe")
+    axes[0].set_ylabel("Durchschnittlicher Sharpe (annualisiert)")
     axes[-1].legend(fontsize=8)
     fig.suptitle(title)
     fig.tight_layout()
@@ -114,8 +118,8 @@ def plot_sharpe_bar(table, out):
         ax.axhline(naive, color="black", linestyle="--", linewidth=1, label=f"Naive ({naive:.2f})")
     ax.set_xticks(x)
     ax.set_xticklabels(MODELS)
-    ax.set_ylabel("Mean annualised Sharpe")
-    ax.set_title(f"Mean Sharpe by model and covariance type  [{DATE_START or 'start'} .. {DATE_END or 'end'}]")
+    ax.set_ylabel("Durchschnittlicher Sharpe (annualisiert)")
+    ax.set_title(f"Durchschnittlicher Sharpe nach Modell und Kovarianztyp  [{DATE_START or 'Start'} .. {DATE_END or 'Ende'}]")
     ax.legend(fontsize=8)
     ax.grid(True, axis="y", alpha=0.3)
     fig.tight_layout()
@@ -126,13 +130,13 @@ def plot_sharpe_bar(table, out):
 def dataset_charts(table, out_dir):
     """All overview charts for a single dataset's slice of the table."""
     os.makedirs(out_dir, exist_ok=True)
-    frame = f"  [{DATE_START or 'start'} .. {DATE_END or 'end'}]"
+    frame = f"  [{DATE_START or 'Start'} .. {DATE_END or 'Ende'}]"
 
     # --- overall charts (averaged over the other axis) -----------------------
     plot_sharpe_vs(table, "Prediction Horizon", f"{out_dir}/sharpe_vs_prediction.png",
-                   "Mean annualised Sharpe vs prediction horizon" + frame)
+                   "Durchschnittlicher Sharpe (annualisiert) vs. Prognosehorizont" + frame)
     plot_sharpe_vs(table, "Training Period", f"{out_dir}/sharpe_vs_training.png",
-                   "Mean annualised Sharpe vs training period" + frame)
+                   "Durchschnittlicher Sharpe (annualisiert) vs. Trainingszeitraum" + frame)
     plot_sharpe_bar(table, f"{out_dir}/sharpe_by_model_cov.png")
 
     # --- per prediction horizon: Sharpe vs training period -------------------
@@ -143,7 +147,7 @@ def dataset_charts(table, out_dir):
         if sub["Training Period"].nunique() < 2:
             continue  # nothing to plot "over training" with a single training period
         plot_sharpe_vs(sub, "Training Period", f"{d}/pred_{pred}.png",
-                       f"Sharpe vs training period  |  prediction horizon = {pred}{frame}")
+                       f"Sharpe vs. Trainingszeitraum  |  Prognosehorizont = {pred}{frame}")
 
     # --- per training period: Sharpe vs prediction horizon -------------------
     d = f"{out_dir}/sharpe_vs_prediction_by_train"
@@ -153,7 +157,7 @@ def dataset_charts(table, out_dir):
         if sub["Prediction Horizon"].nunique() < 2:
             continue  # nothing to plot "over prediction" with a single horizon
         plot_sharpe_vs(sub, "Prediction Horizon", f"{d}/train_{train}.png",
-                       f"Sharpe vs prediction horizon  |  training period = {train}{frame}")
+                       f"Sharpe vs. Prognosehorizont  |  Trainingszeitraum = {train}{frame}")
 
 
 def summary_outputs():
