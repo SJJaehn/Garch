@@ -100,7 +100,7 @@ GRID_PRED  = [1, 5, 10, 21]
 # (train_window, prediction_window) combinations per dataset. A single run is just
 # a one-entry COMBOS (e.g. {"DCC_sim": [(1008, 1)]}).
 COMBOS = {
-    "TRBC": [(252, 10)],   # single run -> Ergebnisse/TRBC/252_10/
+    "SP500": [(1004, 10), (1004, 21)],   # single run -> Ergebnisse/TRBC/252_10/
 }
 
 # Full grid (restore by swapping it back in for the single-run COMBOS above):

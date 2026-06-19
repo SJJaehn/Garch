@@ -6,13 +6,12 @@ Analyse the backtest results in Ergebnisse/.
   Part 2 - aggregate every summary.csv into one Excel table + overview charts under
             Ergebnisse/Zusammenfassung/.
 
-Rolling Sharpe_t    = mean(excess over last WINDOW days) / std(...) * sqrt(252)
-Cumulative Sharpe_t = mean(excess since inception)        / std(...) * sqrt(252)
-excess = portfolio return - risk-free return (Fed Funds, same as the backtest).
+Rolling Sharpe_t    = mean(return over last WINDOW days) / std(...) * sqrt(252)
+Cumulative Sharpe_t = mean(return since inception)        / std(...) * sqrt(252)
+All Sharpe figures use a zero risk-free rate (excess return = portfolio return).
 
 The shared knobs (evaluation frame, which models/covariances to draw, colours)
-live in the SETTINGS block below. The risk-free loaders are reused from
-backtest.py (importing it is side-effect free — its run lives under __main__).
+live in the SETTINGS block below.
 
     python analyze.py
 """
@@ -27,14 +26,13 @@ import numpy as np
 import pandas as pd
 
 import config
-from backtest import align_risk_free, read_risk_free_level
 
 # =============================================================================
 # SETTINGS  -- shared by the per-combo charts and the overview charts
 # =============================================================================
 
 # --- per-combo time-series charts --------------------------------------------
-WINDOW       = 126           # rolling window length (trading days)
+WINDOW       = 504           # rolling window length (trading days)
 SMOOTH       = 1             # extra moving-average smoothing of rolling Sharpe (1 = off)
 MIN_PERIODS  = 252           # min observations before a cumulative Sharpe is shown
 DATE_START   = "2010-01-01"  # fixed evaluation frame (None = full history)
@@ -90,7 +88,6 @@ def plot_lines(df, title, ylabel, out, logy=False, zero_line=True):
 
 def per_combo_charts():
     root = config.RESULTS_DIR
-    rf_level = read_risk_free_level()
     for path in sorted(glob.glob(f"{root}/*/*/returns.csv")):
         folder = os.path.dirname(path)
         combo = os.path.relpath(folder, root)
@@ -103,15 +100,13 @@ def per_combo_charts():
         if ret.empty:
             continue
 
-        rf = align_risk_free(rf_level, ret.index).fillna(0.0)
-        excess = ret.sub(rf, axis=0)
-
-        roll = (excess.rolling(WINDOW).mean() / excess.rolling(WINDOW).std()) * np.sqrt(252)
+        # Sharpe with a zero risk-free rate: excess return = portfolio return
+        roll = (ret.rolling(WINDOW).mean() / ret.rolling(WINDOW).std()) * np.sqrt(252)
         if SMOOTH > 1:
             roll = roll.rolling(SMOOTH).mean()
         roll = roll.dropna(how="all")
 
-        cum = (excess.expanding(MIN_PERIODS).mean() / excess.expanding(MIN_PERIODS).std()) * np.sqrt(252)
+        cum = (ret.expanding(MIN_PERIODS).mean() / ret.expanding(MIN_PERIODS).std()) * np.sqrt(252)
         cum = cum.dropna(how="all")
 
         if not roll.empty:
@@ -130,23 +125,21 @@ def per_combo_charts():
 # Part 2 - aggregate table + overview charts
 # =============================================================================
 
-def framed_sharpe(returns_path, rf_level):
-    """Annualised Sharpe per portfolio over the fixed frame, from returns.csv."""
+def framed_sharpe(returns_path):
+    """Annualised Sharpe (rf=0) per portfolio over the fixed frame, from returns.csv."""
     if not os.path.exists(returns_path):
         return {}
     ret = pd.read_csv(returns_path, index_col=0, parse_dates=True).loc[DATE_START:DATE_END]
     if ret.empty:
         return {}
-    rf = align_risk_free(rf_level, ret.index).fillna(0.0)
-    excess = ret.sub(rf, axis=0)
-    sharpe = (excess.mean() * 252) / (excess.std(ddof=1) * np.sqrt(252))
+    # Sharpe with a zero risk-free rate: excess return = portfolio return
+    sharpe = (ret.mean() * 252) / (ret.std(ddof=1) * np.sqrt(252))
     return sharpe.to_dict()
 
 
 def build_table():
     """Collect every summary.csv into one tidy DataFrame."""
     root = config.RESULTS_DIR
-    rf_level = read_risk_free_level()
     frames = []
     for path in glob.glob(f"{root}/*/*/summary.csv"):
         folder = os.path.dirname(path)
@@ -175,7 +168,7 @@ def build_table():
         df.insert(5, "Covariance Type", df.pop("Covariance Type").fillna("N/A"))
         df.insert(6, "GARCH(p,q)", garch)
         # Sharpe recomputed over the fixed frame (full-sample metrics stay alongside)
-        df["Ann. Sharpe (frame)"] = df["Option"].map(framed_sharpe(f"{folder}/returns.csv", rf_level))
+        df["Ann. Sharpe (frame)"] = df["Option"].map(framed_sharpe(f"{folder}/returns.csv"))
         frames.append(df)
 
     if not frames:

@@ -430,6 +430,7 @@ def calculate_summary_metrics(daily_returns, rf_daily=0.0):
         "Ann. Return":     ann_ret,
         "Ann. Std":        ann_std,
         "Ann. Sharpe":     ann_excess / ann_excess_std if ann_excess_std > 0 else np.nan,
+        "Ann. Sharpe (rf=0)": (arr.mean() * 252) / ann_std if ann_std > 0 else np.nan,
         "Ann. Sortino":    ann_excess / semi_dev if semi_dev > 0 else np.nan,
         "Max Drawdown":    max_dd,
         "Calmar Ratio":    ann_ret / abs(max_dd) if max_dd < 0 else np.nan,
@@ -779,7 +780,7 @@ def _build_summary(results, metrics, period_dates, rf, avg_turnover, avg_qlike, 
 
     col_order = ["Model", "Covariance Type", "Ann. Return", "Ann. Std", "Ann. Std (fcst)",
                  "Real / Fcst Std", "Avg QLIKE", "Avg Cov RMSE", "ERC RC RMSE", "Avg Turnover",
-                 "Ann. Sharpe", "Ann. Sortino", "Max Drawdown", "Calmar Ratio", "CVaR (95%)",
+                 "Ann. Sharpe", "Ann. Sharpe (rf=0)", "Ann. Sortino", "Max Drawdown", "Calmar Ratio", "CVaR (95%)",
                  "Skewness", "Excess Kurtosis"]
     return pd.DataFrame(summary_rows).sort_values(["Model", "Covariance Type"])[col_order]
 
