@@ -9,7 +9,9 @@ Analyse the backtest results in Ergebnisse/.
 
 Rolling Sharpe_t    = mean(return over last WINDOW days) / std(...) * sqrt(252)
 Cumulative Sharpe_t = mean(return since inception)        / std(...) * sqrt(252)
-All Sharpe figures use a zero risk-free rate (excess return = portfolio return).
+Every Sharpe chart comes in two variants: rf=0 (plain returns, the default file
+name) and "mit rf" (returns in excess of the Fed-Funds series; *_rf.png files
+and the Sharpe_rf overview folder).
 
 The shared knobs (evaluation frame, which models/covariances to draw, colours)
 live in the SETTINGS block below.
@@ -36,8 +38,8 @@ import main as config
 WINDOW       = 504           # rolling window length (trading days)
 SMOOTH       = 1             # extra moving-average smoothing of rolling Sharpe (1 = off)
 MIN_PERIODS  = 252           # min observations before a cumulative Sharpe is shown
-DATE_START   = "2010-01-01"  # fixed evaluation frame (None = full history)
-DATE_END     = None
+DATE_START   = "2012-01-01"  # fixed evaluation frame (None = full history)
+DATE_END     = "2020-01-01"
 MODEL_FILTER = ["MVP", "HRP", "ERC", "Naive"]   # which models to draw
 COV_FILTER   = ["Historical", "GARCH", "DCC"]   # which covariance types to draw
 COLUMNS      = None          # explicit column override; bypasses the filters
@@ -46,7 +48,29 @@ COLUMNS      = None          # explicit column override; bypasses the filters
 MODELS     = ["MVP", "HRP", "ERC"]
 COVS       = ["Historical", "GARCH", "DCC"]
 COV_COLORS = {"Historical": "tab:blue", "GARCH": "tab:orange", "DCC": "tab:green"}
-SHARPE_COL = "Ann. Sharpe (frame)"   # the charts use the framed Sharpe (DATE_START/END)
+# the charts use the framed Sharpes (DATE_START/END), rf=0 and excess over Fed Funds
+SHARPE_COL    = "Ann. Sharpe (frame)"
+SHARPE_RF_COL = "Ann. Sharpe rf (frame)"
+
+
+_RF_LEVEL = None
+
+
+def rf_daily(index):
+    """Daily simple risk-free return aligned to ``index`` (Fed-Funds level, cached).
+    Deferred import: backtest pulls in riskfolio/arch, so load it only when needed."""
+    global _RF_LEVEL
+    if _RF_LEVEL is None:
+        import backtest
+        _RF_LEVEL = backtest.read_risk_free_level()
+    return _RF_LEVEL.reindex(index).ffill().pct_change()
+
+
+def ann_sharpe(ret, rf=None):
+    """Annualised Sharpe per column; excess over daily ``rf`` if given (else rf=0)."""
+    if rf is not None:
+        ret = ret.sub(rf, axis=0)
+    return (ret.mean() * 252) / (ret.std(ddof=1) * np.sqrt(252))
 
 
 # =============================================================================
@@ -87,25 +111,25 @@ def plot_lines(df, title, ylabel, out, logy=False, zero_line=True):
     plt.close(fig)
 
 
-def option_series_bar(s, ylabel, out, title, show_naive=True):
+def option_series_bar(s, ylabel, out, title):
     """Grouped bars for one run: an option-indexed Series ("MVP GARCH", ..., "Naive")
     reshaped into the table layout plot_metric_bar expects."""
     rows = []
     for opt, val in s.items():
         mdl, cov = ("Naive", "N/A") if opt == "Naive" else opt.rsplit(" ", 1)
         rows.append({"Model": mdl, "Covariance Type": cov, "Value": val})
-    plot_metric_bar(pd.DataFrame(rows), "Value", ylabel, out, title, show_naive)
+    plot_metric_bar(pd.DataFrame(rows), "Value", ylabel, out, title)
 
 
 def plot_cov_bar(means, ylabel, out, title):
-    """One bar per covariance type (QLIKE has no model dimension within a run)."""
-    fig, ax = plt.subplots(figsize=(6, 5))
+    """One bar per covariance type (for metrics without a model dimension)."""
+    fig, ax = plt.subplots(figsize=(7, 5))
     bars = ax.bar(means.index, means.values, width=0.6,
                   color=[COV_COLORS.get(c, "tab:gray") for c in means.index])
     # differences are small vs. the absolute level -> labels carry the comparison
     ax.bar_label(bars, fmt="%.2f", fontsize=9, padding=2)
     ax.set_ylabel(ylabel)
-    ax.set_title(title)
+    ax.set_title(title, fontsize=11)
     ax.grid(True, axis="y", alpha=0.3)
     fig.tight_layout()
     fig.savefig(out, dpi=120)
@@ -126,31 +150,32 @@ def per_combo_charts():
         if ret.empty:
             continue
 
-        # Sharpe with a zero risk-free rate: excess return = portfolio return
-        roll = (ret.rolling(WINDOW).mean() / ret.rolling(WINDOW).std()) * np.sqrt(252)
-        if SMOOTH > 1:
-            roll = roll.rolling(SMOOTH).mean()
-        roll = roll.dropna(how="all")
+        frame = f"  [{DATE_START or 'Start'} .. {DATE_END or 'Ende'}]"
+        tag = f", {SMOOTH}T-geglättet" if SMOOTH > 1 else ""
+        # every Sharpe chart twice: rf=0 (plain returns) and excess over the rf series
+        exc = ret.sub(rf_daily(ret.index), axis=0)
+        for suffix, rf_tag, r in (("", "rf=0", ret), ("_rf", "mit rf", exc)):
+            roll = (r.rolling(WINDOW).mean() / r.rolling(WINDOW).std()) * np.sqrt(252)
+            if SMOOTH > 1:
+                roll = roll.rolling(SMOOTH).mean()
+            roll = roll.dropna(how="all")
 
-        cum = (ret.expanding(MIN_PERIODS).mean() / ret.expanding(MIN_PERIODS).std()) * np.sqrt(252)
-        cum = cum.dropna(how="all")
+            cum = (r.expanding(MIN_PERIODS).mean() / r.expanding(MIN_PERIODS).std()) * np.sqrt(252)
+            cum = cum.dropna(how="all")
 
-        if not roll.empty:
-            tag = f", {SMOOTH}T-geglättet" if SMOOTH > 1 else ""
-            plot_lines(roll, f"Rollierender {WINDOW}-Tage-Sharpe (annualisiert){tag} – {combo}",
-                       "Sharpe-Ratio", f"{folder}/rolling_sharpe.png")
-        if not cum.empty:
-            plot_lines(cum, f"Kumulierter Sharpe (annualisiert) – {combo}",
-                       "Sharpe-Ratio", f"{folder}/cumulative_sharpe.png")
+            if not roll.empty:
+                plot_lines(roll, f"Rollierender {WINDOW}-Tage-Sharpe (annualisiert, {rf_tag}){tag} – {combo}",
+                           "Sharpe-Ratio", f"{folder}/rolling_sharpe{suffix}.png")
+            if not cum.empty:
+                plot_lines(cum, f"Kumulierter Sharpe (annualisiert, {rf_tag}) – {combo}",
+                           "Sharpe-Ratio", f"{folder}/cumulative_sharpe{suffix}.png")
+            # per-run bar chart over the evaluation frame, styled like by_model_cov.png
+            option_series_bar(ann_sharpe(r), "Sharpe-Ratio", f"{folder}/sharpe_bar{suffix}.png",
+                              f"Sharpe (annualisiert, {rf_tag}) – {combo}{frame}")
+
         plot_lines(100 * (1 + ret).cumprod(), f"Portfoliowert (log-Skala) – {combo}",
                    "Portfoliowert (Start = 100)", f"{folder}/portfolio_value.png", logy=True)
 
-        # per-run bar charts over the evaluation frame, styled like by_model_cov.png
-        frame = f"  [{DATE_START or 'Start'} .. {DATE_END or 'Ende'}]"
-        # Sharpe with a zero risk-free rate: excess return = portfolio return
-        sharpe = (ret.mean() * 252) / (ret.std(ddof=1) * np.sqrt(252))
-        option_series_bar(sharpe, "Sharpe-Ratio", f"{folder}/sharpe_bar.png",
-                          f"Sharpe (annualisiert) – {combo}{frame}")
         vola = ret.std(ddof=1) * np.sqrt(252)
         option_series_bar(vola, "Realisierte Volatilität (annualisiert)",
                           f"{folder}/realized_vol_bar.png",
@@ -172,15 +197,14 @@ def per_combo_charts():
 # =============================================================================
 
 def framed_sharpe(returns_path):
-    """Annualised Sharpe (rf=0) per portfolio over the fixed frame, from returns.csv."""
+    """Annualised Sharpes per portfolio over the fixed frame, from returns.csv.
+    Returns ({option: sharpe rf=0}, {option: sharpe excess over rf})."""
     if not os.path.exists(returns_path):
-        return {}
+        return {}, {}
     ret = pd.read_csv(returns_path, index_col=0, parse_dates=True).loc[DATE_START:DATE_END]
     if ret.empty:
-        return {}
-    # Sharpe with a zero risk-free rate: excess return = portfolio return
-    sharpe = (ret.mean() * 252) / (ret.std(ddof=1) * np.sqrt(252))
-    return sharpe.to_dict()
+        return {}, {}
+    return ann_sharpe(ret).to_dict(), ann_sharpe(ret, rf_daily(ret.index)).to_dict()
 
 
 def build_table():
@@ -213,8 +237,10 @@ def build_table():
         # pandas reads the "N/A" label (Naive) as NaN; restore it for clean grouping
         df.insert(5, "Covariance Type", df.pop("Covariance Type").fillna("N/A"))
         df.insert(6, "GARCH(p,q)", garch)
-        # Sharpe recomputed over the fixed frame (full-sample metrics stay alongside)
-        df["Ann. Sharpe (frame)"] = df["Option"].map(framed_sharpe(f"{folder}/returns.csv"))
+        # Sharpes recomputed over the fixed frame (full-sample metrics stay alongside)
+        sharpe0, sharpe_rf = framed_sharpe(f"{folder}/returns.csv")
+        df[SHARPE_COL] = df["Option"].map(sharpe0)
+        df[SHARPE_RF_COL] = df["Option"].map(sharpe_rf)
         frames.append(df)
 
     if not frames:
@@ -230,42 +256,48 @@ _AXIS_DE = {"Prediction Horizon": "Prognosehorizont", "Training Period": "Traini
 
 
 # metrics to chart, each into its own Zusammenfassung subfolder:
-#   (column in the table, output subfolder, axis/title label, draw Naive reference)
-# no Naive reference for the covariance-forecast metrics: Naive uses the
-# historical covariance, so its line would just duplicate "Historical"
+#   (column in the table, output subfolder, axis/title label, cov_only)
+# cov_only: the metric is a property of the covariance forecast alone -- identical
+# for every model, and Naive just duplicates "Historical" -- so those charts drop
+# the model panels/grouping and the Naive reference entirely
 METRICS = [
-    (SHARPE_COL,     "Sharpe",           "Durchschnittlicher Sharpe (annualisiert)", True),
-    ("Ann. Std",     "Realisierte_Vola", "Realisierte Volatilität (annualisiert)",   True),
-    ("Avg QLIKE",    "QLIKE",            "Durchschnittlicher QLIKE",                 False),
-    ("Avg Cov RMSE", "Kovarianz_RMSE",   "Durchschnittlicher Kovarianz-RMSE",        False),
-    ("ERC RC RMSE",  "ERC_RC_RMSE",      "ERC Risikobeitrags-RMSE",                  False),
+    (SHARPE_COL,     "Sharpe",           "Durchschnittlicher Sharpe (annualisiert, rf=0)",   False),
+    (SHARPE_RF_COL,  "Sharpe_rf",        "Durchschnittlicher Sharpe (annualisiert, mit rf)", False),
+    ("Ann. Std",     "Realisierte_Vola", "Realisierte Volatilität (annualisiert)",           False),
+    ("Avg QLIKE",    "QLIKE",            "Durchschnittlicher QLIKE",                         True),
+    ("Avg Cov RMSE", "Kovarianz_RMSE",   "Durchschnittlicher Kovarianz-RMSE",                True),
+    ("ERC RC RMSE",  "ERC_RC_RMSE",      "ERC Risikobeitrags-RMSE",                          True),
 ]
 
 
-def plot_metric_vs(table, axis_col, metric_col, ylabel, out, title, show_naive=True):
-    """One subplot per model: mean `metric_col` vs `axis_col`, one line per covariance type."""
-    naive = table[table["Model"] == "Naive"].groupby(axis_col)[metric_col].mean()
-    fig, axes = plt.subplots(1, len(MODELS), figsize=(5 * len(MODELS), 5), sharey=True)
-    for ax, mdl in zip(axes, MODELS):
-        sub = table[table["Model"] == mdl]
+def plot_metric_vs(table, axis_col, metric_col, ylabel, out, title, cov_only=False):
+    """Mean `metric_col` vs `axis_col`, one line per covariance type; one subplot per
+    model plus a Naive reference, unless ``cov_only`` (no model dimension, no Naive)."""
+    panels = [None] if cov_only else MODELS
+    fig, axes = plt.subplots(1, len(panels), figsize=(8 if cov_only else 5 * len(panels), 5),
+                             sharey=True, squeeze=False)
+    for ax, mdl in zip(axes[0], panels):
+        sub = table if mdl is None else table[table["Model"] == mdl]
         for cov in COVS:
             s = sub[sub["Covariance Type"] == cov].groupby(axis_col)[metric_col].mean()
             if not s.empty:
                 ax.plot(s.index, s.values, marker="o", label=cov, color=COV_COLORS[cov])
-        if show_naive and not naive.empty:
-            ax.plot(naive.index, naive.values, "k--", linewidth=1, label="Naive")
-        ax.set_title(mdl)
+        if mdl is not None:
+            naive = table[table["Model"] == "Naive"].groupby(axis_col)[metric_col].mean()
+            if not naive.empty:
+                ax.plot(naive.index, naive.values, "k--", linewidth=1, label="Naive")
+            ax.set_title(mdl)
         ax.set_xlabel(_AXIS_DE.get(axis_col, axis_col))
         ax.grid(True, alpha=0.3)
-    axes[0].set_ylabel(ylabel)
-    axes[-1].legend(fontsize=8)
+    axes[0, 0].set_ylabel(ylabel)
+    axes[0, -1].legend(fontsize=8)
     fig.suptitle(title)
     fig.tight_layout()
     fig.savefig(out, dpi=120)
     plt.close(fig)
 
 
-def plot_metric_bar(table, metric_col, ylabel, out, title, show_naive=True):
+def plot_metric_bar(table, metric_col, ylabel, out, title):
     """Grouped bars: mean `metric_col` by model x covariance type, with Naive reference."""
     g = table.groupby(["Model", "Covariance Type"])[metric_col].mean()
     x = np.arange(len(MODELS))
@@ -274,7 +306,7 @@ def plot_metric_bar(table, metric_col, ylabel, out, title, show_naive=True):
     for i, cov in enumerate(COVS):
         vals = [g.get((m, cov), np.nan) for m in MODELS]
         ax.bar(x + (i - 1) * width, vals, width, label=cov, color=COV_COLORS[cov])
-    naive = g.get(("Naive", "N/A"), np.nan) if show_naive else np.nan
+    naive = g.get(("Naive", "N/A"), np.nan)
     if not np.isnan(naive):
         ax.axhline(naive, color="black", linestyle="--", linewidth=1, label=f"Naive ({naive:.3g})")
     ax.set_xticks(x)
@@ -288,7 +320,7 @@ def plot_metric_bar(table, metric_col, ylabel, out, title, show_naive=True):
     plt.close(fig)
 
 
-def dataset_charts(table, out_dir, metric_col, label, show_naive):
+def dataset_charts(table, out_dir, metric_col, label, cov_only):
     """The full chart set for one dataset's slice and one metric."""
     os.makedirs(out_dir, exist_ok=True)
     frame = f"  [{DATE_START or 'Start'} .. {DATE_END or 'Ende'}]"
@@ -296,12 +328,16 @@ def dataset_charts(table, out_dir, metric_col, label, show_naive):
     # --- overall charts (averaged over the other axis) -----------------------
     plot_metric_vs(table, "Prediction Horizon", metric_col, label,
                    f"{out_dir}/vs_prediction.png", f"{label} vs. Prognosehorizont" + frame,
-                   show_naive)
+                   cov_only)
     plot_metric_vs(table, "Training Period", metric_col, label,
                    f"{out_dir}/vs_training.png", f"{label} vs. Trainingszeitraum" + frame,
-                   show_naive)
-    plot_metric_bar(table, metric_col, label, f"{out_dir}/by_model_cov.png",
-                    f"{label} nach Modell und Kovarianztyp" + frame, show_naive)
+                   cov_only)
+    if cov_only:
+        plot_cov_bar(table.groupby("Covariance Type")[metric_col].mean().reindex(COVS).dropna(),
+                     label, f"{out_dir}/by_cov.png", f"{label} nach Kovarianztyp" + frame)
+    else:
+        plot_metric_bar(table, metric_col, label, f"{out_dir}/by_model_cov.png",
+                        f"{label} nach Modell und Kovarianztyp" + frame)
 
     # --- per prediction horizon: metric vs training period -------------------
     d = f"{out_dir}/vs_training_by_pred"
@@ -312,7 +348,7 @@ def dataset_charts(table, out_dir, metric_col, label, show_naive):
             continue  # nothing to plot "over training" with a single training period
         plot_metric_vs(sub, "Training Period", metric_col, label, f"{d}/pred_{pred}.png",
                        f"{label} vs. Trainingszeitraum  |  Prognosehorizont = {pred}{frame}",
-                       show_naive)
+                       cov_only)
 
     # --- per training period: metric vs prediction horizon -------------------
     d = f"{out_dir}/vs_prediction_by_train"
@@ -323,7 +359,7 @@ def dataset_charts(table, out_dir, metric_col, label, show_naive):
             continue  # nothing to plot "over prediction" with a single horizon
         plot_metric_vs(sub, "Prediction Horizon", metric_col, label, f"{d}/train_{train}.png",
                        f"{label} vs. Prognosehorizont  |  Trainingszeitraum = {train}{frame}",
-                       show_naive)
+                       cov_only)
 
 
 def summary_outputs():
@@ -337,7 +373,7 @@ def summary_outputs():
 
     # one subfolder per metric; inside it the same chart set per dataset
     datasets = sorted(table["Dataset"].unique())
-    for metric_col, folder, label, show_naive in METRICS:
+    for metric_col, folder, label, cov_only in METRICS:
         if metric_col not in table.columns or table[metric_col].notna().sum() == 0:
             print(f"skip {folder}: no '{metric_col}' values in the results")
             continue
@@ -346,7 +382,7 @@ def summary_outputs():
             sub = table[table["Dataset"] == dataset]
             if sub[metric_col].notna().sum() == 0:
                 continue  # this dataset has no values for the metric yet -> skip
-            dataset_charts(sub, f"{summary_dir}/{folder}/{dataset}", metric_col, label, show_naive)
+            dataset_charts(sub, f"{summary_dir}/{folder}/{dataset}", metric_col, label, cov_only)
             done.append(dataset)
         print(f"summary charts ({folder}) -> {summary_dir}/{folder}/  {done}")
 

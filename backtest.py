@@ -179,14 +179,20 @@ def historical_covariance(returns):
     return returns.cov()
 
 
-def constant_correlation_covariance(returns, variances):
-    """GARCH variances + static historical correlation -> covariance matrix."""
+def constant_correlation_covariance(std_resid, variances):
+    """
+    CCC-GARCH (Bollerslev 1990): GARCH forecast variances + the constant sample
+    correlation of the STANDARDIZED residuals -> covariance matrix. Using the
+    standardized residuals (not raw returns) filters out volatility clustering,
+    which would otherwise overweight high-vol days and inflate the correlation;
+    it also makes CCC and DCC share the same correlation input.
+    """
     cols = list(variances.index)
     if len(cols) == 0:
         return pd.DataFrame()
 
     std = np.sqrt(variances.values)
-    corr = returns[cols].corr().fillna(0.0).values
+    corr = std_resid[cols].corr().fillna(0.0).values
     np.fill_diagonal(corr, 1.0)
 
     cov = corr * np.outer(std, std)
@@ -194,7 +200,7 @@ def constant_correlation_covariance(returns, variances):
     return pd.DataFrame(cov, index=cols, columns=cols)
 
 
-def dcc_covariance(variances, std_resid):
+def dcc_covariance(variances, std_resid, horizon=1):
     """
     DCC-GARCH covariance (Engle 2002): combine the GARCH forecast variances with
     a Dynamic Conditional Correlation model estimated on the standardized
@@ -202,6 +208,11 @@ def dcc_covariance(variances, std_resid):
 
       Q_t = (1 - a - b) * Qbar + a * z_{t-1} z_{t-1}' + b * Q_{t-1}
       R_t = normalise(Q_t),   Sigma = D * R * D   (D = diag of forecast std)
+
+    For horizon > 1 the correlation forecast mean-reverts toward Qbar,
+    E[Q_{T+h}] = Qbar + (a+b)^{h-1} (Q_{T+1} - Qbar)  (Engle & Sheppard 2001),
+    and the normalised R_{T+h} are averaged over h = 1..horizon to match the
+    horizon-averaged GARCH variances.
 
     Speed: the log-likelihood uses a Cholesky factorisation for the log-det and
     quadratic form, and we optimise the two parameters (a, b) with L-BFGS-B, so
@@ -249,13 +260,21 @@ def dcc_covariance(variances, std_resid):
         print(f"[fallback] DCC optimizer misbehaved (a={a:.3g}, b={b:.3g}); using a=0.02, b=0.95", flush=True)
         a, b = 0.02, 0.95  # typical values if the optimizer misbehaves
 
-    # roll the recursion through the sample to get the next-step correlation
+    # roll the recursion through the sample to get Q_{T+1} ...
     omega = (1 - a - b) * q_bar
     Q = q_bar.copy()
     for t in range(n_obs):
         Q = omega + a * np.outer(z[t], z[t]) + b * Q
-    d = np.sqrt(np.diag(Q))
-    R = Q / np.outer(d, d)
+
+    # ... then mean-revert toward q_bar over the horizon and average the
+    # normalised correlations (reduces to plain Q_{T+1} for horizon == 1)
+    horizon = max(horizon, 1)
+    R = np.zeros_like(Q)
+    for h in range(1, horizon + 1):
+        Q_h = q_bar + (a + b) ** (h - 1) * (Q - q_bar)
+        d = np.sqrt(np.diag(Q_h))
+        R += Q_h / np.outer(d, d)
+    R /= horizon
 
     cov = R * np.outer(std, std)
     cov += np.eye(n) * 1e-8
@@ -548,7 +567,7 @@ def run_window(start, log_returns, cfg):
     train = train.loc[:, train.notna().mean() >= 0.9]
     train = train.loc[:, train.iloc[-1].notna()]
     if train.shape[1] == 0 or test.empty:
-        return {}, [], [], {}, None, {}, {}
+        return {}, {}, [], [], {}, None, {}, {}
 
     # same universe in the test window; a missing test return means the asset did
     # not trade that day, so its return is 0 (we don't drop it after the fact).
@@ -567,9 +586,10 @@ def run_window(start, log_returns, cfg):
         variances, std_resid = fit_garch_univariate(
             train, cfg.prediction_window, cfg.garch_p, cfg.garch_q)
         if "GARCH" in cfg.cov_methods:
-            cov_by_method["GARCH"] = constant_correlation_covariance(train, variances)
+            cov_by_method["GARCH"] = constant_correlation_covariance(std_resid, variances)
         if "DCC" in cfg.cov_methods:
-            cov_by_method["DCC"] = dcc_covariance(variances, std_resid)
+            cov_by_method["DCC"] = dcc_covariance(variances, std_resid,
+                                                  cfg.prediction_window)
 
     # per-step covariance-forecast quality: QLIKE and Frobenius RMSE of each
     # estimator's matrix against the realized test-window returns (lower is better).
@@ -604,8 +624,18 @@ def run_window(start, log_returns, cfg):
     for model, cov_type, weights, cov in jobs:
         name = "Naive" if model == "Naive" else f"{model} {cov_type}"
         cols = list(weights.index)
-        port_returns = test_simple[cols] @ weights
+        # buy-and-hold within the window: the weights are set once at formation
+        # and then drift with returns, so day t's portfolio return is V_t/V_{t-1}-1
+        # along the held portfolio's value path (matches the drift-based turnover
+        # below; for prediction_window=1 this is exactly the weighted sum w'r).
+        value = (1.0 + test_simple[cols]).cumprod(axis=0) @ weights
+        prev_value = value.shift(1)
+        prev_value.iloc[0] = float(weights.sum())  # = 1: portfolio value at formation
+        port_returns = value / prev_value - 1.0
         per_period[name] = port_returns.values.tolist()
+        # the calibration proxy keeps FIXED weights on purpose: the forecast std is
+        # sqrt(w'Σw) with the formation weights w, so its realized counterpart is
+        # the weighted sum of log returns with those same fixed weights.
         per_period_log[name] = (test_log[cols] @ weights).values.tolist()
 
         # drifted end-of-window weights (for turnover): each asset's start weight
