@@ -16,11 +16,13 @@ Each rolling window is independent and deterministic, so it is farmed out to a
 process pool; workers receive the (read-only) returns once via an initializer.
 
 Run order in this file: data loading -> models (GARCH / covariance / portfolio)
--> metrics & losses -> the rolling-window engine -> the batch grid (config.COMBOS).
-All execution lives under ``if __name__ == "__main__":`` so that under the
-'spawn' start method (macOS default) the workers can safely re-import this module.
+-> metrics & losses -> the rolling-window engine. This module is a library; the
+batch run (which datasets / horizons) is driven from ``main.py``:
 
-    python backtest.py        # runs every (dataset, train, pred) in config.COMBOS
+    python main.py            # edit the SETTINGS block there to choose runs
+
+Worker processes re-import this module (and ``main``) under the 'spawn' start
+method (macOS default), which is safe because importing either has no side effects.
 """
 from __future__ import annotations
 
@@ -37,7 +39,7 @@ from scipy.linalg import cho_factor, cho_solve
 from scipy.optimize import minimize
 from scipy.spatial.distance import squareform
 
-import config
+import main as config
 
 
 # =============================================================================
@@ -533,8 +535,8 @@ def run_window(start, log_returns, cfg):
     """
     Run one rolling window (pure: data + config in, results out).
 
-    Returns (per_period, records, dates, weights_info, formation_date, qlike_info,
-    covrmse_info).
+    Returns (per_period, per_period_log, records, dates, weights_info,
+    formation_date, qlike_info, covrmse_info).
     """
     tw, pw = cfg.train_window, cfg.prediction_window
     train = log_returns.iloc[start : start + tw]
@@ -552,6 +554,10 @@ def run_window(start, log_returns, cfg):
     # not trade that day, so its return is 0 (we don't drop it after the fact).
     test = test[train.columns]
     test_simple = (np.exp(test) - 1).fillna(0.0)
+    # log-return portfolio proxy: the forecast std is sqrt(w'Σw) with Σ the
+    # covariance of LOG returns, so its realized counterpart is the std of the
+    # weighted sum of log returns (same scale -> apples-to-apples calibration).
+    test_log = test.fillna(0.0)
 
     # build the requested covariance matrices; fit GARCH only once and reuse it
     cov_by_method = {}
@@ -590,7 +596,8 @@ def run_window(start, log_returns, cfg):
         for model in cfg.models:
             jobs.append((model, method, get_weights(model, cov), cov))
 
-    per_period = {}
+    per_period = {}                         # name -> simple-return series (performance)
+    per_period_log = {}                     # name -> log-return series (calibration)
     records = []
     weights_info = {}                       # name -> (target weights, drifted end weights)
     formation_date = test.index[0]          # rebalance date for this window
@@ -599,6 +606,7 @@ def run_window(start, log_returns, cfg):
         cols = list(weights.index)
         port_returns = test_simple[cols] @ weights
         per_period[name] = port_returns.values.tolist()
+        per_period_log[name] = (test_log[cols] @ weights).values.tolist()
 
         # drifted end-of-window weights (for turnover): each asset's start weight
         # grows with its gross return over the holding window, then renormalise.
@@ -622,8 +630,8 @@ def run_window(start, log_returns, cfg):
             "Forecasted Std": forecasted_std,
             "RC RMSE": rc_rmse,
         })
-    return (per_period, records, list(test.index), weights_info, formation_date,
-            qlike_info, covrmse_info)
+    return (per_period, per_period_log, records, list(test.index), weights_info,
+            formation_date, qlike_info, covrmse_info)
 
 
 def run_backtest(cfg, log_returns, rf, verbose=True):
@@ -636,7 +644,8 @@ def run_backtest(cfg, log_returns, rf, verbose=True):
                         cfg.prediction_window))
     total = len(starts)
 
-    results = {}          # name -> list of simple period returns
+    results = {}          # name -> list of simple period returns (performance)
+    results_log = {}      # name -> list of log period returns (vol calibration)
     records = []
     period_dates = []
     weights_hist = {}     # name -> list of (formation_date, target weights) in window order
@@ -646,12 +655,14 @@ def run_backtest(cfg, log_returns, rf, verbose=True):
     with ProcessPoolExecutor(max_workers=cfg.max_workers,
                              initializer=_init_worker,
                              initargs=(log_returns, cfg)) as executor:
-        for i, (per_period, recs, dates, winfo, fdate, qinfo, crinfo) in enumerate(
+        for i, (per_period, per_period_log, recs, dates, winfo, fdate, qinfo, crinfo) in enumerate(
                 executor.map(process_window, starts), start=1):
             records.extend(recs)
             period_dates.extend(dates)
             for name, rets in per_period.items():
                 results.setdefault(name, []).extend(rets)
+            for name, rets in per_period_log.items():
+                results_log.setdefault(name, []).extend(rets)
             for name, (target_w, end_w) in winfo.items():
                 weights_hist.setdefault(name, []).append((fdate, target_w))
                 end_hist.setdefault(name, []).append(end_w)
@@ -700,7 +711,7 @@ def run_backtest(cfg, log_returns, rf, verbose=True):
         covrmse_df.to_csv(f"{out_dir}/cov_rmse.csv")
         avg_covrmse = covrmse_df.mean().to_dict()
 
-    summary = _build_summary(results, metrics, period_dates, rf, avg_turnover,
+    summary = _build_summary(results, results_log, metrics, period_dates, rf, avg_turnover,
                              avg_qlike, avg_covrmse)
     summary.to_csv(f"{out_dir}/summary.csv", index=False)
     if verbose:
@@ -749,7 +760,7 @@ def _write_weights(weights_hist, path):
     pd.DataFrame(weight_rows).to_csv(path, index=False)
 
 
-def _build_summary(results, metrics, period_dates, rf, avg_turnover, avg_qlike, avg_covrmse):
+def _build_summary(results, results_log, metrics, period_dates, rf, avg_turnover, avg_qlike, avg_covrmse):
     # average forecast (annualised) std per model/cov type
     avg_fcst = metrics.groupby(["Model", "Covariance Type"])["Forecasted Std"].mean() * np.sqrt(252)
     # average ERC risk-contribution RMSE per model/cov type (NaN for non-ERC)
@@ -768,7 +779,14 @@ def _build_summary(results, metrics, period_dates, rf, avg_turnover, avg_qlike, 
         row["Model"] = model
         row["Covariance Type"] = cov_type
         row["Ann. Std (fcst)"] = fcst
-        row["Real / Fcst Std"] = row["Ann. Std"] / fcst if fcst and fcst > 0 else np.nan
+        # Calibration ratio: realized vs forecast vol on the SAME (log) scale the
+        # model forecasts. The forecast is sqrt(w'Σw) with Σ a LOG-return covariance,
+        # so we compare it to the realized vol of the log-return portfolio proxy
+        # (not the simple-return Ann. Std, which is the performance vol). For daily
+        # data the two realized vols differ negligibly; this just makes it exact.
+        log_rets = np.asarray(results_log.get(name, []))
+        real_std_log = log_rets.std(ddof=1) * np.sqrt(252) if log_rets.size > 1 else np.nan
+        row["Real / Fcst Std"] = real_std_log / fcst if (fcst and fcst > 0) else np.nan
         # QLIKE and cov RMSE are properties of the covariance matrix; Naive uses the historical one
         cov_key = "Historical" if cov_type == "N/A" else cov_type
         row["Avg QLIKE"] = avg_qlike.get(cov_key, np.nan)
@@ -806,16 +824,9 @@ def _plot_portfolio_value(results, period_dates, path):
 
 
 # =============================================================================
-# Batch runner — every (dataset, train, pred) combination in config.COMBOS.
-# Kept under __main__ so workers can safely re-import this module under 'spawn'.
-# A single run = set config.COMBOS to one entry.
+# Entry point lives in main.py (it holds the datasets/horizons to run).
 # =============================================================================
 
 if __name__ == "__main__":
-    for dataset, combos in config.COMBOS.items():
-        _, log_returns, rf = load_dataset(dataset)
-        for train, pred in combos:
-            cfg = config.BacktestConfig(dataset=dataset, train_window=train,
-                                        prediction_window=pred, max_workers=6)
-            print(f"\n=== {dataset} {train}_{pred} ===", flush=True)
-            run_backtest(cfg, log_returns, rf)
+    print("This is the engine module. Run `python main.py` to start a backtest "
+          "(edit the SETTINGS block at the top of main.py to choose datasets/horizons).")

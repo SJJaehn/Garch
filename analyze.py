@@ -2,7 +2,8 @@
 Analyse the backtest results in Ergebnisse/.
 
   Part 1 - per-combo time-series charts (rolling/cumulative Sharpe, portfolio value)
-            saved into each backtest folder.
+            plus bar charts (Sharpe and realized vola by model x covariance type,
+            QLIKE by covariance type) saved into each backtest folder.
   Part 2 - aggregate every summary.csv into one Excel table + overview charts under
             Ergebnisse/Zusammenfassung/.
 
@@ -25,7 +26,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import config
+import main as config
 
 # =============================================================================
 # SETTINGS  -- shared by the per-combo charts and the overview charts
@@ -86,6 +87,31 @@ def plot_lines(df, title, ylabel, out, logy=False, zero_line=True):
     plt.close(fig)
 
 
+def option_series_bar(s, ylabel, out, title, show_naive=True):
+    """Grouped bars for one run: an option-indexed Series ("MVP GARCH", ..., "Naive")
+    reshaped into the table layout plot_metric_bar expects."""
+    rows = []
+    for opt, val in s.items():
+        mdl, cov = ("Naive", "N/A") if opt == "Naive" else opt.rsplit(" ", 1)
+        rows.append({"Model": mdl, "Covariance Type": cov, "Value": val})
+    plot_metric_bar(pd.DataFrame(rows), "Value", ylabel, out, title, show_naive)
+
+
+def plot_cov_bar(means, ylabel, out, title):
+    """One bar per covariance type (QLIKE has no model dimension within a run)."""
+    fig, ax = plt.subplots(figsize=(6, 5))
+    bars = ax.bar(means.index, means.values, width=0.6,
+                  color=[COV_COLORS.get(c, "tab:gray") for c in means.index])
+    # differences are small vs. the absolute level -> labels carry the comparison
+    ax.bar_label(bars, fmt="%.2f", fontsize=9, padding=2)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.grid(True, axis="y", alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(out, dpi=120)
+    plt.close(fig)
+
+
 def per_combo_charts():
     root = config.RESULTS_DIR
     for path in sorted(glob.glob(f"{root}/*/*/returns.csv")):
@@ -118,6 +144,26 @@ def per_combo_charts():
                        "Sharpe-Ratio", f"{folder}/cumulative_sharpe.png")
         plot_lines(100 * (1 + ret).cumprod(), f"Portfoliowert (log-Skala) – {combo}",
                    "Portfoliowert (Start = 100)", f"{folder}/portfolio_value.png", logy=True)
+
+        # per-run bar charts over the evaluation frame, styled like by_model_cov.png
+        frame = f"  [{DATE_START or 'Start'} .. {DATE_END or 'Ende'}]"
+        # Sharpe with a zero risk-free rate: excess return = portfolio return
+        sharpe = (ret.mean() * 252) / (ret.std(ddof=1) * np.sqrt(252))
+        option_series_bar(sharpe, "Sharpe-Ratio", f"{folder}/sharpe_bar.png",
+                          f"Sharpe (annualisiert) – {combo}{frame}")
+        vola = ret.std(ddof=1) * np.sqrt(252)
+        option_series_bar(vola, "Realisierte Volatilität (annualisiert)",
+                          f"{folder}/realized_vol_bar.png",
+                          f"Realisierte Volatilität (annualisiert) – {combo}{frame}")
+
+        # mean QLIKE per covariance type; no Naive benchmark (it has no own forecast)
+        qpath = f"{folder}/qlike.csv"
+        if os.path.exists(qpath):
+            q = pd.read_csv(qpath, index_col=0, parse_dates=True).loc[DATE_START:DATE_END]
+            q = q[[c for c in q.columns if c in COV_FILTER]].dropna(how="all")
+            if not q.empty:
+                plot_cov_bar(q.mean(), "Durchschnittlicher QLIKE", f"{folder}/qlike_bar.png",
+                             f"Durchschnittlicher QLIKE – {combo}{frame}")
         print(f"charts: {combo}")
 
 
@@ -184,17 +230,19 @@ _AXIS_DE = {"Prediction Horizon": "Prognosehorizont", "Training Period": "Traini
 
 
 # metrics to chart, each into its own Zusammenfassung subfolder:
-#   (column in the table, output subfolder, axis/title label)
+#   (column in the table, output subfolder, axis/title label, draw Naive reference)
+# no Naive reference for the covariance-forecast metrics: Naive uses the
+# historical covariance, so its line would just duplicate "Historical"
 METRICS = [
-    (SHARPE_COL,     "Sharpe",           "Durchschnittlicher Sharpe (annualisiert)"),
-    ("Ann. Std",     "Realisierte_Vola", "Realisierte Volatilität (annualisiert)"),
-    ("Avg QLIKE",    "QLIKE",            "Durchschnittlicher QLIKE"),
-    ("Avg Cov RMSE", "Kovarianz_RMSE",   "Durchschnittlicher Kovarianz-RMSE"),
-    ("ERC RC RMSE",  "ERC_RC_RMSE",      "ERC Risikobeitrags-RMSE"),
+    (SHARPE_COL,     "Sharpe",           "Durchschnittlicher Sharpe (annualisiert)", True),
+    ("Ann. Std",     "Realisierte_Vola", "Realisierte Volatilität (annualisiert)",   True),
+    ("Avg QLIKE",    "QLIKE",            "Durchschnittlicher QLIKE",                 False),
+    ("Avg Cov RMSE", "Kovarianz_RMSE",   "Durchschnittlicher Kovarianz-RMSE",        False),
+    ("ERC RC RMSE",  "ERC_RC_RMSE",      "ERC Risikobeitrags-RMSE",                  False),
 ]
 
 
-def plot_metric_vs(table, axis_col, metric_col, ylabel, out, title):
+def plot_metric_vs(table, axis_col, metric_col, ylabel, out, title, show_naive=True):
     """One subplot per model: mean `metric_col` vs `axis_col`, one line per covariance type."""
     naive = table[table["Model"] == "Naive"].groupby(axis_col)[metric_col].mean()
     fig, axes = plt.subplots(1, len(MODELS), figsize=(5 * len(MODELS), 5), sharey=True)
@@ -204,7 +252,7 @@ def plot_metric_vs(table, axis_col, metric_col, ylabel, out, title):
             s = sub[sub["Covariance Type"] == cov].groupby(axis_col)[metric_col].mean()
             if not s.empty:
                 ax.plot(s.index, s.values, marker="o", label=cov, color=COV_COLORS[cov])
-        if not naive.empty:
+        if show_naive and not naive.empty:
             ax.plot(naive.index, naive.values, "k--", linewidth=1, label="Naive")
         ax.set_title(mdl)
         ax.set_xlabel(_AXIS_DE.get(axis_col, axis_col))
@@ -217,7 +265,7 @@ def plot_metric_vs(table, axis_col, metric_col, ylabel, out, title):
     plt.close(fig)
 
 
-def plot_metric_bar(table, metric_col, ylabel, out, title):
+def plot_metric_bar(table, metric_col, ylabel, out, title, show_naive=True):
     """Grouped bars: mean `metric_col` by model x covariance type, with Naive reference."""
     g = table.groupby(["Model", "Covariance Type"])[metric_col].mean()
     x = np.arange(len(MODELS))
@@ -226,7 +274,7 @@ def plot_metric_bar(table, metric_col, ylabel, out, title):
     for i, cov in enumerate(COVS):
         vals = [g.get((m, cov), np.nan) for m in MODELS]
         ax.bar(x + (i - 1) * width, vals, width, label=cov, color=COV_COLORS[cov])
-    naive = g.get(("Naive", "N/A"), np.nan)
+    naive = g.get(("Naive", "N/A"), np.nan) if show_naive else np.nan
     if not np.isnan(naive):
         ax.axhline(naive, color="black", linestyle="--", linewidth=1, label=f"Naive ({naive:.3g})")
     ax.set_xticks(x)
@@ -240,18 +288,20 @@ def plot_metric_bar(table, metric_col, ylabel, out, title):
     plt.close(fig)
 
 
-def dataset_charts(table, out_dir, metric_col, label):
+def dataset_charts(table, out_dir, metric_col, label, show_naive):
     """The full chart set for one dataset's slice and one metric."""
     os.makedirs(out_dir, exist_ok=True)
     frame = f"  [{DATE_START or 'Start'} .. {DATE_END or 'Ende'}]"
 
     # --- overall charts (averaged over the other axis) -----------------------
     plot_metric_vs(table, "Prediction Horizon", metric_col, label,
-                   f"{out_dir}/vs_prediction.png", f"{label} vs. Prognosehorizont" + frame)
+                   f"{out_dir}/vs_prediction.png", f"{label} vs. Prognosehorizont" + frame,
+                   show_naive)
     plot_metric_vs(table, "Training Period", metric_col, label,
-                   f"{out_dir}/vs_training.png", f"{label} vs. Trainingszeitraum" + frame)
+                   f"{out_dir}/vs_training.png", f"{label} vs. Trainingszeitraum" + frame,
+                   show_naive)
     plot_metric_bar(table, metric_col, label, f"{out_dir}/by_model_cov.png",
-                    f"{label} nach Modell und Kovarianztyp" + frame)
+                    f"{label} nach Modell und Kovarianztyp" + frame, show_naive)
 
     # --- per prediction horizon: metric vs training period -------------------
     d = f"{out_dir}/vs_training_by_pred"
@@ -261,7 +311,8 @@ def dataset_charts(table, out_dir, metric_col, label):
         if sub["Training Period"].nunique() < 2:
             continue  # nothing to plot "over training" with a single training period
         plot_metric_vs(sub, "Training Period", metric_col, label, f"{d}/pred_{pred}.png",
-                       f"{label} vs. Trainingszeitraum  |  Prognosehorizont = {pred}{frame}")
+                       f"{label} vs. Trainingszeitraum  |  Prognosehorizont = {pred}{frame}",
+                       show_naive)
 
     # --- per training period: metric vs prediction horizon -------------------
     d = f"{out_dir}/vs_prediction_by_train"
@@ -271,7 +322,8 @@ def dataset_charts(table, out_dir, metric_col, label):
         if sub["Prediction Horizon"].nunique() < 2:
             continue  # nothing to plot "over prediction" with a single horizon
         plot_metric_vs(sub, "Prediction Horizon", metric_col, label, f"{d}/train_{train}.png",
-                       f"{label} vs. Prognosehorizont  |  Trainingszeitraum = {train}{frame}")
+                       f"{label} vs. Prognosehorizont  |  Trainingszeitraum = {train}{frame}",
+                       show_naive)
 
 
 def summary_outputs():
@@ -285,7 +337,7 @@ def summary_outputs():
 
     # one subfolder per metric; inside it the same chart set per dataset
     datasets = sorted(table["Dataset"].unique())
-    for metric_col, folder, label in METRICS:
+    for metric_col, folder, label, show_naive in METRICS:
         if metric_col not in table.columns or table[metric_col].notna().sum() == 0:
             print(f"skip {folder}: no '{metric_col}' values in the results")
             continue
@@ -294,7 +346,7 @@ def summary_outputs():
             sub = table[table["Dataset"] == dataset]
             if sub[metric_col].notna().sum() == 0:
                 continue  # this dataset has no values for the metric yet -> skip
-            dataset_charts(sub, f"{summary_dir}/{folder}/{dataset}", metric_col, label)
+            dataset_charts(sub, f"{summary_dir}/{folder}/{dataset}", metric_col, label, show_naive)
             done.append(dataset)
         print(f"summary charts ({folder}) -> {summary_dir}/{folder}/  {done}")
 

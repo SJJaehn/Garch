@@ -32,7 +32,7 @@ import os
 import numpy as np
 import pandas as pd
 
-import config
+import main as config
 
 # =============================================================================
 # CONFIG  -- everything that defines the data-generating process
@@ -40,7 +40,7 @@ import config
 
 N_OBS    = 6000          # number of price rows (dates)
 N_ASSETS = 20            # number of assets (columns)
-SEED     = 42
+SEED     = 1
 OUTPUT_DIR = config.ARTIFICIAL_DIR
 
 START_DATE  = "2000-01-03"   # first date; a business-day calendar is built from here
