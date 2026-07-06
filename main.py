@@ -1,37 +1,33 @@
 """
-Main entry point: choose the datasets and horizons to back-test, then run them.
-
-Edit the SETTINGS block below and launch everything with:
+Main entry point: choose the datasets and window sizes in the settings block
+below, then run
 
     python main.py
 
-This file also holds the shared, rarely-touched configuration (paths, the
-dataset registry, solver settings and ``BacktestConfig``) that ``backtest.py``,
-``analyze.py`` and ``datagen.py`` import. Importing it is side-effect free: the
-actual run only happens under ``if __name__ == "__main__"``, so importing ``main``
-from another script (or from a worker process) reads no files and starts nothing.
+This file also holds the shared configuration (paths, dataset registry, solver
+settings) that backtest.py, analyze.py and datagen.py import.
 """
-from __future__ import annotations
-
-import os
-from dataclasses import dataclass
 
 # =============================================================================
-# SETTINGS  —  edit these, then run:  python main.py
+# Settings
 # =============================================================================
-# Back-test every dataset in RUN_DATASETS over every (training window, forecast
-# horizon) pair, i.e. the full TRAIN_WINDOWS x PRED_WINDOWS grid. Windows are in
-# trading days (252 ≈ one year). Dataset names must be keys of DATASETS below.
+# Every dataset in RUN_DATASETS is backtested over every combination of
+# training window and prediction window (in trading days, 252 = one year).
 
-RUN_DATASETS  = ["DCC_sim", "GARCH_sim", "MonteCarlo"]            # e.g. ["TRBC", "Dow", "SP500"]
-TRAIN_WINDOWS = [1008, 1260]                 # lookback length(s),  e.g. [252, 504, 1008]
-PRED_WINDOWS  = [1]                    # forecast horizon(s), e.g. [1, 5, 10, 21]
-MAX_WORKERS   = 6                      # parallel worker processes
+RUN_DATASETS  = ["TRBC"]                      # keys of DATASETS below, e.g. ["TRBC", "Dow", "SP500"]
+TRAIN_WINDOWS = [1008, 1260, 1512, 1764, 2016, 2268, 2520, 252, 504, 756]  # 252, 504, ..., 2520 trading days
+PRED_WINDOWS  = [1, 5, 10, 21]                # forecast horizon(s) in days
+MAX_WORKERS   = 6             # number of parallel worker processes
 
-# Full grid example:
-#   RUN_DATASETS  = ["TRBC", "Dow"]
-#   TRAIN_WINDOWS = [252 * i for i in range(1, 11)]   # 252, 504, ..., 2520
-#   PRED_WINDOWS  = [1, 5, 10, 21]
+# Which covariance estimators and portfolio models to compare
+COV_METHODS = ["Historical", "GARCH", "DCC"]
+MODELS      = ["MVP", "HRP", "ERC"]
+
+# Order of the univariate GARCH(p, q) volatility models
+GARCH_P = 1
+GARCH_Q = 1
+
+LOG_WEIGHTS = True  # also save the portfolio weights of every window to weights.csv
 
 
 # =============================================================================
@@ -40,14 +36,12 @@ MAX_WORKERS   = 6                      # parallel worker processes
 
 DATA_DIR       = "DATA"
 EMPIRICAL_DIR  = f"{DATA_DIR}/Empirical"
-# NOTE: the folder name is the historical "Artifical" typo on purpose — the
-# generated data already lives there; renaming would only risk breaking it.
-ARTIFICIAL_DIR = f"{DATA_DIR}/Artifical"
+ARTIFICIAL_DIR = f"{DATA_DIR}/Artifical"  # folder name keeps the old typo on purpose
 
 RESULTS_DIR = "Ergebnisse"
 SUMMARY_DIR = f"{RESULTS_DIR}/Zusammenfassung"
 
-# Dataset registry:  name -> (csv path, date format)
+# Dataset registry: name -> (csv path, date format)
 DATASETS = {
     "TRBC":  (f"{EMPIRICAL_DIR}/TRBC_Business_Sectors_clean.csv", "%Y-%m-%d"),
     "SP500": (f"{EMPIRICAL_DIR}/S&P500_Adj.csv",                  "%d.%m.%y"),
@@ -58,86 +52,42 @@ DATASETS = {
     "DCC_sim":    (f"{ARTIFICIAL_DIR}/dcc.csv",         "%Y-%m-%d"),
 }
 
-
-# Fed Funds total-return series: a daily index *level* (starts at 100), columns
-# "Exchange Date";"Close". The loaders take its pct_change -> daily simple
-# risk-free return, so a freshly downloaded export must keep this name/format.
+# Fed Funds total-return index: a daily index level starting at 100, with the
+# columns "Exchange Date";"Close". Its percentage change is used as the daily
+# simple risk-free return, so a freshly downloaded export must keep this format.
 RISK_FREE_FILE = f"{EMPIRICAL_DIR}/FED_FUNDS.csv"
 
 
-def risk_free_file() -> str:
-    """Path to the Fed Funds total-return CSV (the risk-free series)."""
-    if not os.path.exists(RISK_FREE_FILE):
-        raise FileNotFoundError(
-            f"Risk-free file not found: {RISK_FREE_FILE} "
-            "(Fed Funds total-return index, exported as 'Exchange Date';'Close')."
-        )
-    return RISK_FREE_FILE
-
-
 # =============================================================================
-# Solver configuration (riskfolio-lib / cvxpy)
+# Solver settings (riskfolio-lib / cvxpy)
 # =============================================================================
-# cvxpy's default C++ canonicalisation backend aborts (a hard SIGABRT) with
-# numpy 2.x in this environment; the SciPy backend is correct and stable. We
-# route every riskfolio solve through it. This is harmless on a healthy install
-# and required on a broken one.
-SOLVERS = ["CLARABEL"]
+# cvxpy's default C++ backend crashes with numpy 2.x on this machine, the SciPy
+# backend works fine, so every riskfolio optimization is routed through it.
+
+SOLVERS    = ["CLARABEL"]
 SOL_PARAMS = {"CLARABEL": {"canon_backend": "SCIPY"}}
 
 
-# =============================================================================
-# Backtest configuration
-# =============================================================================
-
-@dataclass(frozen=True)
-class BacktestConfig:
-    """Everything that defines a single backtest run."""
-
-    dataset: str = "DCC_sim"
-    train_window: int = 4 * 252          # ~4 years of trading days
-    prediction_window: int = 1           # test/forecast horizon in days
-    garch_p: int = 1
-    garch_q: int = 1
-    cov_methods: tuple[str, ...] = ("Historical", "GARCH", "DCC")
-    models: tuple[str, ...] = ("MVP", "HRP", "ERC")
-    log_weights: bool = True             # also dump per-window weights to weights.csv
-    max_workers: int = 3
-
-    @property
-    def garch_tag(self) -> str:
-        return "" if (self.garch_p, self.garch_q) == (1, 1) else f"_g{self.garch_p}-{self.garch_q}"
-
-    @property
-    def output_dir(self) -> str:
-        return f"{RESULTS_DIR}/{self.dataset}/{self.train_window}_{self.prediction_window}{self.garch_tag}"
+"""
+Builds the output folder name for one run, e.g. Ergebnisse/Dow/1008_1.
+The GARCH order is only appended when it is not the default (1, 1).
+"""
+def output_dir(dataset, train_window, prediction_window):
+    garch_tag = "" if (GARCH_P, GARCH_Q) == (1, 1) else f"_g{GARCH_P}-{GARCH_Q}"
+    return f"{RESULTS_DIR}/{dataset}/{train_window}_{prediction_window}{garch_tag}"
 
 
 # =============================================================================
-# Runner
+# Running the full grid
 # =============================================================================
 
-def run():
-    """Back-test the full RUN_DATASETS x TRAIN_WINDOWS x PRED_WINDOWS grid."""
-    # Deferred import: keeps `import main` cheap (no riskfolio/arch) for datagen.py,
-    # analyze.py and the spawned worker processes, which only need the data above.
+if __name__ == "__main__":
+    # imported here because backtest.py itself imports the settings from this file
     import backtest
 
     for dataset in RUN_DATASETS:
-        _, log_returns, rf = backtest.load_dataset(dataset)
+        prices, log_returns, rf = backtest.load_dataset(dataset)
         for train_window in TRAIN_WINDOWS:
             for prediction_window in PRED_WINDOWS:
-                cfg = BacktestConfig(dataset=dataset, train_window=train_window,
-                                     prediction_window=prediction_window,
-                                     max_workers=MAX_WORKERS)
                 print(f"\n=== {dataset} {train_window}_{prediction_window} ===", flush=True)
-                backtest.run_backtest(cfg, log_returns, rf)
-
-
-if __name__ == "__main__":
-    # Re-import under the real module name before running: anything handed to the
-    # worker pool (e.g. BacktestConfig) is pickled by qualified name, and instances
-    # of a class defined in `__main__` cannot be unpickled in a spawned worker.
-    # Calling main.run() makes those references resolve as `main.X` instead.
-    import main
-    main.run()
+                backtest.run_backtest(dataset, log_returns, rf, train_window, prediction_window)

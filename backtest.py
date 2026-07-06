@@ -1,31 +1,19 @@
 """
-Rolling-window portfolio backtest (the whole pipeline in one script).
+Rolling-window portfolio backtest.
 
-We compare portfolio construction methods (MVP, HRP, ERC) using several
-covariance estimators (historical, GARCH constant-correlation, DCC), plus a
-naive 1/N benchmark.
+Compares the portfolio construction methods (MVP, HRP, ERC and a naive 1/N
+benchmark) under different covariance estimators (historical sample covariance,
+GARCH with constant correlation, DCC).
 
-Returns are LOG returns for the modelling part (GARCH/DCC like additive,
-well-behaved returns). For evaluation and plotting we convert back to SIMPLE
-returns, because a portfolio return is a weighted sum of *simple* asset returns,
-not of log returns.
+The modelling part works on LOG returns (GARCH/DCC assume additive,
+well-behaved returns). The performance evaluation works on SIMPLE returns,
+because a portfolio return is the weighted sum of simple asset returns, not of
+log returns.
 
-The engine is data-in / files-out: ``run_backtest`` takes the config and the
-already-loaded data, so nothing is read at import and there is no global state.
-Each rolling window is independent and deterministic, so it is farmed out to a
-process pool; workers receive the (read-only) returns once via an initializer.
+The datasets and window sizes to run are chosen in main.py:
 
-Run order in this file: data loading -> models (GARCH / covariance / portfolio)
--> metrics & losses -> the rolling-window engine. This module is a library; the
-batch run (which datasets / horizons) is driven from ``main.py``:
-
-    python main.py            # edit the SETTINGS block there to choose runs
-
-Worker processes re-import this module (and ``main``) under the 'spawn' start
-method (macOS default), which is safe because importing either has no side effects.
+    python main.py
 """
-from __future__ import annotations
-
 import os
 import warnings
 from concurrent.futures import ProcessPoolExecutor
@@ -43,97 +31,95 @@ import main as config
 
 
 # =============================================================================
-# Data loading: prices, log returns and the risk-free series
+# Data loading
 # =============================================================================
-# All functions are side-effect free (nothing runs at import) and take their
-# inputs explicitly, so the same loaders are reused by analyze.py.
 
-def load_prices(dataset: str) -> pd.DataFrame:
-    """Load a dataset's price frame (assets in columns, dates in the index)."""
+"""
+Loads the price data of a dataset (assets in the columns, dates in the index).
+"""
+def load_prices(dataset):
     filepath, date_format = config.DATASETS[dataset]
     prices = pd.read_csv(filepath, index_col=0)
     prices.index = pd.to_datetime(prices.index, format=date_format, errors="coerce")
-    prices = prices[prices.index.notna()]
-    # keep dates where at least half the assets have a price
+    prices = prices[prices.index.notna()]  # dropping rows where the date could not be parsed
+    # keeping only the dates where at least half of the assets have a price
     prices = prices.loc[prices.notna().sum(axis=1) >= int(0.5 * prices.shape[1])]
     return prices
 
 
-def to_log_returns(prices: pd.DataFrame) -> pd.DataFrame:
-    """Log returns r_t = ln(P_t / P_{t-1}); drop assets that are flat >50% of the time."""
+"""
+Calculates the log returns r_t = ln(P_t / P_{t-1}). Assets that show no price
+movement on more than 50% of the days (stale series) are dropped.
+"""
+def to_log_returns(prices):
     log_returns = np.log(prices / prices.shift(1)).iloc[1:]
     zero_frac = (log_returns == 0).sum() / log_returns.notna().sum()
     return log_returns.loc[:, zero_frac < 0.5]
 
 
-_GERMAN_MONTHS = {"Mär": "Mar", "Mai": "May", "Okt": "Oct", "Dez": "Dec"}
-
-
-def read_risk_free_level(risk_free_file: str | None = None) -> pd.Series:
-    """Read the Fed Funds total-return *index level*, indexed by date (sorted)."""
-    path = risk_free_file or config.risk_free_file()
-    rf = pd.read_csv(path, sep=";", decimal=",", encoding="utf-8-sig")
+"""
+Reads the Fed Funds total-return index (a daily index level, sorted by date).
+The csv export uses German month names, so those are translated first.
+"""
+def read_risk_free_level():
+    if not os.path.exists(config.RISK_FREE_FILE):
+        raise FileNotFoundError(f"Risk-free file not found: {config.RISK_FREE_FILE}")
+    rf = pd.read_csv(config.RISK_FREE_FILE, sep=";", decimal=",", encoding="utf-8-sig")
     dates = rf["Exchange Date"]
-    for de, en in _GERMAN_MONTHS.items():
-        dates = dates.str.replace(de, en, regex=False)  # German -> English months
+    for de, en in {"Mär": "Mar", "Mai": "May", "Okt": "Oct", "Dez": "Dec"}.items():
+        dates = dates.str.replace(de, en, regex=False)  # German -> English month names
     level = pd.Series(rf["Close"].values, index=pd.to_datetime(dates, format="%d-%b-%Y"))
     return level.sort_index()
 
 
-def align_risk_free(level: pd.Series, index) -> pd.Series:
-    """
-    Daily SIMPLE risk-free return aligned to ``index``.
-
-    The metrics work on simple returns, so we align the index *level* to the
-    target dates (forward-filling gaps) and take its percentage change, so the
-    risk-free accrual spans exactly the same day spacing as the portfolio returns.
-    """
-    return level.reindex(index).ffill().pct_change()
-
-
-def load_risk_free(price_index, risk_free_file: str | None = None) -> pd.Series:
-    """Convenience: read the level and align it to ``price_index`` in one step."""
-    return align_risk_free(read_risk_free_level(risk_free_file), price_index)
+"""
+Daily simple risk-free return aligned to the given dates. The index level is
+forward-filled onto the target dates and then the percentage change is taken,
+so the risk-free accrual spans exactly the same day spacing as the portfolio
+returns.
+"""
+def load_risk_free(dates):
+    level = read_risk_free_level()
+    return level.reindex(dates).ffill().pct_change()
 
 
-def load_dataset(dataset: str, risk_free_file: str | None = None):
-    """Return (prices, log_returns, rf_daily) for a dataset, rf aligned to prices."""
+"""
+Loads everything needed for one dataset: the prices, the log returns and the
+risk-free return series (aligned to the price dates).
+"""
+def load_dataset(dataset):
     prices = load_prices(dataset)
     log_returns = to_log_returns(prices)
-    rf = load_risk_free(prices.index, risk_free_file)
+    rf = load_risk_free(prices.index)
     return prices, log_returns, rf
 
 
 # =============================================================================
 # Univariate GARCH fitting
 # =============================================================================
-# A single fit_garch_univariate call fits a GARCH(p, q) to every asset and
-# returns both the forecast variances and the standardized residuals, so the
-# GARCH (constant-correlation) and DCC covariance estimators can share one fit.
 
-def _ewma_fallback(series, lam=0.94):
-    """
-    RiskMetrics EWMA variance, used when the GARCH fit does not converge.
-    Returns (forecast_variance, standardized_residuals).  EWMA assumes the
-    variance is flat going forward, so the horizon forecast is just the last value.
-    """
+"""
+RiskMetrics EWMA variance, used as a fallback when the GARCH fit does not
+converge. Returns the forecast variance and the standardized residuals. EWMA
+assumes a flat variance going forward, so the forecast is just the last value.
+"""
+def ewma_fallback(series, lam=0.94):
     ewma_var = series.pow(2).ewm(alpha=1 - lam).mean()
     cond_vol = np.sqrt(ewma_var).replace(0.0, np.nan)
     return float(ewma_var.iloc[-1]), series / cond_vol
 
 
-def fit_garch_univariate(returns, prediction_window=1, p=1, q=1):
-    """
-    Fit a univariate GARCH(p, q) to every asset.
+"""
+Fits a univariate GARCH(p, q) to every asset and returns
+  - variances : Series with the forecast variance per asset
+  - std_resid : DataFrame with the standardized residuals per asset
 
-    Returns (variances, std_resid):
-      - variances : Series of forecast variances (back on the raw return scale)
-      - std_resid : DataFrame of standardized residuals (assets in columns)
-
-    Non-convergence handling: retry the fit with more iterations, and if it still
-    fails fall back to an EWMA variance so the asset is kept (rather than silently
-    dropped, which would shrink the GARCH/DCC universe relative to Historical).
-    """
+Both the GARCH (constant correlation) and the DCC covariance need these
+outputs, so the fit is done once and shared. When a fit does not converge it is
+retried with more iterations, and if it still fails the EWMA fallback is used
+so the asset is kept in the universe instead of being silently dropped.
+"""
+def fit_garch(returns, prediction_window=1, p=1, q=1):
     horizon = max(prediction_window, 1)
     variances = {}
     resid = {}
@@ -145,7 +131,7 @@ def fit_garch_univariate(returns, prediction_window=1, p=1, q=1):
         var = sr = None
         if len(series) >= 50:
             try:
-                # arch is happier with percent returns; undo the scaling with /100**2
+                # arch works better with percent returns, the /100**2 undoes the scaling
                 model = arch_model(series * 100, vol="GARCH", p=p, q=q)
                 res = model.fit(disp="off", show_warning=False)
                 if res.convergence_flag != 0:  # retry with a bigger iteration budget
@@ -157,10 +143,10 @@ def fit_garch_univariate(returns, prediction_window=1, p=1, q=1):
             except Exception:
                 var = None
 
-        if var is None:  # GARCH failed / too little data -> EWMA fallback
+        if var is None:  # GARCH failed -> EWMA fallback
             reason = "insufficient data" if len(series) < 50 else "GARCH did not converge"
             print(f"[fallback] GARCH->EWMA for {col} ({reason})", flush=True)
-            var, sr = _ewma_fallback(series)
+            var, sr = ewma_fallback(series)
 
         variances[col] = var
         resid[col] = sr
@@ -171,22 +157,24 @@ def fit_garch_univariate(returns, prediction_window=1, p=1, q=1):
 # =============================================================================
 # Covariance estimators
 # =============================================================================
-# Each takes (log) returns and/or GARCH outputs and returns a covariance
-# DataFrame (assets in both axes).
+# Each estimator returns a covariance DataFrame (assets on both axes).
 
+"""
+Plain historical sample covariance.
+"""
 def historical_covariance(returns):
-    """Plain historical sample covariance."""
     return returns.cov()
 
 
-def constant_correlation_covariance(std_resid, variances):
-    """
-    CCC-GARCH (Bollerslev 1990): GARCH forecast variances + the constant sample
-    correlation of the STANDARDIZED residuals -> covariance matrix. Using the
-    standardized residuals (not raw returns) filters out volatility clustering,
-    which would otherwise overweight high-vol days and inflate the correlation;
-    it also makes CCC and DCC share the same correlation input.
-    """
+"""
+CCC-GARCH covariance (Bollerslev 1990): the GARCH forecast variances are
+combined with the constant sample correlation of the standardized residuals.
+The standardized residuals are used instead of the raw returns because the
+volatility clustering is already filtered out of them (high-vol days would
+otherwise inflate the correlation); it also means that CCC and DCC work with
+the same correlation input.
+"""
+def garch_covariance(std_resid, variances):
     cols = list(variances.index)
     if len(cols) == 0:
         return pd.DataFrame()
@@ -200,33 +188,33 @@ def constant_correlation_covariance(std_resid, variances):
     return pd.DataFrame(cov, index=cols, columns=cols)
 
 
+"""
+DCC-GARCH covariance (Engle 2002): the GARCH forecast variances are combined
+with a Dynamic Conditional Correlation model estimated on the standardized
+residuals z_t:
+
+    Q_t = (1 - a - b) * Q_bar + a * z_{t-1} z_{t-1}' + b * Q_{t-1}
+    R_t = normalize(Q_t),   Sigma = D * R * D   (D = diag of the forecast std)
+
+The two parameters (a, b) are estimated by maximum likelihood (the likelihood
+uses a Cholesky factorization for speed and is optimized with L-BFGS-B).
+
+For horizon > 1 the correlation forecast mean-reverts toward Q_bar
+(Engle & Sheppard 2001),
+    E[Q_{T+h}] = Q_bar + (a + b)^(h-1) * (Q_{T+1} - Q_bar),
+and the normalized correlations are averaged over h = 1..horizon to match the
+horizon-averaged GARCH variances.
+"""
 def dcc_covariance(variances, std_resid, horizon=1):
-    """
-    DCC-GARCH covariance (Engle 2002): combine the GARCH forecast variances with
-    a Dynamic Conditional Correlation model estimated on the standardized
-    residuals.
-
-      Q_t = (1 - a - b) * Qbar + a * z_{t-1} z_{t-1}' + b * Q_{t-1}
-      R_t = normalise(Q_t),   Sigma = D * R * D   (D = diag of forecast std)
-
-    For horizon > 1 the correlation forecast mean-reverts toward Qbar,
-    E[Q_{T+h}] = Qbar + (a+b)^{h-1} (Q_{T+1} - Qbar)  (Engle & Sheppard 2001),
-    and the normalised R_{T+h} are averaged over h = 1..horizon to match the
-    horizon-averaged GARCH variances.
-
-    Speed: the log-likelihood uses a Cholesky factorisation for the log-det and
-    quadratic form, and we optimise the two parameters (a, b) with L-BFGS-B, so
-    only a handful of likelihood evaluations are needed.
-    """
     cols = list(std_resid.columns)
     if len(cols) == 0:
         return pd.DataFrame()
 
-    z = std_resid.dropna().values            # common dates only
+    z = std_resid.dropna().values            # keep only the common dates
     n_obs, n = z.shape
     std = np.sqrt(variances[cols].values)
 
-    # too few assets / observations for a correlation model -> diagonal cov
+    # too few assets / observations for a correlation model -> diagonal covariance
     if n < 2 or n_obs < n + 2:
         print(f"[fallback] DCC->diagonal covariance (n={n}, n_obs={n_obs})", flush=True)
         cov = np.diag(std ** 2) + np.eye(n) * 1e-8
@@ -234,6 +222,7 @@ def dcc_covariance(variances, std_resid, horizon=1):
 
     q_bar = np.corrcoef(z, rowvar=False)     # unconditional correlation of the z's
 
+    # negative log-likelihood of the DCC recursion for the parameters (a, b)
     def neg_loglik(params):
         a, b = params
         if a <= 0 or b <= 0 or a + b >= 0.9999:
@@ -256,9 +245,9 @@ def dcc_covariance(variances, std_resid, horizon=1):
     opt = minimize(neg_loglik, x0=[0.02, 0.95], method="L-BFGS-B",
                    bounds=[(1e-4, 0.3), (1e-4, 0.999)], options={"maxiter": 50})
     a, b = opt.x
-    if not (a > 0 and b > 0 and a + b < 1):
+    if not (a > 0 and b > 0 and a + b < 1):  # typical values if the optimizer misbehaves
         print(f"[fallback] DCC optimizer misbehaved (a={a:.3g}, b={b:.3g}); using a=0.02, b=0.95", flush=True)
-        a, b = 0.02, 0.95  # typical values if the optimizer misbehaves
+        a, b = 0.02, 0.95
 
     # roll the recursion through the sample to get Q_{T+1} ...
     omega = (1 - a - b) * q_bar
@@ -267,7 +256,7 @@ def dcc_covariance(variances, std_resid, horizon=1):
         Q = omega + a * np.outer(z[t], z[t]) + b * Q
 
     # ... then mean-revert toward q_bar over the horizon and average the
-    # normalised correlations (reduces to plain Q_{T+1} for horizon == 1)
+    # normalized correlations (for horizon == 1 this is just Q_{T+1})
     horizon = max(horizon, 1)
     R = np.zeros_like(Q)
     for h in range(1, horizon + 1):
@@ -284,37 +273,39 @@ def dcc_covariance(variances, std_resid, horizon=1):
 # =============================================================================
 # Portfolio weighting schemes
 # =============================================================================
-# MVP and ERC go through riskfolio-lib with our *externally estimated* covariance
-# (GARCH / DCC / historical) injected directly. HRP stays self-implemented
-# because no library accepts a user-supplied covariance for it.
+# MVP and ERC are solved with riskfolio-lib, with our own covariance matrix
+# (historical / GARCH / DCC) plugged in directly. HRP is implemented by hand
+# because riskfolio does not accept a user-supplied covariance matrix for it.
 
-def _make_portfolio(cov_matrix):
-    """
-    Build a riskfolio ``Portfolio`` with our covariance injected and a stable
-    solver configuration (see config.SOLVERS / SOL_PARAMS for the cvxpy backend
-    note). Returns (port, cols).
-    """
+"""
+Builds a riskfolio Portfolio object with our covariance matrix plugged in.
+riskfolio needs a returns DataFrame for the asset names/shape, but with
+model='Classic' and hist=True the optimization only reads port.cov and port.mu,
+so the actual return values are never used (they are just zeros).
+"""
+def make_portfolio(cov_matrix):
     cols = list(cov_matrix.index)
     n = len(cols)
 
     cov = np.asarray(cov_matrix, dtype=float)
-    cov = (cov + cov.T) / 2.0 + np.eye(n) * 1e-8   # symmetric + jitter -> PSD/stable
+    cov = (cov + cov.T) / 2.0 + np.eye(n) * 1e-8  # force symmetry + jitter for stability
     cov = pd.DataFrame(cov, index=cols, columns=cols)
 
-    # riskfolio needs a returns frame for the asset names/shape; under
-    # model='Classic', hist=True the optimisation reads port.cov / port.mu only,
-    # so the actual return values are unused.
     dummy = pd.DataFrame(np.zeros((2, n)), columns=cols)
     port = rp.Portfolio(returns=dummy)
     port.cov = cov
     port.mu = pd.DataFrame(np.zeros((1, n)), columns=cols)
+    # stable solver configuration, see the note in main.py
     port.solvers = list(config.SOLVERS)
     port.sol_params = {k: dict(v) for k, v in config.SOL_PARAMS.items()}
     return port, cols
 
 
-def _clean_weights(w, cols, index):
-    """Turn a riskfolio weights frame into a normalised, long-only Series."""
+"""
+Turns a riskfolio weights frame into a normalized, long-only weights Series.
+If the optimization returned no solution, equal weights are used instead.
+"""
+def clean_weights(w, cols, index):
     if w is None or getattr(w, "empty", True):
         warnings.warn("riskfolio optimisation returned no solution; using equal weights")
         return pd.Series(1.0 / len(cols), index=index)
@@ -325,8 +316,10 @@ def _clean_weights(w, cols, index):
     return (s / total).reindex(index)
 
 
+"""
+Equal-weight (1/N) portfolio.
+"""
 def naive_weights(assets):
-    """Equal-weight (1/N) portfolio over ``assets``."""
     assets = list(assets)
     n = len(assets)
     if n == 0:
@@ -334,26 +327,32 @@ def naive_weights(assets):
     return pd.Series(1.0 / n, index=assets)
 
 
+"""
+Long-only Minimum Variance Portfolio (riskfolio MinRisk with rm='MV').
+"""
 def mvp_weights(cov_matrix):
-    """Long-only Minimum Variance Portfolio (riskfolio MinRisk, rm='MV')."""
     if len(cov_matrix) == 0:
         return pd.Series(dtype=float)
-    port, cols = _make_portfolio(cov_matrix)
+    port, cols = make_portfolio(cov_matrix)
     w = port.optimization(model="Classic", rm="MV", obj="MinRisk", hist=True)
-    return _clean_weights(w, cols, cov_matrix.index)
+    return clean_weights(w, cols, cov_matrix.index)
 
 
+"""
+Equal Risk Contribution portfolio (riskfolio risk parity with rm='MV').
+"""
 def erc_weights(cov_matrix):
-    """Equal Risk Contribution portfolio (riskfolio risk parity, rm='MV')."""
     if len(cov_matrix) == 0:
         return pd.Series(dtype=float)
-    port, cols = _make_portfolio(cov_matrix)
+    port, cols = make_portfolio(cov_matrix)
     w = port.rp_optimization(model="Classic", rm="MV", b=None, hist=True)
-    return _clean_weights(w, cols, cov_matrix.index)
+    return clean_weights(w, cols, cov_matrix.index)
 
 
+"""
+Hierarchical Risk Parity (Lopez de Prado 2016).
+"""
 def hrp_weights(cov_matrix):
-    """Hierarchical Risk Parity (Lopez de Prado 2016)."""
     n = len(cov_matrix)
     if n == 0:
         return pd.Series(dtype=float)
@@ -361,7 +360,7 @@ def hrp_weights(cov_matrix):
         return pd.Series([1.0], index=cov_matrix.index)
 
     cov = cov_matrix.copy()
-    cov = (cov + cov.T) / 2.0  # make sure it is symmetric
+    cov = (cov + cov.T) / 2.0  # make sure the matrix is symmetric
 
     # 1) correlation distance matrix
     std = np.sqrt(np.diag(cov.values))
@@ -374,14 +373,15 @@ def hrp_weights(cov_matrix):
     order = leaves_list(link)
     assets = list(cov.index[order])
 
+    # variance of a sub-cluster using inverse-variance weights
     def cluster_variance(items):
         sub = cov.loc[items, items].values
         ivp = 1.0 / np.diag(sub)
         ivp /= ivp.sum()
         return float(ivp @ sub @ ivp)
 
-    # 3) recursive bisection: split the ordering in half, give more weight to the
-    #    lower-variance half each time
+    # 3) recursive bisection: split the ordering in half and give more weight
+    #    to the half with the lower variance, repeat within each half
     weights = pd.Series(1.0, index=assets)
     clusters = [assets]
     while clusters:
@@ -400,44 +400,41 @@ def hrp_weights(cov_matrix):
     return (weights / weights.sum()).reindex(cov_matrix.index)
 
 
-_WEIGHTERS = {
-    "MVP": mvp_weights,
-    "HRP": hrp_weights,
-    "ERC": erc_weights,
-}
-
-
+"""
+Returns the portfolio weights for the given model name.
+"""
 def get_weights(model, cov_matrix):
-    """Dispatch to the weighting scheme named by ``model`` (MVP / HRP / ERC)."""
-    try:
-        return _WEIGHTERS[model](cov_matrix)
-    except KeyError:
-        raise ValueError(f"unknown model: {model}")
+    if model == "MVP":
+        return mvp_weights(cov_matrix)
+    elif model == "HRP":
+        return hrp_weights(cov_matrix)
+    elif model == "ERC":
+        return erc_weights(cov_matrix)
+    raise ValueError(f"unknown model: {model}")
 
 
 # =============================================================================
 # Performance metrics and covariance-forecast losses
 # =============================================================================
 
+"""
+Annualized performance statistics for a series of simple daily returns.
+rf_daily is the simple daily risk-free return (a scalar or an array aligned to
+daily_returns) and is subtracted to get the excess returns for Sharpe/Sortino.
+"""
 def calculate_summary_metrics(daily_returns, rf_daily=0.0):
-    """
-    Annualised performance statistics from a series of simple daily returns.
-
-    rf_daily is the SIMPLE daily risk-free return (a scalar, or an array aligned
-    to daily_returns), subtracted to get excess returns for Sharpe / Sortino.
-    """
     arr = np.asarray(daily_returns)
     rf = np.asarray(rf_daily)
     excess = arr - rf
 
     ann_ret = np.prod(1 + arr) ** (252 / len(arr)) - 1   # CAGR (geometric)
-    ann_std = arr.std(ddof=1) * np.sqrt(252)             # sample std (raw, = portfolio vol)
+    ann_std = arr.std(ddof=1) * np.sqrt(252)             # realized portfolio vol
 
-    # arithmetic annualised excess return, consistent with the std used below
+    # arithmetic annualized excess return, consistent with the std used below
     ann_excess = excess.mean() * 252
     # std of the EXCESS returns for the Sharpe denominator (textbook definition)
     ann_excess_std = excess.std(ddof=1) * np.sqrt(252)
-    # downside deviation of the excess returns
+    # downside deviation of the excess returns (for Sortino)
     semi_dev = np.sqrt(np.mean(np.minimum(excess, 0) ** 2)) * np.sqrt(252)
 
     cumulative = np.cumprod(1 + arr)
@@ -461,18 +458,18 @@ def calculate_summary_metrics(daily_returns, rf_daily=0.0):
     }
 
 
-def _qlike(cov, realized):
-    """
-    Multivariate QLIKE loss of a forecast covariance ``cov`` (H) against the
-    realized returns over the test window (Patton 2011; Laurent et al. 2012):
+"""
+Multivariate QLIKE loss of a forecast covariance H against the realized returns
+of the test window (Patton 2011; Laurent et al. 2012):
 
-        QLIKE = log|H| + tr(H^{-1} S),   S = (1/pw) * sum_t r_t r_t'
+    QLIKE = log|H| + tr(H^{-1} S),   S = (1/pw) * sum_t r_t r_t'
 
-    S is the realized (uncentered) second-moment proxy of the test-window log
-    returns. The loss is minimised, in expectation, when H equals the true
-    covariance, so a lower QLIKE means a better covariance forecast. Returns NaN
-    if H is not positive definite / singular.
-    """
+S is the realized second-moment proxy of the test-window log returns. In
+expectation the loss is minimized when H equals the true covariance, so a lower
+QLIKE means a better covariance forecast. Returns NaN if H is not positive
+definite.
+"""
+def qlike_loss(cov, realized):
     H = np.asarray(cov, dtype=float)
     R = np.asarray(realized, dtype=float)          # (pw, n) test-window log returns
     if H.shape[0] == 0 or R.shape[0] == 0:
@@ -487,19 +484,18 @@ def _qlike(cov, realized):
         return np.nan
 
 
-def _cov_rmse(cov, realized):
-    """
-    Frobenius RMSE of a forecast covariance ``cov`` (H) against the realized
-    second-moment proxy  S = (1/pw) * sum_t r_t r_t'  of the test-window returns:
+"""
+Frobenius RMSE between a forecast covariance H and the realized second-moment
+proxy S of the test window (Patton & Sheppard 2009):
 
-        Cov RMSE = sqrt( mean_{i,j} (H_ij - S_ij)^2 ) = ||H - S||_F / N
+    Cov RMSE = sqrt( mean_ij (H_ij - S_ij)^2 )
 
-    i.e. the typical per-element error between the forecast and realized covariance
-    (the Frobenius / Euclidean loss; Patton & Sheppard 2009). Lower is better. As
-    with QLIKE the realized proxy is noisy for pw=1, so the level is meaningful only
-    in relative terms across estimators (E[S] is the true covariance, so the noise
-    averages out across windows).
-    """
+This is the typical per-element error of the forecast, lower is better. The
+proxy S is noisy for short test windows, but its expected value is the true
+covariance, so the noise averages out across the windows and the level stays
+comparable between the estimators.
+"""
+def cov_rmse(cov, realized):
     H = np.asarray(cov, dtype=float)
     R = np.asarray(realized, dtype=float)
     if H.shape[0] == 0 or R.shape[0] == 0:
@@ -508,17 +504,17 @@ def _cov_rmse(cov, realized):
     return float(np.sqrt(np.mean((H - S) ** 2)))
 
 
-def _risk_contribution_rmse(weights, realized):
-    """
-    RMSE of the realized risk contributions from the equal-risk target (1/N).
+"""
+RMSE of the realized risk contributions from the equal-risk target (1/N).
+With the realized second moment S as covariance proxy, asset i contributes
 
-    Using the test-window realized second moment  S = (1/pw) * sum_t r_t r_t'  as
-    the covariance proxy, asset i's relative risk contribution is
-        RC_i = w_i (S w)_i / (w' S w),   with  sum_i RC_i = 1.
-    An Equal-Risk-Contribution portfolio targets RC_i = 1/N, so a lower RMSE means
-    the weights kept risk closer to balanced *out-of-sample* -> a better covariance
-    forecast. Returns NaN if the realized portfolio variance is ~0.
-    """
+    RC_i = w_i (S w)_i / (w' S w),   sum_i RC_i = 1.
+
+An Equal-Risk-Contribution portfolio targets RC_i = 1/N, so a lower RMSE means
+the weights kept the risk balanced out-of-sample -> a better covariance
+forecast. Returns NaN if the realized portfolio variance is ~0.
+"""
+def risk_contribution_rmse(weights, realized):
     w = np.asarray(weights, dtype=float)
     n = w.shape[0]
     R = np.asarray(realized, dtype=float)
@@ -535,111 +531,115 @@ def _risk_contribution_rmse(weights, realized):
 # =============================================================================
 # Rolling-window engine
 # =============================================================================
-# Read-only per-worker state, populated once by _init_worker (avoids pickling the
-# returns frame on every task and works under both 'spawn' and 'fork').
-_WORKER: dict = {}
+
+# Shared read-only data inside each worker process, filled once by init_worker
+# (this avoids sending the full returns DataFrame with every single window)
+worker_data = {}
 
 
-def _init_worker(log_returns, cfg):
-    _WORKER["log_returns"] = log_returns
-    _WORKER["config"] = cfg
+def init_worker(log_returns, train_window, prediction_window):
+    worker_data["log_returns"] = log_returns
+    worker_data["train_window"] = train_window
+    worker_data["prediction_window"] = prediction_window
 
 
+# Entry point for the process pool: runs one window using the worker data
 def process_window(start):
-    """Process-pool entry point: run one window using the worker's shared state."""
-    return run_window(start, _WORKER["log_returns"], _WORKER["config"])
+    return run_window(start, worker_data["log_returns"],
+                      worker_data["train_window"], worker_data["prediction_window"])
 
 
-def run_window(start, log_returns, cfg):
-    """
-    Run one rolling window (pure: data + config in, results out).
+"""
+Runs one rolling window: fits the covariance estimators on the training window,
+builds the portfolios and evaluates them on the test window.
 
-    Returns (per_period, per_period_log, records, dates, weights_info,
-    formation_date, qlike_info, covrmse_info).
-    """
-    tw, pw = cfg.train_window, cfg.prediction_window
-    train = log_returns.iloc[start : start + tw]
-    test  = log_returns.iloc[start + tw : start + tw + pw]
+Returns (per_period, per_period_log, records, dates, weights_info,
+formation_date, qlike_info, covrmse_info).
+"""
+def run_window(start, log_returns, train_window, prediction_window):
+    train = log_returns.iloc[start : start + train_window]
+    test  = log_returns.iloc[start + train_window : start + train_window + prediction_window]
 
-    # Universe is decided from TRAINING information only (no look-ahead into the
-    # test window): assets with >=90% observations in the window and a valid
-    # observation on the last training day (i.e. tradeable at formation time).
+    # The investable universe is decided from TRAINING information only (no
+    # look-ahead into the test window): an asset needs at least 90% observations
+    # in the window and a valid observation on the last training day (i.e. it is
+    # tradeable when the portfolio is formed).
     train = train.loc[:, train.notna().mean() >= 0.9]
     train = train.loc[:, train.iloc[-1].notna()]
     if train.shape[1] == 0 or test.empty:
         return {}, {}, [], [], {}, None, {}, {}
 
-    # same universe in the test window; a missing test return means the asset did
-    # not trade that day, so its return is 0 (we don't drop it after the fact).
+    # Same universe in the test window; a missing test return means the asset
+    # did not trade that day, so its return is 0 (it is not dropped afterwards).
     test = test[train.columns]
-    test_simple = (np.exp(test) - 1).fillna(0.0)
-    # log-return portfolio proxy: the forecast std is sqrt(w'Σw) with Σ the
-    # covariance of LOG returns, so its realized counterpart is the std of the
-    # weighted sum of log returns (same scale -> apples-to-apples calibration).
+    test_simple = (np.exp(test) - 1).fillna(0.0)  # simple returns for the performance
+    # Log returns for the vol-calibration check: the forecast std sqrt(w'Σw)
+    # uses a covariance of LOG returns, so its realized counterpart must be
+    # measured on the same scale.
     test_log = test.fillna(0.0)
 
-    # build the requested covariance matrices; fit GARCH only once and reuse it
+    # Building the requested covariance matrices (the GARCH fit is done only
+    # once and shared between the GARCH and DCC estimators)
     cov_by_method = {}
-    if "Historical" in cfg.cov_methods:
+    if "Historical" in config.COV_METHODS:
         cov_by_method["Historical"] = historical_covariance(train)
-    if "GARCH" in cfg.cov_methods or "DCC" in cfg.cov_methods:
-        variances, std_resid = fit_garch_univariate(
-            train, cfg.prediction_window, cfg.garch_p, cfg.garch_q)
-        if "GARCH" in cfg.cov_methods:
-            cov_by_method["GARCH"] = constant_correlation_covariance(std_resid, variances)
-        if "DCC" in cfg.cov_methods:
-            cov_by_method["DCC"] = dcc_covariance(variances, std_resid,
-                                                  cfg.prediction_window)
+    if "GARCH" in config.COV_METHODS or "DCC" in config.COV_METHODS:
+        variances, std_resid = fit_garch(train, prediction_window,
+                                         config.GARCH_P, config.GARCH_Q)
+        if "GARCH" in config.COV_METHODS:
+            cov_by_method["GARCH"] = garch_covariance(std_resid, variances)
+        if "DCC" in config.COV_METHODS:
+            cov_by_method["DCC"] = dcc_covariance(variances, std_resid, prediction_window)
 
-    # per-step covariance-forecast quality: QLIKE and Frobenius RMSE of each
-    # estimator's matrix against the realized test-window returns (lower is better).
+    # Forecast quality of every covariance matrix against the realized test
+    # returns: QLIKE and Frobenius RMSE (lower is better for both)
     qlike_info = {}
     covrmse_info = {}
     for method, cov in cov_by_method.items():
         if cov is None or cov.shape[1] == 0:
             continue
         realized = test[list(cov.columns)].fillna(0.0).values
-        qlike_info[method] = _qlike(cov.values, realized)
-        covrmse_info[method] = _cov_rmse(cov.values, realized)
+        qlike_info[method] = qlike_loss(cov.values, realized)
+        covrmse_info[method] = cov_rmse(cov.values, realized)
 
-    # historical cov is also used for the naive portfolio's forecast std
+    # the historical covariance is also needed for the naive portfolio's forecast std
     cov_hist_full = cov_by_method.get("Historical")
     if cov_hist_full is None:
         cov_hist_full = historical_covariance(train)
 
-    # list of (model, cov_type, weights, cov) to evaluate
+    # List of all (model, cov_type, weights, cov) combinations to evaluate
     naive_w = naive_weights(train.columns)
     jobs = [("Naive", "N/A", naive_w, cov_hist_full)]
     for method, cov in cov_by_method.items():
         if cov is None or cov.shape[1] == 0:
             continue
-        for model in cfg.models:
+        for model in config.MODELS:
             jobs.append((model, method, get_weights(model, cov), cov))
 
-    per_period = {}                         # name -> simple-return series (performance)
-    per_period_log = {}                     # name -> log-return series (calibration)
+    per_period = {}       # name -> list of simple returns (performance)
+    per_period_log = {}   # name -> list of log returns (vol calibration)
     records = []
-    weights_info = {}                       # name -> (target weights, drifted end weights)
-    formation_date = test.index[0]          # rebalance date for this window
+    weights_info = {}     # name -> (target weights, drifted end-of-window weights)
+    formation_date = test.index[0]  # the rebalancing date of this window
     for model, cov_type, weights, cov in jobs:
         name = "Naive" if model == "Naive" else f"{model} {cov_type}"
         cols = list(weights.index)
-        # buy-and-hold within the window: the weights are set once at formation
-        # and then drift with returns, so day t's portfolio return is V_t/V_{t-1}-1
-        # along the held portfolio's value path (matches the drift-based turnover
-        # below; for prediction_window=1 this is exactly the weighted sum w'r).
+
+        # Buy-and-hold within the window: the weights are set once at formation
+        # and then drift with the returns, so day t's portfolio return is
+        # V_t / V_{t-1} - 1 along the portfolio value path (for
+        # prediction_window = 1 this is exactly the weighted sum w'r).
         value = (1.0 + test_simple[cols]).cumprod(axis=0) @ weights
         prev_value = value.shift(1)
-        prev_value.iloc[0] = float(weights.sum())  # = 1: portfolio value at formation
+        prev_value.iloc[0] = float(weights.sum())  # = 1, the value at formation
         port_returns = value / prev_value - 1.0
         per_period[name] = port_returns.values.tolist()
-        # the calibration proxy keeps FIXED weights on purpose: the forecast std is
-        # sqrt(w'Σw) with the formation weights w, so its realized counterpart is
-        # the weighted sum of log returns with those same fixed weights.
+        # the calibration series keeps FIXED weights on purpose, because the
+        # forecast std is calculated with the formation weights
         per_period_log[name] = (test_log[cols] @ weights).values.tolist()
 
-        # drifted end-of-window weights (for turnover): each asset's start weight
-        # grows with its gross return over the holding window, then renormalise.
+        # Drifted end-of-window weights (needed for the turnover): every start
+        # weight grows with its asset's gross return, then renormalize
         gross = (1.0 + test_simple[cols]).prod(axis=0)
         end_val = weights * gross
         end_weights = end_val / end_val.sum()
@@ -647,15 +647,15 @@ def run_window(start, log_returns, cfg):
 
         w = weights.values
         forecasted_std = float(np.sqrt(w @ cov.loc[cols, cols].values @ w))
-        # ERC quality: realized risk-contribution RMSE from the 1/N target
-        # (out-of-sample; only the ERC objective targets equal risk contributions)
+        # ERC quality: how far the realized risk contributions are from the
+        # equal (1/N) target (only the ERC objective targets equal contributions)
         rc_rmse = np.nan
         if model == "ERC":
-            rc_rmse = _risk_contribution_rmse(w, test[cols].fillna(0.0).values)
+            rc_rmse = risk_contribution_rmse(w, test[cols].fillna(0.0).values)
         records.append({
             "Model": model,
             "Covariance Type": cov_type,
-            "Window Index": start // cfg.prediction_window,
+            "Window Index": start // prediction_window,
             "Mean Return": port_returns.mean(),
             "Forecasted Std": forecasted_std,
             "RC RMSE": rc_rmse,
@@ -664,27 +664,29 @@ def run_window(start, log_returns, cfg):
             formation_date, qlike_info, covrmse_info)
 
 
-def run_backtest(cfg, log_returns, rf, verbose=True):
-    """
-    Run the full rolling-window backtest for ``cfg`` over ``log_returns`` and
-    write the results into ``cfg.output_dir``. ``rf`` is the daily simple
-    risk-free return (aligned to the price dates). Returns the summary DataFrame.
-    """
-    starts = list(range(0, len(log_returns) - cfg.train_window - cfg.prediction_window + 1,
-                        cfg.prediction_window))
+"""
+Runs the full rolling-window backtest for one dataset / window combination and
+writes all result files into the output folder. rf is the daily simple
+risk-free return aligned to the price dates. Returns the summary DataFrame.
+"""
+def run_backtest(dataset, log_returns, rf, train_window, prediction_window, verbose=True):
+    starts = list(range(0, len(log_returns) - train_window - prediction_window + 1,
+                        prediction_window))
     total = len(starts)
 
-    results = {}          # name -> list of simple period returns (performance)
-    results_log = {}      # name -> list of log period returns (vol calibration)
+    results = {}       # name -> list of simple period returns (performance)
+    results_log = {}   # name -> list of log period returns (vol calibration)
     records = []
     period_dates = []
-    weights_hist = {}     # name -> list of (formation_date, target weights) in window order
-    end_hist = {}         # name -> list of drifted end-of-window weights (same order)
-    qlike_hist = []       # list of (formation_date, {cov_type: qlike}) in window order
-    covrmse_hist = []     # list of (formation_date, {cov_type: cov rmse}) in window order
-    with ProcessPoolExecutor(max_workers=cfg.max_workers,
-                             initializer=_init_worker,
-                             initargs=(log_returns, cfg)) as executor:
+    weights_hist = {}  # name -> list of (formation date, target weights) in window order
+    end_hist = {}      # name -> list of drifted end-of-window weights (same order)
+    qlike_hist = []    # list of (formation date, {cov_type: qlike}) in window order
+    covrmse_hist = []  # list of (formation date, {cov_type: cov rmse}) in window order
+
+    # every window is independent, so they are spread over worker processes
+    with ProcessPoolExecutor(max_workers=config.MAX_WORKERS,
+                             initializer=init_worker,
+                             initargs=(log_returns, train_window, prediction_window)) as executor:
         for i, (per_period, per_period_log, recs, dates, winfo, fdate, qinfo, crinfo) in enumerate(
                 executor.map(process_window, starts), start=1):
             records.extend(recs)
@@ -709,7 +711,7 @@ def run_backtest(cfg, log_returns, rf, verbose=True):
         print("No valid rolling windows (train window longer than the data?).")
         return None
 
-    out_dir = cfg.output_dir
+    out_dir = config.output_dir(dataset, train_window, prediction_window)
     os.makedirs(out_dir, exist_ok=True)
     metrics = pd.DataFrame(records)
     metrics.to_csv(f"{out_dir}/backtest_metrics.csv", index=False)
@@ -720,12 +722,12 @@ def run_backtest(cfg, log_returns, rf, verbose=True):
         returns_df.index.name = "Date"
         returns_df.to_csv(f"{out_dir}/returns.csv")
 
-    avg_turnover = _average_turnover(weights_hist, end_hist)
+    avg_turnover = average_turnover(weights_hist, end_hist)
 
-    if cfg.log_weights:
-        _write_weights(weights_hist, f"{out_dir}/weights.csv")
+    if config.LOG_WEIGHTS:
+        write_weights(weights_hist, f"{out_dir}/weights.csv")
 
-    # per-step QLIKE per covariance estimator (rows = rebalance dates) + the average
+    # per-window QLIKE per covariance estimator (rows = rebalance dates) + the average
     avg_qlike = {}
     if qlike_hist:
         qlike_df = pd.DataFrame([{"Date": fdate, **qinfo} for fdate, qinfo in qlike_hist])
@@ -733,7 +735,7 @@ def run_backtest(cfg, log_returns, rf, verbose=True):
         qlike_df.to_csv(f"{out_dir}/qlike.csv")
         avg_qlike = qlike_df.mean().to_dict()
 
-    # per-step Frobenius cov RMSE per covariance estimator + the average
+    # per-window Frobenius cov RMSE per covariance estimator + the average
     avg_covrmse = {}
     if covrmse_hist:
         covrmse_df = pd.DataFrame([{"Date": fdate, **crinfo} for fdate, crinfo in covrmse_hist])
@@ -741,15 +743,15 @@ def run_backtest(cfg, log_returns, rf, verbose=True):
         covrmse_df.to_csv(f"{out_dir}/cov_rmse.csv")
         avg_covrmse = covrmse_df.mean().to_dict()
 
-    summary = _build_summary(results, results_log, metrics, period_dates, rf, avg_turnover,
-                             avg_qlike, avg_covrmse)
+    summary = build_summary(results, results_log, metrics, period_dates, rf, avg_turnover,
+                            avg_qlike, avg_covrmse)
     summary.to_csv(f"{out_dir}/summary.csv", index=False)
     if verbose:
         print("Annualized performance summary:")
         print(summary.to_string(index=False))
 
     if any(results.values()):
-        _plot_portfolio_value(results, period_dates, f"{out_dir}/Simulation.png")
+        plot_portfolio_value(results, period_dates, f"{out_dir}/Simulation.png")
 
     return summary
 
@@ -758,12 +760,12 @@ def run_backtest(cfg, log_returns, rf, verbose=True):
 # Result assembly helpers
 # =============================================================================
 
-def _average_turnover(weights_hist, end_hist):
-    """
-    Average turnover per strategy: at each rebalance, how much weight is traded to
-    go from the previous window's drifted weights to the new target weights (sum of
-    absolute weight changes = buys + sells, over the union of both universes).
-    """
+"""
+Average turnover per strategy: at every rebalance, how much weight is traded to
+get from the previous window's drifted weights to the new target weights (sum
+of the absolute weight changes = buys + sells, over the union of both universes).
+"""
+def average_turnover(weights_hist, end_hist):
     avg_turnover = {}
     for name, hist in weights_hist.items():
         ends = end_hist[name]
@@ -777,8 +779,11 @@ def _average_turnover(weights_hist, end_hist):
     return avg_turnover
 
 
-def _write_weights(weights_hist, path):
-    """Per-window target weights in long format (Date, Model, Covariance, Asset, Weight)."""
+"""
+Writes the per-window target weights in long format
+(Date, Model, Covariance Type, Asset, Weight).
+"""
+def write_weights(weights_hist, path):
     weight_rows = []
     for name, hist in weights_hist.items():
         model, cov_type = ("Naive", "N/A") if name == "Naive" else name.rsplit(" ", 1)
@@ -790,10 +795,16 @@ def _write_weights(weights_hist, path):
     pd.DataFrame(weight_rows).to_csv(path, index=False)
 
 
-def _build_summary(results, results_log, metrics, period_dates, rf, avg_turnover, avg_qlike, avg_covrmse):
-    # average forecast (annualised) std per model/cov type
+"""
+Builds the summary table: one row per strategy with the annualized performance
+metrics, the forecast-vs-realized vol calibration, the covariance losses and
+the average turnover.
+"""
+def build_summary(results, results_log, metrics, period_dates, rf, avg_turnover,
+                  avg_qlike, avg_covrmse):
+    # average forecast (annualized) std per model / covariance type
     avg_fcst = metrics.groupby(["Model", "Covariance Type"])["Forecasted Std"].mean() * np.sqrt(252)
-    # average ERC risk-contribution RMSE per model/cov type (NaN for non-ERC)
+    # average ERC risk-contribution RMSE per model / covariance type (NaN for non-ERC)
     avg_rc = metrics.groupby(["Model", "Covariance Type"])["RC RMSE"].mean()
     # daily risk-free return aligned to the evaluated dates (same order as results)
     rf_aligned = rf.reindex(pd.to_datetime(period_dates)).fillna(0.0).values
@@ -809,19 +820,17 @@ def _build_summary(results, results_log, metrics, period_dates, rf, avg_turnover
         row["Model"] = model
         row["Covariance Type"] = cov_type
         row["Ann. Std (fcst)"] = fcst
-        # Calibration ratio: realized vs forecast vol on the SAME (log) scale the
-        # model forecasts. The forecast is sqrt(w'Σw) with Σ a LOG-return covariance,
-        # so we compare it to the realized vol of the log-return portfolio proxy
-        # (not the simple-return Ann. Std, which is the performance vol). For daily
-        # data the two realized vols differ negligibly; this just makes it exact.
+        # Calibration ratio: realized vs forecast vol on the SAME (log) scale
+        # that the model forecasts on. For daily data the log and simple vols
+        # differ only negligibly, this just makes the comparison exact.
         log_rets = np.asarray(results_log.get(name, []))
         real_std_log = log_rets.std(ddof=1) * np.sqrt(252) if log_rets.size > 1 else np.nan
         row["Real / Fcst Std"] = real_std_log / fcst if (fcst and fcst > 0) else np.nan
-        # QLIKE and cov RMSE are properties of the covariance matrix; Naive uses the historical one
+        # QLIKE and cov RMSE belong to the covariance matrix; Naive uses the historical one
         cov_key = "Historical" if cov_type == "N/A" else cov_type
         row["Avg QLIKE"] = avg_qlike.get(cov_key, np.nan)
         row["Avg Cov RMSE"] = avg_covrmse.get(cov_key, np.nan)
-        # ERC risk-contribution RMSE (NaN for non-ERC models)
+        # ERC risk-contribution RMSE (NaN for the other models)
         row["ERC RC RMSE"] = avg_rc.get((model, cov_type), np.nan)
         row["Avg Turnover"] = avg_turnover.get(name, np.nan)
         summary_rows.append(row)
@@ -833,9 +842,12 @@ def _build_summary(results, results_log, metrics, period_dates, rf, avg_turnover
     return pd.DataFrame(summary_rows).sort_values(["Model", "Covariance Type"])[col_order]
 
 
-def _plot_portfolio_value(results, period_dates, path):
+"""
+Plots the portfolio value (start = 100) of every strategy over time.
+"""
+def plot_portfolio_value(results, period_dates, path):
     import matplotlib
-    matplotlib.use("Agg")  # headless-safe; the plot is built in the main process only
+    matplotlib.use("Agg")  # rendering without a display
     import matplotlib.pyplot as plt
 
     x_axis = pd.to_datetime(period_dates)
@@ -853,10 +865,6 @@ def _plot_portfolio_value(results, period_dates, path):
     plt.close(fig)
 
 
-# =============================================================================
-# Entry point lives in main.py (it holds the datasets/horizons to run).
-# =============================================================================
-
 if __name__ == "__main__":
-    print("This is the engine module. Run `python main.py` to start a backtest "
-          "(edit the SETTINGS block at the top of main.py to choose datasets/horizons).")
+    print("This file only contains the backtest engine. Run `python main.py` to "
+          "start a backtest (the settings are at the top of main.py).")
