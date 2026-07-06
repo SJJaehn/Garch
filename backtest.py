@@ -616,6 +616,25 @@ def run_window(start, log_returns, train_window, prediction_window):
         for model in config.MODELS:
             jobs.append((model, method, get_weights(model, cov), cov))
 
+    # Weights the models would have chosen with hindsight: the same weighting
+    # scheme run on the realized covariance of the prediction window (the same
+    # uncentered proxy S = R'R/pw that QLIKE uses). Cached per (model, universe)
+    # because the result is identical for every forecast covariance. Note that
+    # for prediction_window=1 S has rank 1, so these weights are very noisy and
+    # the L1 distance is only meaningful relative to the other estimators.
+    realized_weights_cache = {}
+    def realized_weights(model, cols):
+        key = (model, tuple(cols))
+        if key not in realized_weights_cache:
+            R = test[cols].fillna(0.0).values
+            S = R.T @ R / R.shape[0] + np.eye(len(cols)) * 1e-8
+            S = pd.DataFrame(S, index=cols, columns=cols)
+            try:
+                realized_weights_cache[key] = get_weights(model, S)
+            except Exception:
+                realized_weights_cache[key] = None
+        return realized_weights_cache[key]
+
     per_period = {}       # name -> list of simple returns (performance)
     per_period_log = {}   # name -> list of log returns (vol calibration)
     records = []
@@ -652,6 +671,15 @@ def run_window(start, log_returns, train_window, prediction_window):
         rc_rmse = np.nan
         if model == "ERC":
             rc_rmse = risk_contribution_rmse(w, test[cols].fillna(0.0).values)
+        # L1 distance ||w_real - w_forecast||_1 between the traded weights and
+        # the weights the same model would have chosen with the realized
+        # covariance of the prediction window (NaN for Naive, which does not
+        # estimate its weights from a covariance)
+        l1_dist = np.nan
+        if model != "Naive":
+            real_w = realized_weights(model, cols)
+            if real_w is not None and not real_w.isna().any():
+                l1_dist = float(np.abs(weights - real_w).sum())
         records.append({
             "Model": model,
             "Covariance Type": cov_type,
@@ -659,6 +687,7 @@ def run_window(start, log_returns, train_window, prediction_window):
             "Mean Return": port_returns.mean(),
             "Forecasted Std": forecasted_std,
             "RC RMSE": rc_rmse,
+            "L1 Weight Dist": l1_dist,
         })
     return (per_period, per_period_log, records, list(test.index), weights_info,
             formation_date, qlike_info, covrmse_info)
@@ -806,6 +835,8 @@ def build_summary(results, results_log, metrics, period_dates, rf, avg_turnover,
     avg_fcst = metrics.groupby(["Model", "Covariance Type"])["Forecasted Std"].mean() * np.sqrt(252)
     # average ERC risk-contribution RMSE per model / covariance type (NaN for non-ERC)
     avg_rc = metrics.groupby(["Model", "Covariance Type"])["RC RMSE"].mean()
+    # average L1 distance to the realized-covariance weights (NaN for Naive)
+    avg_l1 = metrics.groupby(["Model", "Covariance Type"])["L1 Weight Dist"].mean()
     # daily risk-free return aligned to the evaluated dates (same order as results)
     rf_aligned = rf.reindex(pd.to_datetime(period_dates)).fillna(0.0).values
 
@@ -832,11 +863,14 @@ def build_summary(results, results_log, metrics, period_dates, rf, avg_turnover,
         row["Avg Cov RMSE"] = avg_covrmse.get(cov_key, np.nan)
         # ERC risk-contribution RMSE (NaN for the other models)
         row["ERC RC RMSE"] = avg_rc.get((model, cov_type), np.nan)
+        # L1 distance to the hindsight weights of the same model (NaN for Naive)
+        row["Avg L1 Dist"] = avg_l1.get((model, cov_type), np.nan)
         row["Avg Turnover"] = avg_turnover.get(name, np.nan)
         summary_rows.append(row)
 
     col_order = ["Model", "Covariance Type", "Ann. Return", "Ann. Std", "Ann. Std (fcst)",
-                 "Real / Fcst Std", "Avg QLIKE", "Avg Cov RMSE", "ERC RC RMSE", "Avg Turnover",
+                 "Real / Fcst Std", "Avg QLIKE", "Avg Cov RMSE", "ERC RC RMSE", "Avg L1 Dist",
+                 "Avg Turnover",
                  "Ann. Sharpe", "Ann. Sharpe (rf=0)", "Ann. Sortino", "Max Drawdown", "Calmar Ratio", "CVaR (95%)",
                  "Skewness", "Excess Kurtosis"]
     return pd.DataFrame(summary_rows).sort_values(["Model", "Covariance Type"])[col_order]
