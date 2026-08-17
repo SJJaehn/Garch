@@ -460,9 +460,15 @@ def calculate_summary_metrics(daily_returns, rf_daily=0.0):
 
 """
 Multivariate QLIKE loss of a forecast covariance H against the realized returns
-of the test window (Patton 2011; Laurent et al. 2012):
+of the test window (Patton 2011; Laurent, Rombouts & Violante 2012):
 
     QLIKE = log|H| + tr(H^{-1} S),   S = (1/pw) * sum_t r_t r_t'
+
+This is the Stein loss L_S of Laurent, Rombouts & Violante (their eq. 16),
+tr(H^{-1}S) - log|H^{-1}S| - N, minus the -log|S| - N term: that term depends
+only on the proxy and not on H, so it cancels in every forecast comparison and
+the ranking is identical. The Stein loss is implied by the Wishart density,
+scale invariant and asymmetric (it penalizes under-prediction more heavily).
 
 S is the realized second-moment proxy of the test-window log returns. In
 expectation the loss is minimized when H equals the true covariance, so a lower
@@ -485,23 +491,31 @@ def qlike_loss(cov, realized):
 
 
 """
-Frobenius RMSE between a forecast covariance H and the realized second-moment
-proxy S of the test window (Patton & Sheppard 2009):
+MSE between a forecast covariance H and the realized second-moment proxy
+S = (1/pw) * sum_t r_t r_t' of the test window:
 
-    Cov RMSE = sqrt( mean_ij (H_ij - S_ij)^2 )
+    Cov MSE = mean_ij (H_ij - S_ij)^2
 
-This is the typical per-element error of the forecast, lower is better. The
-proxy S is noisy for short test windows, but its expected value is the true
-covariance, so the noise averages out across the windows and the level stays
-comparable between the estimators.
+This is the Frobenius loss L_F of Laurent, Rombouts & Violante (their eq. 15),
+Tr[(S - H)'(S - H)], divided by N^2. It runs over all N^2 entries, so the
+off-diagonal covariance errors are double counted relative to the variance
+errors (their Euclidean loss L_E instead uses vech and counts each unique entry
+once). L_F is the matrix extension of the MSE and is implied by the matrix
+Normal likelihood.
+
+Like QLIKE, MSE belongs to Patton's (2011) class of "robust" loss functions:
+S is a noisy but unbiased proxy of the true covariance, and with a robust loss
+the ranking of the estimators is not distorted by that noise. Taking the square
+root per window first (RMSE) would leave this class, so the averaged RMSE could
+rank the estimators incorrectly. Lower is better.
 """
-def cov_rmse(cov, realized):
+def cov_mse(cov, realized):
     H = np.asarray(cov, dtype=float)
     R = np.asarray(realized, dtype=float)
     if H.shape[0] == 0 or R.shape[0] == 0:
         return np.nan
     S = R.T @ R / R.shape[0]
-    return float(np.sqrt(np.mean((H - S) ** 2)))
+    return float(np.mean((H - S) ** 2))
 
 
 """
@@ -554,7 +568,7 @@ Runs one rolling window: fits the covariance estimators on the training window,
 builds the portfolios and evaluates them on the test window.
 
 Returns (per_period, per_period_log, records, dates, weights_info,
-formation_date, qlike_info, covrmse_info).
+formation_date, qlike_info, covmse_info).
 """
 def run_window(start, log_returns, train_window, prediction_window):
     train = log_returns.iloc[start : start + train_window]
@@ -592,15 +606,15 @@ def run_window(start, log_returns, train_window, prediction_window):
             cov_by_method["DCC"] = dcc_covariance(variances, std_resid, prediction_window)
 
     # Forecast quality of every covariance matrix against the realized test
-    # returns: QLIKE and Frobenius RMSE (lower is better for both)
+    # returns: QLIKE and covariance MSE (lower is better for both)
     qlike_info = {}
-    covrmse_info = {}
+    covmse_info = {}
     for method, cov in cov_by_method.items():
         if cov is None or cov.shape[1] == 0:
             continue
         realized = test[list(cov.columns)].fillna(0.0).values
         qlike_info[method] = qlike_loss(cov.values, realized)
-        covrmse_info[method] = cov_rmse(cov.values, realized)
+        covmse_info[method] = cov_mse(cov.values, realized)
 
     # the historical covariance is also needed for the naive portfolio's forecast std
     cov_hist_full = cov_by_method.get("Historical")
@@ -690,7 +704,7 @@ def run_window(start, log_returns, train_window, prediction_window):
             "L1 Weight Dist": l1_dist,
         })
     return (per_period, per_period_log, records, list(test.index), weights_info,
-            formation_date, qlike_info, covrmse_info)
+            formation_date, qlike_info, covmse_info)
 
 
 """
@@ -710,7 +724,7 @@ def run_backtest(dataset, log_returns, rf, train_window, prediction_window, verb
     weights_hist = {}  # name -> list of (formation date, target weights) in window order
     end_hist = {}      # name -> list of drifted end-of-window weights (same order)
     qlike_hist = []    # list of (formation date, {cov_type: qlike}) in window order
-    covrmse_hist = []  # list of (formation date, {cov_type: cov rmse}) in window order
+    covmse_hist = []   # list of (formation date, {cov_type: cov mse}) in window order
 
     # every window is independent, so they are spread over worker processes
     with ProcessPoolExecutor(max_workers=config.MAX_WORKERS,
@@ -730,7 +744,7 @@ def run_backtest(dataset, log_returns, rf, train_window, prediction_window, verb
             if qinfo:
                 qlike_hist.append((fdate, qinfo))
             if crinfo:
-                covrmse_hist.append((fdate, crinfo))
+                covmse_hist.append((fdate, crinfo))
             if verbose:
                 print(f"\r{i}/{total} windows completed", end="", flush=True)
     if verbose:
@@ -764,16 +778,16 @@ def run_backtest(dataset, log_returns, rf, train_window, prediction_window, verb
         qlike_df.to_csv(f"{out_dir}/qlike.csv")
         avg_qlike = qlike_df.mean().to_dict()
 
-    # per-window Frobenius cov RMSE per covariance estimator + the average
-    avg_covrmse = {}
-    if covrmse_hist:
-        covrmse_df = pd.DataFrame([{"Date": fdate, **crinfo} for fdate, crinfo in covrmse_hist])
-        covrmse_df = covrmse_df.set_index("Date").sort_index()
-        covrmse_df.to_csv(f"{out_dir}/cov_rmse.csv")
-        avg_covrmse = covrmse_df.mean().to_dict()
+    # per-window covariance MSE per covariance estimator + the average
+    avg_covmse = {}
+    if covmse_hist:
+        covmse_df = pd.DataFrame([{"Date": fdate, **crinfo} for fdate, crinfo in covmse_hist])
+        covmse_df = covmse_df.set_index("Date").sort_index()
+        covmse_df.to_csv(f"{out_dir}/cov_mse.csv")
+        avg_covmse = covmse_df.mean().to_dict()
 
     summary = build_summary(results, results_log, metrics, period_dates, rf, avg_turnover,
-                            avg_qlike, avg_covrmse)
+                            avg_qlike, avg_covmse)
     summary.to_csv(f"{out_dir}/summary.csv", index=False)
     if verbose:
         print("Annualized performance summary:")
@@ -830,7 +844,7 @@ metrics, the forecast-vs-realized vol calibration, the covariance losses and
 the average turnover.
 """
 def build_summary(results, results_log, metrics, period_dates, rf, avg_turnover,
-                  avg_qlike, avg_covrmse):
+                  avg_qlike, avg_covmse):
     # average forecast (annualized) std per model / covariance type
     avg_fcst = metrics.groupby(["Model", "Covariance Type"])["Forecasted Std"].mean() * np.sqrt(252)
     # average ERC risk-contribution RMSE per model / covariance type (NaN for non-ERC)
@@ -857,10 +871,10 @@ def build_summary(results, results_log, metrics, period_dates, rf, avg_turnover,
         log_rets = np.asarray(results_log.get(name, []))
         real_std_log = log_rets.std(ddof=1) * np.sqrt(252) if log_rets.size > 1 else np.nan
         row["Real / Fcst Std"] = real_std_log / fcst if (fcst and fcst > 0) else np.nan
-        # QLIKE and cov RMSE belong to the covariance matrix; Naive uses the historical one
+        # QLIKE and cov MSE belong to the covariance matrix; Naive uses the historical one
         cov_key = "Historical" if cov_type == "N/A" else cov_type
         row["Avg QLIKE"] = avg_qlike.get(cov_key, np.nan)
-        row["Avg Cov RMSE"] = avg_covrmse.get(cov_key, np.nan)
+        row["Avg Cov MSE"] = avg_covmse.get(cov_key, np.nan)
         # ERC risk-contribution RMSE (NaN for the other models)
         row["ERC RC RMSE"] = avg_rc.get((model, cov_type), np.nan)
         # L1 distance to the hindsight weights of the same model (NaN for Naive)
@@ -869,7 +883,7 @@ def build_summary(results, results_log, metrics, period_dates, rf, avg_turnover,
         summary_rows.append(row)
 
     col_order = ["Model", "Covariance Type", "Ann. Return", "Ann. Std", "Ann. Std (fcst)",
-                 "Real / Fcst Std", "Avg QLIKE", "Avg Cov RMSE", "ERC RC RMSE", "Avg L1 Dist",
+                 "Real / Fcst Std", "Avg QLIKE", "Avg Cov MSE", "ERC RC RMSE", "Avg L1 Dist",
                  "Avg Turnover",
                  "Ann. Sharpe", "Ann. Sharpe (rf=0)", "Ann. Sortino", "Max Drawdown", "Calmar Ratio", "CVaR (95%)",
                  "Skewness", "Excess Kurtosis"]

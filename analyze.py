@@ -4,7 +4,8 @@ Analyzes the backtest results in Ergebnisse/.
   Part 1 - per-run time-series charts (rolling/cumulative Sharpe, portfolio
            value) plus bar charts (Sharpe and realized vola per model x
            covariance type, QLIKE per covariance type), saved into each
-           backtest folder.
+           backtest folder, together with sharpe_tests.csv (pairwise
+           significance of the Sharpe differences, Jobson-Korkie / Memmel).
   Part 2 - collects every summary.csv into one Excel table and draws overview
            charts under Ergebnisse/Zusammenfassung/.
 
@@ -18,6 +19,8 @@ file name) and once with the returns in excess of the Fed Funds series
     python analyze.py
 """
 import glob
+import itertools
+import math
 import os
 import re
 
@@ -74,6 +77,49 @@ def ann_sharpe(ret, rf=None):
     if rf is not None:
         ret = ret.sub(rf, axis=0)
     return (ret.mean() * 252) / (ret.std(ddof=1) * np.sqrt(252))
+
+
+"""
+Jobson-Korkie test with Memmel's (2003) correction for the difference between
+the Sharpe ratios of two return series measured on the same sample. a and b are
+aligned numpy arrays of the daily (excess) returns being compared. Returns the
+z-statistic and the two-sided p-value; the correction accounts for the
+correlation between the two series, so it is valid for comparing strategies
+backtested on the same dates. Annualization cancels out of the ratio difference
+and is irrelevant here.
+"""
+def sharpe_diff_test(a, b):
+    n = len(a)
+    sr_a = a.mean() / a.std(ddof=1)
+    sr_b = b.mean() / b.std(ddof=1)
+    corr = np.corrcoef(a, b)[0, 1]
+    theta = (1.0 / n) * (2 - 2 * corr
+                         + 0.5 * (sr_a ** 2 + sr_b ** 2 - 2 * sr_a * sr_b * corr ** 2))
+    z = (sr_a - sr_b) / math.sqrt(theta)
+    p = math.erfc(abs(z) / math.sqrt(2))
+    return z, p
+
+
+"""
+Pairwise Sharpe-ratio significance table for one run: every pair of portfolios
+(columns of ret) is compared with sharpe_diff_test, keeping only the dates both
+series cover. The Sharpes use returns in excess of the daily risk-free rate, so
+they match the Ann. Sharpe column and the *_rf charts. Returns a DataFrame with
+the two annualized Sharpes, their difference and the test, sorted so the most
+significant pairs come first.
+"""
+def sharpe_significance(ret):
+    exc = ret.sub(rf_daily(ret.index), axis=0)
+    sharpe = ann_sharpe(exc)
+    rows = []
+    for a, b in itertools.combinations(exc.columns, 2):
+        pair = exc[[a, b]].dropna()
+        z, p = sharpe_diff_test(pair[a].values, pair[b].values)
+        rows.append({"Option A": a, "Option B": b,
+                     "Sharpe A": sharpe[a], "Sharpe B": sharpe[b],
+                     "Diff (A-B)": sharpe[a] - sharpe[b],
+                     "z-stat": z, "p-value": p, "Obs": len(pair)})
+    return pd.DataFrame(rows).sort_values("p-value").reset_index(drop=True)
 
 
 # =============================================================================
@@ -211,6 +257,9 @@ def per_combo_charts():
             if not q.empty:
                 plot_cov_bar(q.mean(), "Durchschnittlicher QLIKE", f"{folder}/qlike_bar.png",
                              f"Durchschnittlicher QLIKE – {combo}{frame}")
+
+        # pairwise significance of the Sharpe differences shown in sharpe_bar_rf.png
+        sharpe_significance(ret).to_csv(f"{folder}/sharpe_tests.csv", index=False)
         print(f"charts: {combo}")
 
 

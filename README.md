@@ -55,7 +55,7 @@ A single backtest is just a one-entry grid in `main.py`, e.g.
 
 Each backtest writes to `Ergebnisse/<dataset>/<train>_<pred>/`:
 `returns.csv`, `backtest_metrics.csv`, `summary.csv`, `qlike.csv`,
-`cov_rmse.csv`, `weights.csv` (optional), and `Simulation.png`. `analyze.py`
+`cov_mse.csv`, `weights.csv` (optional), and `Simulation.png`. `analyze.py`
 adds per-run charts and an aggregate Excel table + overview charts under
 `Ergebnisse/Zusammenfassung/`.
 

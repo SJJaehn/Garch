@@ -15,7 +15,7 @@ settings) that backtest.py, analyze.py and datagen.py import.
 # training window and prediction window (in trading days, 252 = one year).
 
 RUN_DATASETS  = ["TRBC"]                      # keys of DATASETS below, e.g. ["TRBC", "Dow", "SP500"]
-TRAIN_WINDOWS = [1008, 1260, 1512, 1764, 2016, 2268, 2520, 252, 504, 756]  # 252, 504, ..., 2520 trading days
+TRAIN_WINDOWS = [1260]  # 252, 504, ..., 2520 trading days
 PRED_WINDOWS  = [1, 5, 10, 21]                # forecast horizon(s) in days
 MAX_WORKERS   = 6             # number of parallel worker processes
 
