@@ -1,0 +1,29 @@
+% automatisch erzeugt von paper/tabellen.py -- nicht von Hand editieren
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \begin{tabular}{llrrrrr}
+    \toprule
+    Modell & Kovarianz & Turnover & 0 Bp. & 5 Bp. & 10 Bp. & 20 Bp. \\
+    \midrule
+    MVP & Historisch & 0,008 & 0,695 & 0,688 & 0,680 & 0,666 \\
+    MVP & GARCH & 0,258 & 0,658 & 0,425 & 0,192 & -0,274 \\
+    MVP & DCC-GARCH & 0,255 & 0,671 & 0,438 & 0,205 & -0,261 \\
+    \midrule
+    HRP & Historisch & 0,012 & 0,614 & 0,605 & 0,595 & 0,577 \\
+    HRP & GARCH & 0,072 & 0,611 & 0,555 & 0,499 & 0,388 \\
+    HRP & DCC-GARCH & 0,094 & 0,622 & 0,548 & 0,474 & 0,327 \\
+    \midrule
+    ERC & Historisch & 0,006 & 0,601 & 0,596 & 0,592 & 0,584 \\
+    ERC & GARCH & 0,034 & 0,592 & 0,568 & 0,543 & 0,494 \\
+    ERC & DCC-GARCH & 0,034 & 0,591 & 0,567 & 0,542 & 0,492 \\
+    \midrule
+    1/N & -- & 0,006 & 0,581 & 0,577 & 0,573 & 0,565 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Sharpe Ratios nach proportionalen Transaktionskosten (Basisfall)}
+  \label{tab:transaktionskosten}
+  \begin{minipage}{\linewidth}\vspace{0.4em}\centering\footnotesize
+  Sharpe Ratio ($r_f=0$) nach Abzug von $c$ Basispunkten auf das je Rebalancierung umgeschlagene Volumen.
+  \end{minipage}
+\end{table}

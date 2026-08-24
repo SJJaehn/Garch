@@ -1,0 +1,39 @@
+% automatisch erzeugt von paper/tabellen.py -- nicht von Hand editieren
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \begin{tabular}{lrrrrrrrr}
+    \toprule
+    Datensatz & Training & $N$ & \multicolumn{2}{c}{QLIKE} & \multicolumn{2}{c}{MSE ($\times 10^{-8}$)} & \multicolumn{2}{c}{Sharpe MVP} \\
+    \cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}
+     & & & Hist. & $\Delta$ DCC & Hist. & DCC & Hist. & DCC \\
+    \midrule
+    GARCH-Sim. & 252 & 20 & -154,1 & -2,09 & 7,03 & 6,90 & 1,110 & 0,973 \\
+     & 504 & 20 & -154,3 & -2,68 & 7,03 & 6,87 & 1,073 & 0,986 \\
+     & 756 & 20 & -154,4 & -2,83 & 7,02 & 6,86 & 0,942 & 0,956 \\
+     & 1008 & 20 & -154,4 & -2,90 & 7,02 & 6,86 & 0,870 & 0,936 \\
+     & 1260 & 20 & -154,6 & -2,82 & 7,02 & 6,86 & 0,828 & 0,923 \\
+     & 1512 & 20 & -154,7 & -2,79 & 7,02 & 6,86 & 0,840 & 0,921 \\
+     & 1764 & 20 & -154,6 & -2,83 & 7,02 & 6,85 & 0,832 & 0,905 \\
+     & 2016 & 20 & -154,6 & -2,89 & 7,02 & 6,85 & 0,847 & 0,907 \\
+     & 2268 & 20 & -154,7 & -2,85 & 7,02 & 6,85 & 0,840 & 0,899 \\
+     & 2520 & 20 & -154,7 & -2,83 & 7,02 & 6,85 & 0,837 & 0,896 \\
+    \midrule
+    DCC-Sim. & 252 & 20 & -156,1 & -4,14 & 10,06 & 9,27 & 0,898 & 1,021 \\
+     & 504 & 20 & -154,9 & -6,62 & 10,13 & 9,22 & 1,041 & 1,072 \\
+     & 756 & 20 & -154,5 & -7,46 & 10,16 & 9,21 & 1,008 & 1,020 \\
+     & 1008 & 20 & -154,2 & -7,89 & 10,15 & 9,20 & 1,032 & 1,010 \\
+     & 1260 & 20 & -154,1 & -8,09 & 10,16 & 9,20 & 1,042 & 0,996 \\
+     & 1512 & 20 & -154,1 & -8,19 & 10,16 & 9,20 & 0,997 & 1,010 \\
+     & 1764 & 20 & -154,1 & -8,29 & 10,18 & 9,19 & 0,941 & 0,992 \\
+     & 2016 & 20 & -154,0 & -8,42 & 10,18 & 9,19 & 0,983 & 0,995 \\
+     & 2268 & 20 & -153,9 & -8,50 & 10,19 & 9,19 & 1,001 & 0,996 \\
+     & 2520 & 20 & -153,9 & -8,53 & 10,19 & 9,20 & 0,996 & 1,002 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Synthetische Validierung: Stabilität über die Trainingsfenster}
+  \label{tab:synth_stabilitaet}
+  \begin{minipage}{\linewidth}\vspace{0.4em}\centering\footnotesize
+  Bewertet ab 01.01.2010; das Universum ist mit 20 Anlagen konstant.
+  \end{minipage}
+\end{table}

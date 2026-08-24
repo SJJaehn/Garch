@@ -1,0 +1,25 @@
+% automatisch erzeugt von paper/tabellen.py -- nicht von Hand editieren
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \begin{tabular}{lrrr@{}lr}
+    \toprule
+    Vergleich & $\varnothing\,\Delta$ Verlust & $t$-Statistik & \multicolumn{2}{c}{$p$-Wert} & Termine \\
+    \midrule
+    \multicolumn{6}{l}{\textit{QLIKE}} \\
+    \quad GARCH vs.\ Historisch & -2,563 & -4,18 & $<$0,001 & $^{***}$ & 6013 \\
+    \quad DCC-GARCH vs.\ Historisch & -3,308 & -5,28 & $<$0,001 & $^{***}$ & 6013 \\
+    \quad DCC-GARCH vs.\ GARCH & -0,744 & -13,86 & $<$0,001 & $^{***}$ & 6079 \\
+    \midrule
+    \multicolumn{6}{l}{\textit{MSE ($\times 10^{-7}$)}} \\
+    \quad GARCH vs.\ Historisch & -0,764 & -2,23 & 0,026 & $^{**}$ & 6079 \\
+    \quad DCC-GARCH vs.\ Historisch & -0,846 & -2,11 & 0,035 & $^{**}$ & 6079 \\
+    \quad DCC-GARCH vs.\ GARCH & -0,082 & -1,26 & 0,207 &  & 6079 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Diebold-Mariano-West-Tests auf die Verlustdifferenzen (Basisfall)}
+  \label{tab:dmw}
+  \begin{minipage}{\linewidth}\vspace{0.4em}\centering\footnotesize
+  Negative Differenzen bedeuten, dass der erstgenannte Schätzer besser prognostiziert; $^{***}$, $^{**}$, $^{*}$ = 1-, 5-, 10-\%-Niveau.
+  \end{minipage}
+\end{table}

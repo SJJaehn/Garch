@@ -1,0 +1,1871 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.2 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{apa/apasortcite//global/global}
+    \entry{ardia2017}{article}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=3192f39cd690dc23d8034afe17d83f86}{%
+           family={Ardia},
+           familyi={A\bibinitperiod},
+           given={David},
+           giveni={D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=0b0112ec24b60a382309047164b20230}{%
+           family={Bolliger},
+           familyi={B\bibinitperiod},
+           given={Guido},
+           giveni={G\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=c8565698678051e17eea0f9e76d4159d}{%
+           family={Boudt},
+           familyi={B\bibinitperiod},
+           given={Kris},
+           giveni={K\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=b106ebfc8194cb7ff0816ba7c3cb94f2}{%
+           family={Gagnon-Fleury},
+           familyi={G\bibinithyphendelim F\bibinitperiod},
+           given={Jean-Philippe},
+           giveni={J\bibinithyphendelim P\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{b51bdf96966d100cedf94f7b312c1836}
+      \strng{fullhash}{1f0f41fc7a5d07521d88424f3971b7a6}
+      \strng{bibnamehash}{1f0f41fc7a5d07521d88424f3971b7a6}
+      \strng{authorbibnamehash}{1f0f41fc7a5d07521d88424f3971b7a6}
+      \strng{authornamehash}{b51bdf96966d100cedf94f7b312c1836}
+      \strng{authorfullhash}{1f0f41fc7a5d07521d88424f3971b7a6}
+      \field{sortinit}{A}
+      \field{sortinithash}{2f401846e2029bad6b3ecc16d50031e2}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Annals of Operations Research}
+      \field{number}{1--2}
+      \field{title}{The impact of covariance misspecification in risk-based portfolios}
+      \field{volume}{254}
+      \field{year}{2017}
+      \field{pages}{1\bibrangedash 16}
+      \range{pages}{16}
+      \verb{doi}
+      \verb 10.1007/s10479-017-2474-7
+      \endverb
+    \endentry
+    \entry{behr2008}{report}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=713b4e2c0de03cfba87ba9e21c754eb8}{%
+           family={Behr},
+           familyi={B\bibinitperiod},
+           given={Patrick},
+           giveni={P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=527a735a2d152a3ee80e7ed2e8d66f66}{%
+           family={Güttler},
+           familyi={G\bibinitperiod},
+           given={Andre},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=b37633fcb8a833477c6746582be6de10}{%
+           family={Miebs},
+           familyi={M\bibinitperiod},
+           given={Felix},
+           giveni={F\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{institution}{1}{%
+        {EDHEC-Risk Institute}%
+      }
+      \strng{namehash}{8e0108385024302fd2ab328bed41e0ab}
+      \strng{fullhash}{ff46fbe433b5f4bf0421ffc51ca7a80d}
+      \strng{bibnamehash}{ff46fbe433b5f4bf0421ffc51ca7a80d}
+      \strng{authorbibnamehash}{ff46fbe433b5f4bf0421ffc51ca7a80d}
+      \strng{authornamehash}{8e0108385024302fd2ab328bed41e0ab}
+      \strng{authorfullhash}{ff46fbe433b5f4bf0421ffc51ca7a80d}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Is minimum-variance investing really worth the while? An analysis with robust performance inference}
+      \field{type}{techreport}
+      \field{year}{2008}
+      \verb{urlraw}
+      \verb https://www.cfr-cologne.de/download/kolloquium/2009/behr_et_al.pdf
+      \endverb
+      \verb{url}
+      \verb https://www.cfr-cologne.de/download/kolloquium/2009/behr_et_al.pdf
+      \endverb
+    \endentry
+    \entry{bollerslev1986}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=39f8f5a428abd62057a0152546172106}{%
+           family={Bollerslev},
+           familyi={B\bibinitperiod},
+           given={Tim},
+           giveni={T\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{39f8f5a428abd62057a0152546172106}
+      \strng{fullhash}{39f8f5a428abd62057a0152546172106}
+      \strng{bibnamehash}{39f8f5a428abd62057a0152546172106}
+      \strng{authorbibnamehash}{39f8f5a428abd62057a0152546172106}
+      \strng{authornamehash}{39f8f5a428abd62057a0152546172106}
+      \strng{authorfullhash}{39f8f5a428abd62057a0152546172106}
+      \field{extraname}{1}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Econometrics}
+      \field{number}{3}
+      \field{title}{Generalized autoregressive conditional heteroskedasticity}
+      \field{volume}{31}
+      \field{year}{1986}
+      \field{pages}{307\bibrangedash 327}
+      \range{pages}{21}
+      \verb{doi}
+      \verb 10.1016/0304-4076(86)90063-1
+      \endverb
+    \endentry
+    \entry{bollerslev1990}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=39f8f5a428abd62057a0152546172106}{%
+           family={Bollerslev},
+           familyi={B\bibinitperiod},
+           given={Tim},
+           giveni={T\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{39f8f5a428abd62057a0152546172106}
+      \strng{fullhash}{39f8f5a428abd62057a0152546172106}
+      \strng{bibnamehash}{39f8f5a428abd62057a0152546172106}
+      \strng{authorbibnamehash}{39f8f5a428abd62057a0152546172106}
+      \strng{authornamehash}{39f8f5a428abd62057a0152546172106}
+      \strng{authorfullhash}{39f8f5a428abd62057a0152546172106}
+      \field{extraname}{2}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Review of Economics and Statistics}
+      \field{number}{3}
+      \field{title}{Modelling the Coherence in Short-Run Nominal Exchange Rates: A Multivariate Generalized ARCH Model}
+      \field{volume}{72}
+      \field{year}{1990}
+      \field{pages}{498\bibrangedash 505}
+      \range{pages}{8}
+      \verb{doi}
+      \verb 10.2307/2109358
+      \endverb
+    \endentry
+    \entry{broadie1993}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=3cfb481751542a67d35c80c9b81f8abb}{%
+           family={Broadie},
+           familyi={B\bibinitperiod},
+           given={Mark},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{3cfb481751542a67d35c80c9b81f8abb}
+      \strng{fullhash}{3cfb481751542a67d35c80c9b81f8abb}
+      \strng{bibnamehash}{3cfb481751542a67d35c80c9b81f8abb}
+      \strng{authorbibnamehash}{3cfb481751542a67d35c80c9b81f8abb}
+      \strng{authornamehash}{3cfb481751542a67d35c80c9b81f8abb}
+      \strng{authorfullhash}{3cfb481751542a67d35c80c9b81f8abb}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Annals of Operations Research}
+      \field{number}{1}
+      \field{title}{Computing efficient frontiers using estimated parameters}
+      \field{volume}{45}
+      \field{year}{1993}
+      \field{pages}{21\bibrangedash 58}
+      \range{pages}{38}
+      \verb{doi}
+      \verb 10.1007/BF02282040
+      \endverb
+    \endentry
+    \entry{chaves2011}{article}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=c7c2badb66f83c61391cb2ca761b8913}{%
+           family={Chaves},
+           familyi={C\bibinitperiod},
+           given={Denis},
+           giveni={D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=dad069a185db802436544e80b9ef3c09}{%
+           family={Hsu},
+           familyi={H\bibinitperiod},
+           given={Jason},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=65dc7c16174f4ebc47ccdc01e74939f2}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Feifei},
+           giveni={F\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=d84663f9b9f43623153d9b4be0a57834}{%
+           family={Shakernia},
+           familyi={S\bibinitperiod},
+           given={Omid},
+           giveni={O\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{9d9d50aa073ce40a65fc379761c5e050}
+      \strng{fullhash}{738e01c7c6d188bdb314d32d451970bb}
+      \strng{bibnamehash}{738e01c7c6d188bdb314d32d451970bb}
+      \strng{authorbibnamehash}{738e01c7c6d188bdb314d32d451970bb}
+      \strng{authornamehash}{9d9d50aa073ce40a65fc379761c5e050}
+      \strng{authorfullhash}{738e01c7c6d188bdb314d32d451970bb}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Journal of Investing}
+      \field{number}{1}
+      \field{title}{Risk Parity Portfolio vs. Other Asset Allocation Heuristic Portfolios}
+      \field{volume}{20}
+      \field{year}{2011}
+      \field{pages}{108\bibrangedash 118}
+      \range{pages}{11}
+      \verb{doi}
+      \verb 10.3905/joi.2011.20.1.108
+      \endverb
+    \endentry
+    \entry{demiguel2009}{article}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=1cb0e550ac7b66fc924fc4425594f4d6}{%
+           family={DeMiguel},
+           familyi={D\bibinitperiod},
+           given={Victor},
+           giveni={V\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=aa37059b0400fe91aa65eed5612c21ea}{%
+           family={Garlappi},
+           familyi={G\bibinitperiod},
+           given={Lorenzo},
+           giveni={L\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9cc21ebfac2cb0ca09dd01a2d7c19d73}{%
+           family={Uppal},
+           familyi={U\bibinitperiod},
+           given={Raman},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{659219818f0b1545fdcf4b8415ca9bed}
+      \strng{fullhash}{a605eab1f88863f434ea538352f49d39}
+      \strng{bibnamehash}{a605eab1f88863f434ea538352f49d39}
+      \strng{authorbibnamehash}{a605eab1f88863f434ea538352f49d39}
+      \strng{authornamehash}{659219818f0b1545fdcf4b8415ca9bed}
+      \strng{authorfullhash}{a605eab1f88863f434ea538352f49d39}
+      \field{sortinit}{D}
+      \field{sortinithash}{6f385f66841fb5e82009dc833c761848}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Review of Financial Studies}
+      \field{number}{5}
+      \field{title}{Optimal Versus Naive Diversification: How Inefficient is the 1/N Portfolio Strategy?}
+      \field{volume}{22}
+      \field{year}{2009}
+      \field{pages}{1915\bibrangedash 1953}
+      \range{pages}{39}
+      \verb{doi}
+      \verb 10.1093/rfs/hhm075
+      \endverb
+    \endentry
+    \entry{diebold1995}{article}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=15cc2e3b52b5ea2d3045be532376a348}{%
+           family={Diebold},
+           familyi={D\bibinitperiod},
+           given={Francis\bibnamedelima X.},
+           giveni={F\bibinitperiod\bibinitdelim X\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=2c47ca2ba3f38cb3329258e8242da091}{%
+           family={Mariano},
+           familyi={M\bibinitperiod},
+           given={Roberto\bibnamedelima S.},
+           giveni={R\bibinitperiod\bibinitdelim S\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{b22e93c16ed1af110c2b6d60db37bd6c}
+      \strng{fullhash}{b22e93c16ed1af110c2b6d60db37bd6c}
+      \strng{bibnamehash}{b22e93c16ed1af110c2b6d60db37bd6c}
+      \strng{authorbibnamehash}{b22e93c16ed1af110c2b6d60db37bd6c}
+      \strng{authornamehash}{b22e93c16ed1af110c2b6d60db37bd6c}
+      \strng{authorfullhash}{b22e93c16ed1af110c2b6d60db37bd6c}
+      \field{sortinit}{D}
+      \field{sortinithash}{6f385f66841fb5e82009dc833c761848}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Business and Economic Statistics}
+      \field{number}{3}
+      \field{title}{Comparing Predictive Accuracy}
+      \field{volume}{13}
+      \field{year}{1995}
+      \field{pages}{253\bibrangedash 263}
+      \range{pages}{11}
+      \verb{doi}
+      \verb 10.1080/07350015.1995.10524599
+      \endverb
+    \endentry
+    \entry{engle1982}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=d491df6781389ebb4ef255c1ec0ca7ed}{%
+           family={Engle},
+           familyi={E\bibinitperiod},
+           given={Robert\bibnamedelima F.},
+           giveni={R\bibinitperiod\bibinitdelim F\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{fullhash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{bibnamehash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{authorbibnamehash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{authornamehash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{authorfullhash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \field{extraname}{1}
+      \field{sortinit}{E}
+      \field{sortinithash}{8da8a182d344d5b9047633dfc0cc9131}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Econometrica}
+      \field{number}{4}
+      \field{title}{Autoregressive Conditional Heteroscedasticity with Estimates of the Variance of United Kingdom Inflation}
+      \field{volume}{50}
+      \field{year}{1982}
+      \field{pages}{987\bibrangedash 1007}
+      \range{pages}{21}
+      \verb{doi}
+      \verb 10.2307/1912773
+      \endverb
+    \endentry
+    \entry{engle2002}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=d491df6781389ebb4ef255c1ec0ca7ed}{%
+           family={Engle},
+           familyi={E\bibinitperiod},
+           given={Robert\bibnamedelima F.},
+           giveni={R\bibinitperiod\bibinitdelim F\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{fullhash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{bibnamehash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{authorbibnamehash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{authornamehash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{authorfullhash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \field{extraname}{2}
+      \field{sortinit}{E}
+      \field{sortinithash}{8da8a182d344d5b9047633dfc0cc9131}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Business and Economic Statistics}
+      \field{number}{3}
+      \field{title}{Dynamic Conditional Correlation: A Simple Class of Multivariate Generalized Autoregressive Conditional Heteroskedasticity Models}
+      \field{volume}{20}
+      \field{year}{2002}
+      \field{pages}{339\bibrangedash 350}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.1198/073500102288618487
+      \endverb
+    \endentry
+    \entry{engle2006}{article}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=d491df6781389ebb4ef255c1ec0ca7ed}{%
+           family={Engle},
+           familyi={E\bibinitperiod},
+           given={Robert\bibnamedelima F.},
+           giveni={R\bibinitperiod\bibinitdelim F\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9974b47942ea5aeb47386d52833d1be7}{%
+           family={Colacito},
+           familyi={C\bibinitperiod},
+           given={Riccardo},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{f528d84420ebeb7417c35145f42d3d97}
+      \strng{fullhash}{f528d84420ebeb7417c35145f42d3d97}
+      \strng{bibnamehash}{f528d84420ebeb7417c35145f42d3d97}
+      \strng{authorbibnamehash}{f528d84420ebeb7417c35145f42d3d97}
+      \strng{authornamehash}{f528d84420ebeb7417c35145f42d3d97}
+      \strng{authorfullhash}{f528d84420ebeb7417c35145f42d3d97}
+      \field{sortinit}{E}
+      \field{sortinithash}{8da8a182d344d5b9047633dfc0cc9131}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Business and Economic Statistics}
+      \field{number}{2}
+      \field{title}{Testing and Valuing Dynamic Correlations for Asset Allocation}
+      \field{volume}{24}
+      \field{year}{2006}
+      \field{pages}{238\bibrangedash 253}
+      \range{pages}{16}
+      \verb{doi}
+      \verb 10.1198/073500106000000017
+      \endverb
+    \endentry
+    \entry{engle2001}{report}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=d491df6781389ebb4ef255c1ec0ca7ed}{%
+           family={Engle},
+           familyi={E\bibinitperiod},
+           given={Robert\bibnamedelima F.},
+           giveni={R\bibinitperiod\bibinitdelim F\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=22fcbc93c38819e962968aad3e3cba7f}{%
+           family={Sheppard},
+           familyi={S\bibinitperiod},
+           given={Kevin},
+           giveni={K\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{institution}{1}{%
+        {National Bureau of Economic Research}%
+      }
+      \strng{namehash}{4d30734bf07625069669caaac07c4fcf}
+      \strng{fullhash}{4d30734bf07625069669caaac07c4fcf}
+      \strng{bibnamehash}{4d30734bf07625069669caaac07c4fcf}
+      \strng{authorbibnamehash}{4d30734bf07625069669caaac07c4fcf}
+      \strng{authornamehash}{4d30734bf07625069669caaac07c4fcf}
+      \strng{authorfullhash}{4d30734bf07625069669caaac07c4fcf}
+      \field{sortinit}{E}
+      \field{sortinithash}{8da8a182d344d5b9047633dfc0cc9131}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{number}{8554}
+      \field{title}{Theoretical and Empirical Properties of Dynamic Conditional Correlation Multivariate GARCH}
+      \field{type}{NBER Working Paper}
+      \field{year}{2001}
+      \verb{doi}
+      \verb 10.3386/w8554
+      \endverb
+    \endentry
+    \entry{jobson1981}{article}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=97bbb9c3f474212ddeb242b74cfcd963}{%
+           family={Jobson},
+           familyi={J\bibinitperiod},
+           given={J.\bibnamedelimi D.},
+           giveni={J\bibinitperiod\bibinitdelim D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=44261cdc81c8d78f89952e4a80112efe}{%
+           family={Korkie},
+           familyi={K\bibinitperiod},
+           given={Bob\bibnamedelima M.},
+           giveni={B\bibinitperiod\bibinitdelim M\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{99363c71cc21ff7d1f59267709193ffd}
+      \strng{fullhash}{99363c71cc21ff7d1f59267709193ffd}
+      \strng{bibnamehash}{99363c71cc21ff7d1f59267709193ffd}
+      \strng{authorbibnamehash}{99363c71cc21ff7d1f59267709193ffd}
+      \strng{authornamehash}{99363c71cc21ff7d1f59267709193ffd}
+      \strng{authorfullhash}{99363c71cc21ff7d1f59267709193ffd}
+      \field{sortinit}{J}
+      \field{sortinithash}{b2f54a9081ace9966a7cb9413811edb4}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Journal of Finance}
+      \field{number}{4}
+      \field{title}{Performance Hypothesis Testing with the Sharpe and Treynor Measures}
+      \field{volume}{36}
+      \field{year}{1981}
+      \field{pages}{889\bibrangedash 908}
+      \range{pages}{20}
+      \verb{doi}
+      \verb 10.1111/j.1540-6261.1981.tb04891.x
+      \endverb
+    \endentry
+    \entry{laurent2012}{article}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=75f7b0739e9cd6c037e87bed8f36c143}{%
+           family={Laurent},
+           familyi={L\bibinitperiod},
+           given={Sébastien},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=5517f2d5b151f2665daa29e633fed7b9}{%
+           family={Rombouts},
+           familyi={R\bibinitperiod},
+           given={Jeroen\bibnamedelimb V.\bibnamedelimi K.},
+           giveni={J\bibinitperiod\bibinitdelim V\bibinitperiod\bibinitdelim K\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=38fbff4c51150bec7a87a55253dcd933}{%
+           family={Violante},
+           familyi={V\bibinitperiod},
+           given={Francesco},
+           giveni={F\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{e593c5e37e7b95af92e1b996535f75d3}
+      \strng{fullhash}{3421ab03484fada8bbd5d9e8299cf172}
+      \strng{bibnamehash}{3421ab03484fada8bbd5d9e8299cf172}
+      \strng{authorbibnamehash}{3421ab03484fada8bbd5d9e8299cf172}
+      \strng{authornamehash}{e593c5e37e7b95af92e1b996535f75d3}
+      \strng{authorfullhash}{3421ab03484fada8bbd5d9e8299cf172}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Applied Econometrics}
+      \field{number}{6}
+      \field{title}{On the forecasting accuracy of multivariate GARCH models}
+      \field{volume}{27}
+      \field{year}{2012}
+      \field{pages}{934\bibrangedash 955}
+      \range{pages}{22}
+      \verb{doi}
+      \verb 10.1002/jae.1248
+      \endverb
+    \endentry
+    \entry{ledoit2004}{article}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=e98821837b14867718e6d02fdd00754b}{%
+           family={Ledoit},
+           familyi={L\bibinitperiod},
+           given={Olivier},
+           giveni={O\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=aba96a4246f521dcd0f7b0b6c402b9fc}{%
+           family={Wolf},
+           familyi={W\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{ce321f123471e4f23ec245fdfceee685}
+      \strng{fullhash}{ce321f123471e4f23ec245fdfceee685}
+      \strng{bibnamehash}{ce321f123471e4f23ec245fdfceee685}
+      \strng{authorbibnamehash}{ce321f123471e4f23ec245fdfceee685}
+      \strng{authornamehash}{ce321f123471e4f23ec245fdfceee685}
+      \strng{authorfullhash}{ce321f123471e4f23ec245fdfceee685}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Multivariate Analysis}
+      \field{number}{2}
+      \field{title}{A well-conditioned estimator for large-dimensional covariance matrices}
+      \field{volume}{88}
+      \field{year}{2004}
+      \field{pages}{365\bibrangedash 411}
+      \range{pages}{47}
+      \verb{doi}
+      \verb 10.1016/S0047-259X(03)00096-4
+      \endverb
+    \endentry
+    \entry{lee2011}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=2109016b85e78743599575cbbd1a2047}{%
+           family={Lee},
+           familyi={L\bibinitperiod},
+           given={Wai},
+           giveni={W\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{2109016b85e78743599575cbbd1a2047}
+      \strng{fullhash}{2109016b85e78743599575cbbd1a2047}
+      \strng{bibnamehash}{2109016b85e78743599575cbbd1a2047}
+      \strng{authorbibnamehash}{2109016b85e78743599575cbbd1a2047}
+      \strng{authornamehash}{2109016b85e78743599575cbbd1a2047}
+      \strng{authorfullhash}{2109016b85e78743599575cbbd1a2047}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Journal of Portfolio Management}
+      \field{number}{4}
+      \field{title}{Risk-Based Asset Allocation: A New Answer to an Old Question?}
+      \field{volume}{37}
+      \field{year}{2011}
+      \field{pages}{11\bibrangedash 28}
+      \range{pages}{18}
+      \verb{doi}
+      \verb 10.3905/jpm.2011.37.4.011
+      \endverb
+    \endentry
+    \entry{deprado2016}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=9a324b3e027531fed3766b6ed67a9ac8}{%
+           family={López\bibnamedelimb de\bibnamedelima Prado},
+           familyi={L\bibinitperiod\bibinitdelim d\bibinitperiod\bibinitdelim P\bibinitperiod},
+           given={Marcos},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{9a324b3e027531fed3766b6ed67a9ac8}
+      \strng{fullhash}{9a324b3e027531fed3766b6ed67a9ac8}
+      \strng{bibnamehash}{9a324b3e027531fed3766b6ed67a9ac8}
+      \strng{authorbibnamehash}{9a324b3e027531fed3766b6ed67a9ac8}
+      \strng{authornamehash}{9a324b3e027531fed3766b6ed67a9ac8}
+      \strng{authorfullhash}{9a324b3e027531fed3766b6ed67a9ac8}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Journal of Portfolio Management}
+      \field{number}{4}
+      \field{title}{Building Diversified Portfolios that Outperform Out of Sample}
+      \field{volume}{42}
+      \field{year}{2016}
+      \field{pages}{59\bibrangedash 69}
+      \range{pages}{11}
+      \verb{doi}
+      \verb 10.3905/jpm.2016.42.4.059
+      \endverb
+    \endentry
+    \entry{markowitz1952}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=bdfa1c8585b5a4ae901315043a00f2f2}{%
+           family={Markowitz},
+           familyi={M\bibinitperiod},
+           given={Harry},
+           giveni={H\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{bdfa1c8585b5a4ae901315043a00f2f2}
+      \strng{fullhash}{bdfa1c8585b5a4ae901315043a00f2f2}
+      \strng{bibnamehash}{bdfa1c8585b5a4ae901315043a00f2f2}
+      \strng{authorbibnamehash}{bdfa1c8585b5a4ae901315043a00f2f2}
+      \strng{authornamehash}{bdfa1c8585b5a4ae901315043a00f2f2}
+      \strng{authorfullhash}{bdfa1c8585b5a4ae901315043a00f2f2}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Journal of Finance}
+      \field{number}{1}
+      \field{title}{Portfolio Selection}
+      \field{volume}{7}
+      \field{year}{1952}
+      \field{pages}{77\bibrangedash 91}
+      \range{pages}{15}
+      \verb{doi}
+      \verb 10.1111/j.1540-6261.1952.tb01525.x
+      \endverb
+    \endentry
+    \entry{memmel2003}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=3f40a39a5adfe8059cf15e13e4fa8765}{%
+           family={Memmel},
+           familyi={M\bibinitperiod},
+           given={Christoph},
+           giveni={C\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{3f40a39a5adfe8059cf15e13e4fa8765}
+      \strng{fullhash}{3f40a39a5adfe8059cf15e13e4fa8765}
+      \strng{bibnamehash}{3f40a39a5adfe8059cf15e13e4fa8765}
+      \strng{authorbibnamehash}{3f40a39a5adfe8059cf15e13e4fa8765}
+      \strng{authornamehash}{3f40a39a5adfe8059cf15e13e4fa8765}
+      \strng{authorfullhash}{3f40a39a5adfe8059cf15e13e4fa8765}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Finance Letters}
+      \field{number}{1}
+      \field{title}{Performance Hypothesis Testing with the Sharpe Ratio}
+      \field{volume}{1}
+      \field{year}{2003}
+      \field{pages}{21\bibrangedash 23}
+      \range{pages}{3}
+    \endentry
+    \entry{michaud1989}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=0f7b908feff1449b7e2c0969613c6f15}{%
+           family={Michaud},
+           familyi={M\bibinitperiod},
+           given={Richard\bibnamedelima O.},
+           giveni={R\bibinitperiod\bibinitdelim O\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{0f7b908feff1449b7e2c0969613c6f15}
+      \strng{fullhash}{0f7b908feff1449b7e2c0969613c6f15}
+      \strng{bibnamehash}{0f7b908feff1449b7e2c0969613c6f15}
+      \strng{authorbibnamehash}{0f7b908feff1449b7e2c0969613c6f15}
+      \strng{authornamehash}{0f7b908feff1449b7e2c0969613c6f15}
+      \strng{authorfullhash}{0f7b908feff1449b7e2c0969613c6f15}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Financial Analysts Journal}
+      \field{number}{1}
+      \field{title}{The Markowitz Optimization Enigma: Is 'Optimized' Optimal?}
+      \field{volume}{45}
+      \field{year}{1989}
+      \field{pages}{31\bibrangedash 42}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.2469/faj.v45.n1.31
+      \endverb
+    \endentry
+    \entry{moura2020}{article}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=7d03f152ff69942413fcbb5e37d5c3dc}{%
+           family={Moura},
+           familyi={M\bibinitperiod},
+           given={Guilherme\bibnamedelima V.},
+           giveni={G\bibinitperiod\bibinitdelim V\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=ecf40a27534d81c1e2a373296176f412}{%
+           family={Santos},
+           familyi={S\bibinitperiod},
+           given={André\bibnamedelimb A.\bibnamedelimi P.},
+           giveni={A\bibinitperiod\bibinitdelim A\bibinitperiod\bibinitdelim P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=a01d11e3de13ee5a02d2c3011ef4067b}{%
+           family={Ruiz},
+           familyi={R\bibinitperiod},
+           given={Esther},
+           giveni={E\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{0fc582b165b44693ae95500a016d7435}
+      \strng{fullhash}{c1f7ffafc14d7784dc0890665a1b2d74}
+      \strng{bibnamehash}{c1f7ffafc14d7784dc0890665a1b2d74}
+      \strng{authorbibnamehash}{c1f7ffafc14d7784dc0890665a1b2d74}
+      \strng{authornamehash}{0fc582b165b44693ae95500a016d7435}
+      \strng{authorfullhash}{c1f7ffafc14d7784dc0890665a1b2d74}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Banking \& Finance}
+      \field{title}{Comparing high-dimensional conditional covariance matrices: Implications for portfolio selection}
+      \field{volume}{118}
+      \field{year}{2020}
+      \field{pages}{105882}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1016/j.jbankfin.2020.105882
+      \endverb
+    \endentry
+    \entry{patton2011}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=a4a103d050a59b8cf50ce433a3cc51ec}{%
+           family={Patton},
+           familyi={P\bibinitperiod},
+           given={Andrew\bibnamedelima J.},
+           giveni={A\bibinitperiod\bibinitdelim J\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{a4a103d050a59b8cf50ce433a3cc51ec}
+      \strng{fullhash}{a4a103d050a59b8cf50ce433a3cc51ec}
+      \strng{bibnamehash}{a4a103d050a59b8cf50ce433a3cc51ec}
+      \strng{authorbibnamehash}{a4a103d050a59b8cf50ce433a3cc51ec}
+      \strng{authornamehash}{a4a103d050a59b8cf50ce433a3cc51ec}
+      \strng{authorfullhash}{a4a103d050a59b8cf50ce433a3cc51ec}
+      \field{sortinit}{P}
+      \field{sortinithash}{ff3bcf24f47321b42cb156c2cc8a8422}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Econometrics}
+      \field{number}{1}
+      \field{title}{Volatility forecast comparison using imperfect volatility proxies}
+      \field{volume}{160}
+      \field{year}{2011}
+      \field{pages}{246\bibrangedash 256}
+      \range{pages}{11}
+      \verb{doi}
+      \verb 10.1016/j.jeconom.2010.03.034
+      \endverb
+    \endentry
+    \entry{sen2022}{misc}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=cfae805fa1b37594436e9a018a653548}{%
+           family={Sen},
+           familyi={S\bibinitperiod},
+           given={Jaydip},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=7c6481eb696d55e57fea58911aaabae6}{%
+           family={Mehtab},
+           familyi={M\bibinitperiod},
+           given={Sidra},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=c95b384352d41d86ae5305e0e6a79ebe}{%
+           family={Dutta},
+           familyi={D\bibinitperiod},
+           given={Abhishek},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=e4796c5b5aeee8eb08de06d63a2d02ac}{%
+           family={Mondal},
+           familyi={M\bibinitperiod},
+           given={Saikat},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{df8d62833534ce7a64f1dcc50519c3a0}
+      \strng{fullhash}{76d1650c6e64be1bbbdc07e70ad66400}
+      \strng{bibnamehash}{76d1650c6e64be1bbbdc07e70ad66400}
+      \strng{authorbibnamehash}{76d1650c6e64be1bbbdc07e70ad66400}
+      \strng{authornamehash}{df8d62833534ce7a64f1dcc50519c3a0}
+      \strng{authorfullhash}{76d1650c6e64be1bbbdc07e70ad66400}
+      \field{sortinit}{S}
+      \field{sortinithash}{b164b07b29984b41daf1e85279fbc5ab}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{arXiv preprint}
+      \field{title}{Hierarchical Risk Parity and Minimum Variance Portfolio Design on NIFTY 50 Stocks}
+      \field{year}{2022}
+      \verb{doi}
+      \verb 10.48550/arXiv.2202.02728
+      \endverb
+    \endentry
+    \entry{west1996}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=c9458dd7fe490cece576ba5c37b500fb}{%
+           family={West},
+           familyi={W\bibinitperiod},
+           given={Kenneth\bibnamedelima D.},
+           giveni={K\bibinitperiod\bibinitdelim D\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{c9458dd7fe490cece576ba5c37b500fb}
+      \strng{fullhash}{c9458dd7fe490cece576ba5c37b500fb}
+      \strng{bibnamehash}{c9458dd7fe490cece576ba5c37b500fb}
+      \strng{authorbibnamehash}{c9458dd7fe490cece576ba5c37b500fb}
+      \strng{authornamehash}{c9458dd7fe490cece576ba5c37b500fb}
+      \strng{authorfullhash}{c9458dd7fe490cece576ba5c37b500fb}
+      \field{sortinit}{W}
+      \field{sortinithash}{4315d78024d0cea9b57a0c6f0e35ed0d}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Econometrica}
+      \field{number}{5}
+      \field{title}{Asymptotic Inference about Predictive Ability}
+      \field{volume}{64}
+      \field{year}{1996}
+      \field{pages}{1067\bibrangedash 1084}
+      \range{pages}{18}
+      \verb{doi}
+      \verb 10.2307/2171956
+      \endverb
+    \endentry
+  \enddatalist
+  \datalist[entry]{apa/global//global/global}
+    \entry{ardia2017}{article}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=3192f39cd690dc23d8034afe17d83f86}{%
+           family={Ardia},
+           familyi={A\bibinitperiod},
+           given={David},
+           giveni={D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=0b0112ec24b60a382309047164b20230}{%
+           family={Bolliger},
+           familyi={B\bibinitperiod},
+           given={Guido},
+           giveni={G\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=c8565698678051e17eea0f9e76d4159d}{%
+           family={Boudt},
+           familyi={B\bibinitperiod},
+           given={Kris},
+           giveni={K\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=b106ebfc8194cb7ff0816ba7c3cb94f2}{%
+           family={Gagnon-Fleury},
+           familyi={G\bibinithyphendelim F\bibinitperiod},
+           given={Jean-Philippe},
+           giveni={J\bibinithyphendelim P\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{b51bdf96966d100cedf94f7b312c1836}
+      \strng{fullhash}{1f0f41fc7a5d07521d88424f3971b7a6}
+      \strng{bibnamehash}{1f0f41fc7a5d07521d88424f3971b7a6}
+      \strng{authorbibnamehash}{1f0f41fc7a5d07521d88424f3971b7a6}
+      \strng{authornamehash}{b51bdf96966d100cedf94f7b312c1836}
+      \strng{authorfullhash}{1f0f41fc7a5d07521d88424f3971b7a6}
+      \field{sortinit}{A}
+      \field{sortinithash}{2f401846e2029bad6b3ecc16d50031e2}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Annals of Operations Research}
+      \field{number}{1--2}
+      \field{title}{The impact of covariance misspecification in risk-based portfolios}
+      \field{volume}{254}
+      \field{year}{2017}
+      \field{pages}{1\bibrangedash 16}
+      \range{pages}{16}
+      \verb{doi}
+      \verb 10.1007/s10479-017-2474-7
+      \endverb
+    \endentry
+    \entry{behr2008}{report}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=713b4e2c0de03cfba87ba9e21c754eb8}{%
+           family={Behr},
+           familyi={B\bibinitperiod},
+           given={Patrick},
+           giveni={P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=527a735a2d152a3ee80e7ed2e8d66f66}{%
+           family={Güttler},
+           familyi={G\bibinitperiod},
+           given={Andre},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=b37633fcb8a833477c6746582be6de10}{%
+           family={Miebs},
+           familyi={M\bibinitperiod},
+           given={Felix},
+           giveni={F\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{institution}{1}{%
+        {EDHEC-Risk Institute}%
+      }
+      \strng{namehash}{8e0108385024302fd2ab328bed41e0ab}
+      \strng{fullhash}{ff46fbe433b5f4bf0421ffc51ca7a80d}
+      \strng{bibnamehash}{ff46fbe433b5f4bf0421ffc51ca7a80d}
+      \strng{authorbibnamehash}{ff46fbe433b5f4bf0421ffc51ca7a80d}
+      \strng{authornamehash}{8e0108385024302fd2ab328bed41e0ab}
+      \strng{authorfullhash}{ff46fbe433b5f4bf0421ffc51ca7a80d}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Is minimum-variance investing really worth the while? An analysis with robust performance inference}
+      \field{type}{techreport}
+      \field{year}{2008}
+      \verb{urlraw}
+      \verb https://www.cfr-cologne.de/download/kolloquium/2009/behr_et_al.pdf
+      \endverb
+      \verb{url}
+      \verb https://www.cfr-cologne.de/download/kolloquium/2009/behr_et_al.pdf
+      \endverb
+    \endentry
+    \entry{bollerslev1986}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=39f8f5a428abd62057a0152546172106}{%
+           family={Bollerslev},
+           familyi={B\bibinitperiod},
+           given={Tim},
+           giveni={T\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{39f8f5a428abd62057a0152546172106}
+      \strng{fullhash}{39f8f5a428abd62057a0152546172106}
+      \strng{bibnamehash}{39f8f5a428abd62057a0152546172106}
+      \strng{authorbibnamehash}{39f8f5a428abd62057a0152546172106}
+      \strng{authornamehash}{39f8f5a428abd62057a0152546172106}
+      \strng{authorfullhash}{39f8f5a428abd62057a0152546172106}
+      \field{extraname}{1}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Econometrics}
+      \field{number}{3}
+      \field{title}{Generalized autoregressive conditional heteroskedasticity}
+      \field{volume}{31}
+      \field{year}{1986}
+      \field{pages}{307\bibrangedash 327}
+      \range{pages}{21}
+      \verb{doi}
+      \verb 10.1016/0304-4076(86)90063-1
+      \endverb
+    \endentry
+    \entry{bollerslev1990}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=39f8f5a428abd62057a0152546172106}{%
+           family={Bollerslev},
+           familyi={B\bibinitperiod},
+           given={Tim},
+           giveni={T\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{39f8f5a428abd62057a0152546172106}
+      \strng{fullhash}{39f8f5a428abd62057a0152546172106}
+      \strng{bibnamehash}{39f8f5a428abd62057a0152546172106}
+      \strng{authorbibnamehash}{39f8f5a428abd62057a0152546172106}
+      \strng{authornamehash}{39f8f5a428abd62057a0152546172106}
+      \strng{authorfullhash}{39f8f5a428abd62057a0152546172106}
+      \field{extraname}{2}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Review of Economics and Statistics}
+      \field{number}{3}
+      \field{title}{Modelling the Coherence in Short-Run Nominal Exchange Rates: A Multivariate Generalized ARCH Model}
+      \field{volume}{72}
+      \field{year}{1990}
+      \field{pages}{498\bibrangedash 505}
+      \range{pages}{8}
+      \verb{doi}
+      \verb 10.2307/2109358
+      \endverb
+    \endentry
+    \entry{broadie1993}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=3cfb481751542a67d35c80c9b81f8abb}{%
+           family={Broadie},
+           familyi={B\bibinitperiod},
+           given={Mark},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{3cfb481751542a67d35c80c9b81f8abb}
+      \strng{fullhash}{3cfb481751542a67d35c80c9b81f8abb}
+      \strng{bibnamehash}{3cfb481751542a67d35c80c9b81f8abb}
+      \strng{authorbibnamehash}{3cfb481751542a67d35c80c9b81f8abb}
+      \strng{authornamehash}{3cfb481751542a67d35c80c9b81f8abb}
+      \strng{authorfullhash}{3cfb481751542a67d35c80c9b81f8abb}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Annals of Operations Research}
+      \field{number}{1}
+      \field{title}{Computing efficient frontiers using estimated parameters}
+      \field{volume}{45}
+      \field{year}{1993}
+      \field{pages}{21\bibrangedash 58}
+      \range{pages}{38}
+      \verb{doi}
+      \verb 10.1007/BF02282040
+      \endverb
+    \endentry
+    \entry{chaves2011}{article}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=c7c2badb66f83c61391cb2ca761b8913}{%
+           family={Chaves},
+           familyi={C\bibinitperiod},
+           given={Denis},
+           giveni={D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=dad069a185db802436544e80b9ef3c09}{%
+           family={Hsu},
+           familyi={H\bibinitperiod},
+           given={Jason},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=65dc7c16174f4ebc47ccdc01e74939f2}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Feifei},
+           giveni={F\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=d84663f9b9f43623153d9b4be0a57834}{%
+           family={Shakernia},
+           familyi={S\bibinitperiod},
+           given={Omid},
+           giveni={O\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{9d9d50aa073ce40a65fc379761c5e050}
+      \strng{fullhash}{738e01c7c6d188bdb314d32d451970bb}
+      \strng{bibnamehash}{738e01c7c6d188bdb314d32d451970bb}
+      \strng{authorbibnamehash}{738e01c7c6d188bdb314d32d451970bb}
+      \strng{authornamehash}{9d9d50aa073ce40a65fc379761c5e050}
+      \strng{authorfullhash}{738e01c7c6d188bdb314d32d451970bb}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Journal of Investing}
+      \field{number}{1}
+      \field{title}{Risk Parity Portfolio vs. Other Asset Allocation Heuristic Portfolios}
+      \field{volume}{20}
+      \field{year}{2011}
+      \field{pages}{108\bibrangedash 118}
+      \range{pages}{11}
+      \verb{doi}
+      \verb 10.3905/joi.2011.20.1.108
+      \endverb
+    \endentry
+    \entry{demiguel2009}{article}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=1cb0e550ac7b66fc924fc4425594f4d6}{%
+           family={DeMiguel},
+           familyi={D\bibinitperiod},
+           given={Victor},
+           giveni={V\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=aa37059b0400fe91aa65eed5612c21ea}{%
+           family={Garlappi},
+           familyi={G\bibinitperiod},
+           given={Lorenzo},
+           giveni={L\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9cc21ebfac2cb0ca09dd01a2d7c19d73}{%
+           family={Uppal},
+           familyi={U\bibinitperiod},
+           given={Raman},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{659219818f0b1545fdcf4b8415ca9bed}
+      \strng{fullhash}{a605eab1f88863f434ea538352f49d39}
+      \strng{bibnamehash}{a605eab1f88863f434ea538352f49d39}
+      \strng{authorbibnamehash}{a605eab1f88863f434ea538352f49d39}
+      \strng{authornamehash}{659219818f0b1545fdcf4b8415ca9bed}
+      \strng{authorfullhash}{a605eab1f88863f434ea538352f49d39}
+      \field{sortinit}{D}
+      \field{sortinithash}{6f385f66841fb5e82009dc833c761848}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Review of Financial Studies}
+      \field{number}{5}
+      \field{title}{Optimal Versus Naive Diversification: How Inefficient is the 1/N Portfolio Strategy?}
+      \field{volume}{22}
+      \field{year}{2009}
+      \field{pages}{1915\bibrangedash 1953}
+      \range{pages}{39}
+      \verb{doi}
+      \verb 10.1093/rfs/hhm075
+      \endverb
+    \endentry
+    \entry{diebold1995}{article}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=15cc2e3b52b5ea2d3045be532376a348}{%
+           family={Diebold},
+           familyi={D\bibinitperiod},
+           given={Francis\bibnamedelima X.},
+           giveni={F\bibinitperiod\bibinitdelim X\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=2c47ca2ba3f38cb3329258e8242da091}{%
+           family={Mariano},
+           familyi={M\bibinitperiod},
+           given={Roberto\bibnamedelima S.},
+           giveni={R\bibinitperiod\bibinitdelim S\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{b22e93c16ed1af110c2b6d60db37bd6c}
+      \strng{fullhash}{b22e93c16ed1af110c2b6d60db37bd6c}
+      \strng{bibnamehash}{b22e93c16ed1af110c2b6d60db37bd6c}
+      \strng{authorbibnamehash}{b22e93c16ed1af110c2b6d60db37bd6c}
+      \strng{authornamehash}{b22e93c16ed1af110c2b6d60db37bd6c}
+      \strng{authorfullhash}{b22e93c16ed1af110c2b6d60db37bd6c}
+      \field{sortinit}{D}
+      \field{sortinithash}{6f385f66841fb5e82009dc833c761848}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Business and Economic Statistics}
+      \field{number}{3}
+      \field{title}{Comparing Predictive Accuracy}
+      \field{volume}{13}
+      \field{year}{1995}
+      \field{pages}{253\bibrangedash 263}
+      \range{pages}{11}
+      \verb{doi}
+      \verb 10.1080/07350015.1995.10524599
+      \endverb
+    \endentry
+    \entry{engle1982}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=d491df6781389ebb4ef255c1ec0ca7ed}{%
+           family={Engle},
+           familyi={E\bibinitperiod},
+           given={Robert\bibnamedelima F.},
+           giveni={R\bibinitperiod\bibinitdelim F\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{fullhash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{bibnamehash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{authorbibnamehash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{authornamehash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{authorfullhash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \field{extraname}{1}
+      \field{sortinit}{E}
+      \field{sortinithash}{8da8a182d344d5b9047633dfc0cc9131}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Econometrica}
+      \field{number}{4}
+      \field{title}{Autoregressive Conditional Heteroscedasticity with Estimates of the Variance of United Kingdom Inflation}
+      \field{volume}{50}
+      \field{year}{1982}
+      \field{pages}{987\bibrangedash 1007}
+      \range{pages}{21}
+      \verb{doi}
+      \verb 10.2307/1912773
+      \endverb
+    \endentry
+    \entry{engle2002}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=d491df6781389ebb4ef255c1ec0ca7ed}{%
+           family={Engle},
+           familyi={E\bibinitperiod},
+           given={Robert\bibnamedelima F.},
+           giveni={R\bibinitperiod\bibinitdelim F\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{fullhash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{bibnamehash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{authorbibnamehash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{authornamehash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \strng{authorfullhash}{d491df6781389ebb4ef255c1ec0ca7ed}
+      \field{extraname}{2}
+      \field{sortinit}{E}
+      \field{sortinithash}{8da8a182d344d5b9047633dfc0cc9131}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Business and Economic Statistics}
+      \field{number}{3}
+      \field{title}{Dynamic Conditional Correlation: A Simple Class of Multivariate Generalized Autoregressive Conditional Heteroskedasticity Models}
+      \field{volume}{20}
+      \field{year}{2002}
+      \field{pages}{339\bibrangedash 350}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.1198/073500102288618487
+      \endverb
+    \endentry
+    \entry{engle2006}{article}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=d491df6781389ebb4ef255c1ec0ca7ed}{%
+           family={Engle},
+           familyi={E\bibinitperiod},
+           given={Robert\bibnamedelima F.},
+           giveni={R\bibinitperiod\bibinitdelim F\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9974b47942ea5aeb47386d52833d1be7}{%
+           family={Colacito},
+           familyi={C\bibinitperiod},
+           given={Riccardo},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{f528d84420ebeb7417c35145f42d3d97}
+      \strng{fullhash}{f528d84420ebeb7417c35145f42d3d97}
+      \strng{bibnamehash}{f528d84420ebeb7417c35145f42d3d97}
+      \strng{authorbibnamehash}{f528d84420ebeb7417c35145f42d3d97}
+      \strng{authornamehash}{f528d84420ebeb7417c35145f42d3d97}
+      \strng{authorfullhash}{f528d84420ebeb7417c35145f42d3d97}
+      \field{sortinit}{E}
+      \field{sortinithash}{8da8a182d344d5b9047633dfc0cc9131}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Business and Economic Statistics}
+      \field{number}{2}
+      \field{title}{Testing and Valuing Dynamic Correlations for Asset Allocation}
+      \field{volume}{24}
+      \field{year}{2006}
+      \field{pages}{238\bibrangedash 253}
+      \range{pages}{16}
+      \verb{doi}
+      \verb 10.1198/073500106000000017
+      \endverb
+    \endentry
+    \entry{engle2001}{report}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=d491df6781389ebb4ef255c1ec0ca7ed}{%
+           family={Engle},
+           familyi={E\bibinitperiod},
+           given={Robert\bibnamedelima F.},
+           giveni={R\bibinitperiod\bibinitdelim F\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=22fcbc93c38819e962968aad3e3cba7f}{%
+           family={Sheppard},
+           familyi={S\bibinitperiod},
+           given={Kevin},
+           giveni={K\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{institution}{1}{%
+        {National Bureau of Economic Research}%
+      }
+      \strng{namehash}{4d30734bf07625069669caaac07c4fcf}
+      \strng{fullhash}{4d30734bf07625069669caaac07c4fcf}
+      \strng{bibnamehash}{4d30734bf07625069669caaac07c4fcf}
+      \strng{authorbibnamehash}{4d30734bf07625069669caaac07c4fcf}
+      \strng{authornamehash}{4d30734bf07625069669caaac07c4fcf}
+      \strng{authorfullhash}{4d30734bf07625069669caaac07c4fcf}
+      \field{sortinit}{E}
+      \field{sortinithash}{8da8a182d344d5b9047633dfc0cc9131}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{number}{8554}
+      \field{title}{Theoretical and Empirical Properties of Dynamic Conditional Correlation Multivariate GARCH}
+      \field{type}{NBER Working Paper}
+      \field{year}{2001}
+      \verb{doi}
+      \verb 10.3386/w8554
+      \endverb
+    \endentry
+    \entry{jobson1981}{article}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=97bbb9c3f474212ddeb242b74cfcd963}{%
+           family={Jobson},
+           familyi={J\bibinitperiod},
+           given={J.\bibnamedelimi D.},
+           giveni={J\bibinitperiod\bibinitdelim D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=44261cdc81c8d78f89952e4a80112efe}{%
+           family={Korkie},
+           familyi={K\bibinitperiod},
+           given={Bob\bibnamedelima M.},
+           giveni={B\bibinitperiod\bibinitdelim M\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{99363c71cc21ff7d1f59267709193ffd}
+      \strng{fullhash}{99363c71cc21ff7d1f59267709193ffd}
+      \strng{bibnamehash}{99363c71cc21ff7d1f59267709193ffd}
+      \strng{authorbibnamehash}{99363c71cc21ff7d1f59267709193ffd}
+      \strng{authornamehash}{99363c71cc21ff7d1f59267709193ffd}
+      \strng{authorfullhash}{99363c71cc21ff7d1f59267709193ffd}
+      \field{sortinit}{J}
+      \field{sortinithash}{b2f54a9081ace9966a7cb9413811edb4}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Journal of Finance}
+      \field{number}{4}
+      \field{title}{Performance Hypothesis Testing with the Sharpe and Treynor Measures}
+      \field{volume}{36}
+      \field{year}{1981}
+      \field{pages}{889\bibrangedash 908}
+      \range{pages}{20}
+      \verb{doi}
+      \verb 10.1111/j.1540-6261.1981.tb04891.x
+      \endverb
+    \endentry
+    \entry{laurent2012}{article}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=75f7b0739e9cd6c037e87bed8f36c143}{%
+           family={Laurent},
+           familyi={L\bibinitperiod},
+           given={Sébastien},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=5517f2d5b151f2665daa29e633fed7b9}{%
+           family={Rombouts},
+           familyi={R\bibinitperiod},
+           given={Jeroen\bibnamedelimb V.\bibnamedelimi K.},
+           giveni={J\bibinitperiod\bibinitdelim V\bibinitperiod\bibinitdelim K\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=38fbff4c51150bec7a87a55253dcd933}{%
+           family={Violante},
+           familyi={V\bibinitperiod},
+           given={Francesco},
+           giveni={F\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{e593c5e37e7b95af92e1b996535f75d3}
+      \strng{fullhash}{3421ab03484fada8bbd5d9e8299cf172}
+      \strng{bibnamehash}{3421ab03484fada8bbd5d9e8299cf172}
+      \strng{authorbibnamehash}{3421ab03484fada8bbd5d9e8299cf172}
+      \strng{authornamehash}{e593c5e37e7b95af92e1b996535f75d3}
+      \strng{authorfullhash}{3421ab03484fada8bbd5d9e8299cf172}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Applied Econometrics}
+      \field{number}{6}
+      \field{title}{On the forecasting accuracy of multivariate GARCH models}
+      \field{volume}{27}
+      \field{year}{2012}
+      \field{pages}{934\bibrangedash 955}
+      \range{pages}{22}
+      \verb{doi}
+      \verb 10.1002/jae.1248
+      \endverb
+    \endentry
+    \entry{ledoit2004}{article}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=e98821837b14867718e6d02fdd00754b}{%
+           family={Ledoit},
+           familyi={L\bibinitperiod},
+           given={Olivier},
+           giveni={O\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=aba96a4246f521dcd0f7b0b6c402b9fc}{%
+           family={Wolf},
+           familyi={W\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{ce321f123471e4f23ec245fdfceee685}
+      \strng{fullhash}{ce321f123471e4f23ec245fdfceee685}
+      \strng{bibnamehash}{ce321f123471e4f23ec245fdfceee685}
+      \strng{authorbibnamehash}{ce321f123471e4f23ec245fdfceee685}
+      \strng{authornamehash}{ce321f123471e4f23ec245fdfceee685}
+      \strng{authorfullhash}{ce321f123471e4f23ec245fdfceee685}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Multivariate Analysis}
+      \field{number}{2}
+      \field{title}{A well-conditioned estimator for large-dimensional covariance matrices}
+      \field{volume}{88}
+      \field{year}{2004}
+      \field{pages}{365\bibrangedash 411}
+      \range{pages}{47}
+      \verb{doi}
+      \verb 10.1016/S0047-259X(03)00096-4
+      \endverb
+    \endentry
+    \entry{lee2011}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=2109016b85e78743599575cbbd1a2047}{%
+           family={Lee},
+           familyi={L\bibinitperiod},
+           given={Wai},
+           giveni={W\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{2109016b85e78743599575cbbd1a2047}
+      \strng{fullhash}{2109016b85e78743599575cbbd1a2047}
+      \strng{bibnamehash}{2109016b85e78743599575cbbd1a2047}
+      \strng{authorbibnamehash}{2109016b85e78743599575cbbd1a2047}
+      \strng{authornamehash}{2109016b85e78743599575cbbd1a2047}
+      \strng{authorfullhash}{2109016b85e78743599575cbbd1a2047}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Journal of Portfolio Management}
+      \field{number}{4}
+      \field{title}{Risk-Based Asset Allocation: A New Answer to an Old Question?}
+      \field{volume}{37}
+      \field{year}{2011}
+      \field{pages}{11\bibrangedash 28}
+      \range{pages}{18}
+      \verb{doi}
+      \verb 10.3905/jpm.2011.37.4.011
+      \endverb
+    \endentry
+    \entry{deprado2016}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=9a324b3e027531fed3766b6ed67a9ac8}{%
+           family={López\bibnamedelimb de\bibnamedelima Prado},
+           familyi={L\bibinitperiod\bibinitdelim d\bibinitperiod\bibinitdelim P\bibinitperiod},
+           given={Marcos},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{9a324b3e027531fed3766b6ed67a9ac8}
+      \strng{fullhash}{9a324b3e027531fed3766b6ed67a9ac8}
+      \strng{bibnamehash}{9a324b3e027531fed3766b6ed67a9ac8}
+      \strng{authorbibnamehash}{9a324b3e027531fed3766b6ed67a9ac8}
+      \strng{authornamehash}{9a324b3e027531fed3766b6ed67a9ac8}
+      \strng{authorfullhash}{9a324b3e027531fed3766b6ed67a9ac8}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Journal of Portfolio Management}
+      \field{number}{4}
+      \field{title}{Building Diversified Portfolios that Outperform Out of Sample}
+      \field{volume}{42}
+      \field{year}{2016}
+      \field{pages}{59\bibrangedash 69}
+      \range{pages}{11}
+      \verb{doi}
+      \verb 10.3905/jpm.2016.42.4.059
+      \endverb
+    \endentry
+    \entry{markowitz1952}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=bdfa1c8585b5a4ae901315043a00f2f2}{%
+           family={Markowitz},
+           familyi={M\bibinitperiod},
+           given={Harry},
+           giveni={H\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{bdfa1c8585b5a4ae901315043a00f2f2}
+      \strng{fullhash}{bdfa1c8585b5a4ae901315043a00f2f2}
+      \strng{bibnamehash}{bdfa1c8585b5a4ae901315043a00f2f2}
+      \strng{authorbibnamehash}{bdfa1c8585b5a4ae901315043a00f2f2}
+      \strng{authornamehash}{bdfa1c8585b5a4ae901315043a00f2f2}
+      \strng{authorfullhash}{bdfa1c8585b5a4ae901315043a00f2f2}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Journal of Finance}
+      \field{number}{1}
+      \field{title}{Portfolio Selection}
+      \field{volume}{7}
+      \field{year}{1952}
+      \field{pages}{77\bibrangedash 91}
+      \range{pages}{15}
+      \verb{doi}
+      \verb 10.1111/j.1540-6261.1952.tb01525.x
+      \endverb
+    \endentry
+    \entry{memmel2003}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=3f40a39a5adfe8059cf15e13e4fa8765}{%
+           family={Memmel},
+           familyi={M\bibinitperiod},
+           given={Christoph},
+           giveni={C\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{3f40a39a5adfe8059cf15e13e4fa8765}
+      \strng{fullhash}{3f40a39a5adfe8059cf15e13e4fa8765}
+      \strng{bibnamehash}{3f40a39a5adfe8059cf15e13e4fa8765}
+      \strng{authorbibnamehash}{3f40a39a5adfe8059cf15e13e4fa8765}
+      \strng{authornamehash}{3f40a39a5adfe8059cf15e13e4fa8765}
+      \strng{authorfullhash}{3f40a39a5adfe8059cf15e13e4fa8765}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Finance Letters}
+      \field{number}{1}
+      \field{title}{Performance Hypothesis Testing with the Sharpe Ratio}
+      \field{volume}{1}
+      \field{year}{2003}
+      \field{pages}{21\bibrangedash 23}
+      \range{pages}{3}
+    \endentry
+    \entry{michaud1989}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=0f7b908feff1449b7e2c0969613c6f15}{%
+           family={Michaud},
+           familyi={M\bibinitperiod},
+           given={Richard\bibnamedelima O.},
+           giveni={R\bibinitperiod\bibinitdelim O\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{0f7b908feff1449b7e2c0969613c6f15}
+      \strng{fullhash}{0f7b908feff1449b7e2c0969613c6f15}
+      \strng{bibnamehash}{0f7b908feff1449b7e2c0969613c6f15}
+      \strng{authorbibnamehash}{0f7b908feff1449b7e2c0969613c6f15}
+      \strng{authornamehash}{0f7b908feff1449b7e2c0969613c6f15}
+      \strng{authorfullhash}{0f7b908feff1449b7e2c0969613c6f15}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Financial Analysts Journal}
+      \field{number}{1}
+      \field{title}{The Markowitz Optimization Enigma: Is 'Optimized' Optimal?}
+      \field{volume}{45}
+      \field{year}{1989}
+      \field{pages}{31\bibrangedash 42}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.2469/faj.v45.n1.31
+      \endverb
+    \endentry
+    \entry{moura2020}{article}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=7d03f152ff69942413fcbb5e37d5c3dc}{%
+           family={Moura},
+           familyi={M\bibinitperiod},
+           given={Guilherme\bibnamedelima V.},
+           giveni={G\bibinitperiod\bibinitdelim V\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=ecf40a27534d81c1e2a373296176f412}{%
+           family={Santos},
+           familyi={S\bibinitperiod},
+           given={André\bibnamedelimb A.\bibnamedelimi P.},
+           giveni={A\bibinitperiod\bibinitdelim A\bibinitperiod\bibinitdelim P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=a01d11e3de13ee5a02d2c3011ef4067b}{%
+           family={Ruiz},
+           familyi={R\bibinitperiod},
+           given={Esther},
+           giveni={E\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{0fc582b165b44693ae95500a016d7435}
+      \strng{fullhash}{c1f7ffafc14d7784dc0890665a1b2d74}
+      \strng{bibnamehash}{c1f7ffafc14d7784dc0890665a1b2d74}
+      \strng{authorbibnamehash}{c1f7ffafc14d7784dc0890665a1b2d74}
+      \strng{authornamehash}{0fc582b165b44693ae95500a016d7435}
+      \strng{authorfullhash}{c1f7ffafc14d7784dc0890665a1b2d74}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Banking \& Finance}
+      \field{title}{Comparing high-dimensional conditional covariance matrices: Implications for portfolio selection}
+      \field{volume}{118}
+      \field{year}{2020}
+      \field{pages}{105882}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1016/j.jbankfin.2020.105882
+      \endverb
+    \endentry
+    \entry{patton2011}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=a4a103d050a59b8cf50ce433a3cc51ec}{%
+           family={Patton},
+           familyi={P\bibinitperiod},
+           given={Andrew\bibnamedelima J.},
+           giveni={A\bibinitperiod\bibinitdelim J\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{a4a103d050a59b8cf50ce433a3cc51ec}
+      \strng{fullhash}{a4a103d050a59b8cf50ce433a3cc51ec}
+      \strng{bibnamehash}{a4a103d050a59b8cf50ce433a3cc51ec}
+      \strng{authorbibnamehash}{a4a103d050a59b8cf50ce433a3cc51ec}
+      \strng{authornamehash}{a4a103d050a59b8cf50ce433a3cc51ec}
+      \strng{authorfullhash}{a4a103d050a59b8cf50ce433a3cc51ec}
+      \field{sortinit}{P}
+      \field{sortinithash}{ff3bcf24f47321b42cb156c2cc8a8422}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Econometrics}
+      \field{number}{1}
+      \field{title}{Volatility forecast comparison using imperfect volatility proxies}
+      \field{volume}{160}
+      \field{year}{2011}
+      \field{pages}{246\bibrangedash 256}
+      \range{pages}{11}
+      \verb{doi}
+      \verb 10.1016/j.jeconom.2010.03.034
+      \endverb
+    \endentry
+    \entry{sen2022}{misc}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=cfae805fa1b37594436e9a018a653548}{%
+           family={Sen},
+           familyi={S\bibinitperiod},
+           given={Jaydip},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=7c6481eb696d55e57fea58911aaabae6}{%
+           family={Mehtab},
+           familyi={M\bibinitperiod},
+           given={Sidra},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=c95b384352d41d86ae5305e0e6a79ebe}{%
+           family={Dutta},
+           familyi={D\bibinitperiod},
+           given={Abhishek},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=e4796c5b5aeee8eb08de06d63a2d02ac}{%
+           family={Mondal},
+           familyi={M\bibinitperiod},
+           given={Saikat},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{df8d62833534ce7a64f1dcc50519c3a0}
+      \strng{fullhash}{76d1650c6e64be1bbbdc07e70ad66400}
+      \strng{bibnamehash}{76d1650c6e64be1bbbdc07e70ad66400}
+      \strng{authorbibnamehash}{76d1650c6e64be1bbbdc07e70ad66400}
+      \strng{authornamehash}{df8d62833534ce7a64f1dcc50519c3a0}
+      \strng{authorfullhash}{76d1650c6e64be1bbbdc07e70ad66400}
+      \field{sortinit}{S}
+      \field{sortinithash}{b164b07b29984b41daf1e85279fbc5ab}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{arXiv preprint}
+      \field{title}{Hierarchical Risk Parity and Minimum Variance Portfolio Design on NIFTY 50 Stocks}
+      \field{year}{2022}
+      \verb{doi}
+      \verb 10.48550/arXiv.2202.02728
+      \endverb
+    \endentry
+    \entry{west1996}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=c9458dd7fe490cece576ba5c37b500fb}{%
+           family={West},
+           familyi={W\bibinitperiod},
+           given={Kenneth\bibnamedelima D.},
+           giveni={K\bibinitperiod\bibinitdelim D\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{c9458dd7fe490cece576ba5c37b500fb}
+      \strng{fullhash}{c9458dd7fe490cece576ba5c37b500fb}
+      \strng{bibnamehash}{c9458dd7fe490cece576ba5c37b500fb}
+      \strng{authorbibnamehash}{c9458dd7fe490cece576ba5c37b500fb}
+      \strng{authornamehash}{c9458dd7fe490cece576ba5c37b500fb}
+      \strng{authorfullhash}{c9458dd7fe490cece576ba5c37b500fb}
+      \field{sortinit}{W}
+      \field{sortinithash}{4315d78024d0cea9b57a0c6f0e35ed0d}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Econometrica}
+      \field{number}{5}
+      \field{title}{Asymptotic Inference about Predictive Ability}
+      \field{volume}{64}
+      \field{year}{1996}
+      \field{pages}{1067\bibrangedash 1084}
+      \range{pages}{18}
+      \verb{doi}
+      \verb 10.2307/2171956
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

@@ -1,0 +1,19 @@
+% automatisch erzeugt von paper/tabellen.py -- nicht von Hand editieren
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \begin{tabular}{lr@{}lrr@{}lrr@{}lr}
+    \toprule
+    Datensatz & \multicolumn{2}{c}{$\Delta$ G--H} & $t$ & \multicolumn{2}{c}{$\Delta$ D--H} & $t$ & \multicolumn{2}{c}{$\Delta$ D--G} & $t$ \\
+    \midrule
+    Monte Carlo & 0,029 & $^{***}$ & 6,07 & 0,029 & $^{***}$ & 6,12 & 0,000 &  & 0,32 \\
+    GARCH-Sim. & -3,025 & $^{***}$ & -24,69 & -3,024 & $^{***}$ & -24,68 & 0,000 &  & 1,28 \\
+    DCC-Sim. & -2,887 & $^{***}$ & -15,64 & -7,998 & $^{***}$ & -35,68 & -5,111 & $^{***}$ & -49,85 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Synthetische Validierung: DMW-Tests auf die QLIKE-Differenzen}
+  \label{tab:synth_dmw}
+  \begin{minipage}{\linewidth}\vspace{0.4em}\centering\footnotesize
+  G = GARCH, D = DCC-GARCH, H = historisch; negative Differenzen bedeuten eine bessere Prognose. $^{***}$, $^{**}$, $^{*}$ = 1-, 5-, 10-\%-Niveau.
+  \end{minipage}
+\end{table}
