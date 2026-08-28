@@ -2,10 +2,11 @@
 % Fallstudien zur Finanzwirtschaft
 % Risikomodellierung und Risikoprognose mit GARCH-Modellen
 %
-% ENTWURF: Einleitung, Daten, Methodik, Ergebnisse, Einordnung in die Literatur,
+% Aufbau: Einleitung, Daten, Methodik, Ergebnisse, Einordnung in die Literatur,
 % Limitationen, Fazit sowie Anhang zur synthetischen Validierung.
-% Die Herleitung der Portfoliomodelle und der GARCH-Spezifikation steht in der
-% Methodik (Abschnitt 3).
+% Die Literatur wird ausschliesslich in der Einleitung eingefuehrt, in der
+% Methodik nur dort erneut zitiert, wo ein Verfahren begruendet wird, und in
+% Abschnitt 5 nur noch gegen die eigenen Befunde gehalten.
 %
 % Alle Tabellen liegen als eigene Dateien in Abbildungen/ und werden von
 % ../paper/tabellen.py aus den Ergebnis-CSVs erzeugt:
@@ -16,10 +17,15 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[ngerman]{babel}
-\usepackage{booktabs}
+% Times-Klon fuer Text und Mathematik (metrisch identisch zu Times New Roman);
+% newtxmath stellt auch die AMS-Symbole bereit, amssymb entfaellt dadurch
 \usepackage{amsmath}
+\usepackage{newtxtext,newtxmath}
+\usepackage{microtype}
+\usepackage{booktabs}
 \usepackage{graphicx}
-\usepackage[a4paper,margin=2.5cm]{geometry}
+% Seitenraender: links 3,5 cm (Bindung), rechts 1,5 cm, oben 2,5 cm, unten 2 cm
+\usepackage[a4paper,left=3.5cm,right=1.5cm,top=2.5cm,bottom=2cm]{geometry}
 \usepackage{setspace}
 \usepackage[hidelinks]{hyperref}
 \usepackage{subcaption}
@@ -34,6 +40,10 @@
 \addbibresource{literatur.bib}
 
 \onehalfspacing
+% Blocksatz ist LaTeX-Standard, Silbentrennung kommt aus babel/ngerman;
+% die gelockerten Toleranzen vermeiden zu weite Wortabstaende in langen Zeilen
+\tolerance=2000
+\emergencystretch=1em
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.6em}
 
@@ -60,41 +70,39 @@ Wie gravierend die Folgen sind, zeigen \textcite{demiguel2009}, da in ihrem Verg
 Der Aufwand einer Optimierung lohnt sich folglich nur, wenn ihr Gewinn den Verlust durch Schätzfehler übersteigt.
 
 An dieser Stelle setzen risikobasierte Portfolioverfahren an, die vollständig auf Renditeprognosen verzichten und die Gewichte allein aus der Kovarianzmatrix bestimmen.
-Das Minimum-Varianz-Portfolio minimiert die Portfoliovarianz und überzeugt nach \textcite{behr2008} besonders in volatilen Marktphasen, bleibt aber anfällig für Schätzfehler und neigt zu konzentrierten Lösungen \parencite{lee2011}.
-Das Equal-Risk-Contribution-Portfolio verteilt stattdessen die Risikobeiträge gleichmäßig auf alle Anlagen und ist dadurch besser diversifiziert, wobei es das naive Portfolio nach \textcite{chaves2011} nicht durchgängig schlägt.
-Hierarchical Risk Parity (HRP) von \textcite{deprado2016} verzichtet schließlich ganz auf die Matrixinversion und verteilt das Kapital über eine hierarchische Clusterstruktur, wodurch sich stabilere Gewichte ergeben \parencite{sen2022}.
-Die drei Verfahren unterscheiden sich damit vor allem darin, wie intensiv sie die geschätzte Kovarianzmatrix nutzen, weshalb deren Qualität unterschiedlich stark durchschlägt.
+Untersucht werden hier das Minimum-Varianz-Portfolio, das Equal-Risk-Contribution-Portfolio sowie die Hierarchical Risk Parity (HRP) von \textcite{deprado2016}.
+Die drei Verfahren unterscheiden sich vor allem darin, wie intensiv sie die geschätzte Kovarianzmatrix nutzen, weshalb deren Qualität unterschiedlich stark auf die Gewichte durchschlägt.
+Gerade diese Abstufung macht sie zu einem geeigneten Prüffeld für die Frage, wie viel eine bessere Risikoprognose überhaupt wert sein kann.
 
 Damit rückt die Kovarianzmatrix selbst in den Mittelpunkt, denn werden die Gewichte ausschließlich aus ihr abgeleitet, sollte eine bessere Schätzung auch zu besseren Portfolios führen.
 Der übliche Stichprobenschätzer unterstellt jedoch konstante Varianzen und Korrelationen über das gesamte Schätzfenster.
 Diese Annahme widerspricht der Beobachtung, dass ruhige und turbulente Phasen einander ablösen und große Kursausschläge weitere große Ausschläge nach sich ziehen.
-\textcite{engle1982} hat diese Volatilitätscluster erstmals ökonometrisch erfasst, worauf \textcite{bollerslev1986} das heute übliche GARCH-Modell aufbaute.
-Die bedingte Varianz wird dort als gewichtete Kombination aus langfristigem Mittel, jüngstem Schock und Vorperiodenvarianz modelliert, wodurch sie unmittelbar auf neue Information reagiert.
+\textcite{engle1982} hat diese Volatilitätscluster erstmals ökonometrisch erfasst, worauf \textcite{bollerslev1986} das heute übliche Generalized-Autoregressive-Conditional-Heteroskedasticity-Modell (GARCH) aufbaute.
 
 Für ein Portfolio genügt es allerdings nicht, die Varianzen einzeln zu modellieren, da auch die Abhängigkeitsstruktur zwischen den Anlagen zeitvariabel ist.
 Dass Korrelationen in Stressphasen ansteigen und die Diversifikation gerade dann versagt, wenn sie am dringendsten gebraucht wird, kann ein Modell mit konstanter Korrelation nicht abbilden.
-\textcite{engle2002} überträgt die GARCH-Rekursion deshalb auf die Korrelationsmatrix selbst und erhält mit dem DCC-Modell eine vollständig zeitvariable Kovarianzprognose.
-Dass sich präzisere Prognosen auch in der Allokation auszahlen sollten, legen \textcite{ardia2017} nahe, da eine Fehlspezifikation der Kovarianzmatrix die Gewichte risikobasierter Portfolios spürbar verzerrt.
+\textcite{engle2002} überträgt die GARCH-Rekursion deshalb auf die Korrelationsmatrix selbst und erhält mit dem Dynamic-Conditional-Correlation-Modell (DCC) eine vollständig zeitvariable Kovarianzprognose.
+Dass diese Erweiterung für die Allokation relevant ist, legen \textcite{ardia2017} nahe, die eine Fehlspezifikation der Kovarianzmatrix als spürbare Verzerrung der Gewichte risikobasierter Portfolios ausweisen.
 
-Ob diese Erwartung zutrifft, ist damit jedoch nicht beantwortet, weil eine statistisch bessere Prognose nicht automatisch eine bessere Anlageentscheidung ist.
+Ob eine statistisch bessere Prognose auch zu einer besseren Anlageentscheidung führt, ist damit jedoch nicht beantwortet.
 \textcite{engle2006} weisen darauf hin, dass die Sharpe Ratio als Kriterium für die Auswahl eines Kovarianzschätzers irreführend sein kann, da sie von den realisierten Renditen dominiert wird, auf die die Kovarianzmatrix nur mittelbar wirkt.
-Als Alternative bietet \textcite{patton2011} Verlustfunktionen an, deren Rangfolge auch bei einem verrauschten Proxy der wahren Varianz erhalten bleibt, wobei \textcite{laurent2012} dieses Konzept auf vollständige Kovarianzmatrizen übertragen.
-Für hochdimensionale bedingte Kovarianzmatrizen finden \textcite{moura2020} schließlich, dass die statistisch beste Spezifikation nicht die ökonomisch beste sein muss.
-Die Verbindung beider Themenfelder, risikobasierter Allokation einschließlich neuerer Verfahren wie HRP auf der einen und multivariater GARCH-Prognosen auf der anderen Seite, ist bislang nur vereinzelt untersucht worden.
+Als Alternative bietet \textcite{patton2011} Verlustfunktionen an, deren Rangfolge auch bei einem verrauschten Proxy der wahren Varianz erhalten bleibt, während \textcite{laurent2012} dieses Konzept auf vollständige Kovarianzmatrizen übertragen.
+Wie weit beide Kriterien auseinanderfallen können, zeigen \textcite{moura2020} für hochdimensionale bedingte Kovarianzmatrizen, wo die statistisch beste Spezifikation nicht die ökonomisch beste ist.
 
+Die Verbindung beider Themenfelder, risikobasierter Allokation einschließlich neuerer Verfahren wie HRP auf der einen und multivariater GARCH-Prognosen auf der anderen Seite, ist bislang nur vereinzelt untersucht worden.
 Vor diesem Hintergrund verfolgt diese Arbeit zwei Fragen.
 Erstens wird geprüft, ob Minimum-Varianz-, Equal-Risk-Contribution- und Hierarchical-Risk-Parity-Portfolios eine höhere risikoadjustierte Out-of-Sample-Performance erzielen als das naive 1/N-Portfolio.
 Zweitens wird untersucht, ob GARCH- und DCC-GARCH-basierte Risiko- und Kovarianzprognosen die Ergebnisse gegenüber einer historischen Schätzung verbessern.
 Beide Fragen werden getrennt nach statistischen und ökonomischen Kriterien beantwortet, da sich gerade in der Differenz zwischen beiden der zentrale Befund dieser Arbeit zeigt.
 
 Die empirische Grundlage bilden tägliche Renditen von 27~US-Sektorindizes über gut 27~Jahre.
-In einem rollierenden Design werden zehn Trainingsfenster mit vier Prognosehorizonten kombiniert, sodass jede der drei Kovarianzschätzungen und jedes der vier Allokationsverfahren in 40~Konstellationen bewertet wird.
-Statistisch dienen der QLIKE-Verlust und der Kovarianz-MSE als Kriterium, ökonomisch die Sharpe Ratio, die realisierte Volatilität und der Turnover.
+Zehn Trainingsfenster und vier Prognosehorizonte ergeben 40~Konstellationen, in denen jede der drei Kovarianzschätzungen mit jedem der vier Allokationsverfahren bewertet wird.
+Als Kriterien dienen statistisch QLIKE-Verlust und Kovarianz-MSE, ökonomisch Sharpe Ratio, realisierte Volatilität und Turnover.
 Ergänzend prüfen drei simulierte Datensätze mit bekanntem datengenerierendem Prozess, ob die Modelle das leisten, wofür sie konstruiert sind.
 
-Der weitere Aufbau der Arbeit folgt diesem Vorgehen.
+Diesem Vorgehen folgt auch der weitere Aufbau der Arbeit.
 Der \hyperref[sec:daten]{folgende Abschnitt} beschreibt die Datengrundlage, während der \hyperref[sec:methodik]{\ref*{sec:methodik}.~Abschnitt} das Untersuchungsdesign darlegt.
-Im \hyperref[sec:ergebnisse]{\ref*{sec:ergebnisse}.~Abschnitt} werden die Ergebnisse zunächst zur Prognosequalität und anschließend zur Portfolioperformance berichtet, bevor ihre Stabilität über verschiedene Zeiträume untersucht wird.
+Im \hyperref[sec:ergebnisse]{\ref*{sec:ergebnisse}.~Abschnitt} werden die Ergebnisse zunächst zur Prognosequalität und anschließend zur Portfolioperformance berichtet, bevor ihre Stabilität über verschiedene Zeiträume und Anlageuniversen untersucht wird.
 Anschließend ordnet der \hyperref[sec:literatur]{\ref*{sec:literatur}.~Abschnitt} die Befunde in die Literatur ein und der \hyperref[sec:limitationen]{\ref*{sec:limitationen}.~Abschnitt} diskutiert die Grenzen der Untersuchung.
 Am Ende werden die zentralen Erkenntnisse zusammengefasst.
 
@@ -102,58 +110,56 @@ Am Ende werden die zentralen Erkenntnisse zusammengefasst.
 \section{Daten}\label{sec:daten}
 % =============================================================================
 
-Die empirische Analyse beruht auf täglichen Kursen US-amerikanischer Sektorindizes, die über Datastream bezogen wurden.
-Verwendet werden die Business Groups der Refinitiv Business Classification (TRBC), wobei für die Vereinigten Staaten nur Daten für 28 der insgesamt 32~Business Groups verfügbar sind.
-Eine davon zeigt an rund zwei Dritteln ihrer Notierungstage keine Kursbewegung und wird als inaktive Reihe verworfen, sodass 27~Sektoren in die Analyse eingehen.
-Der Beobachtungszeitraum reicht vom 02.04.1999 bis zum 09.06.2026 und umfasst 7.087 Handelstage, wobei alle Renditen als logarithmierte Tagesrenditen $r_t = \ln(P_t/P_{t-1})$ berechnet werden.
-Da nicht für alle Sektoren Daten über den gesamten Betrachtungszeitraum vorliegen, variiert die Zahl der verfügbaren Anlagen über die Zeit.
-Durchgängig verfügbar sind lediglich 16~Sektoren, die übrigen kommen erst im Lauf der Zeit hinzu.
-Zusätzlich hängt die Zahl der möglichen Anlagen von der Länge des Trainingsfensters ab, da das investierbare Universum in jedem Rollfenster neu aus den Trainingsdaten bestimmt wird.
+In diesem Abschnitt wird die Datengrundlage der empirischen Untersuchung beschrieben.
 
-Als risikofreier Zins dient die Fed Funds Rate, die als Total-Return-Index vorliegt, wodurch sich die tägliche einfache Verzinsung aus ihrer prozentualen Veränderung ergibt.
-Diese liegt im Mittel bei 2,08\,\% p.\,a. und wird ausschließlich für die Berechnung der Sharpe Ratio verwendet.
+Verwendet werden tägliche Kurse US-amerikanischer Sektorindizes, die über Datastream bezogen wurden.
+Als Sektorabgrenzung dienen die Business Groups der Refinitiv Business Classification (TRBC), wobei für die Vereinigten Staaten nur Daten für 28 der insgesamt 32~Business Groups verfügbar sind.
+Eine davon zeigt an rund zwei Dritteln ihrer Datenpunkte keine Kursbewegung und wird als inaktive Reihe verworfen, sodass 27~Sektoren in die Analyse eingehen.
+Der Beobachtungszeitraum reicht vom 02.04.1999 bis zum 09.06.2026 und umfasst 7.087 Handelstage, wobei alle Renditen als logarithmierte Tagesrenditen $r_t = \ln(P_t/P_{t-1})$ berechnet werden.
+Vollständig verfügbar sind die Daten allerdings nur für 16~Sektorindizes, während die übrigen Datenreihen erst zu späteren Zeitpunkten starten.
+
+Als risikofreier Zins dient die Fed Funds Rate, die wie auch die Sekotrindizes über Datastream bezogen wird.
+Der risikofreie Zinssatz fließt dabei nicht in die Optimierung der einzelnen Portfolios ein, sondern wird stattdessen ausschließlich für die Berechnung der Sharpe-Ratio verwendet.
 
 Die Querschnittsverteilung der Sektorrenditen ist in \hyperref[tab:daten_deskriptiv]{Tab.~\ref*{tab:daten_deskriptiv}} dargestellt.
-Auffällig ist dabei die durchschnittliche paarweise Korrelation von 0,562, die aufgrund der Begrenzung auf den US-Aktienmarkt erwartungsgemäß hoch ausfällt und die Diversifikationsmöglichkeiten innerhalb des Universums begrenzt.
+Auffällig ist dabei die durchschnittliche paarweise Korrelation von 0,562, die aufgrund der Begrenzung auf den US-Aktienmarkt erwartungsgemäß hoch ausfällt und die Diversifikationsmöglichkeiten innerhalb des Universums von vornherein einschränkt.
 
 \input{Abbildungen/tab_daten_deskriptiv}
 
-Ergänzend werden drei künstlich erzeugte Datensätze verwendet, deren datengenerierender Prozess bekannt ist.
-Diese dienen ausschließlich der Validierung der Implementierung und werden im \hyperref[sec:anhang_synth]{Anhang~\ref*{sec:anhang_synth}} dargestellt.
+Hinzu kommen drei künstlich erzeugte Datensätze, die ausschließlich der Validierung der Implementierung dienen.
+Simuliert werden ein Prozess mit konstanter Kovarianzmatrix sowie je ein CCC- und ein DCC-GARCH-Prozess, sodass für jeden der drei Kovarianzschätzer ein Datensatz vorliegt, auf dem er korrekt spezifiziert ist.
+Die Parametrisierung ist im \hyperref[sec:anhang_synth]{Anhang~\ref*{sec:anhang_synth}} dokumentiert.
 
 % =============================================================================
 \section{Methodik}\label{sec:methodik}
 % =============================================================================
 
-\subsection{Rollfensterdesign}
+In diesem Abschnitt wird das Untersuchungsvorgehen vorgestellt.
+Dabei wird auf die Schätzung der Kovarianzmatrix, die Portfoliooptimierung und die Vergleichsmetriken eingegangen.
 
-Für die Auswertung der Ergebnisse wird ein rolling Window verwendet, um für mögliche Strukturbrüche in den Daten zu kontrollieren.
+\subsection{Rolling Window}\label{subsec:rollfenster}
+
+Um für mögliche Strukturbrüche in den Daten zu kontrollieren, werden sämtliche Ergebnisse in einem rollierenden Fenster erzeugt.
 Für jedes Trainingsfenster der Länge $T \in \{252, 504, \dots, 2520\}$ Handelstagen (ein bis zehn Jahre) und jeden Prognosehorizont $h \in \{1, 5, 10, 21\}$ Tagen werden die Kovarianzmatrizen auf den Trainingsdaten geschätzt, daraus die Portfoliogewichte bestimmt und diese über die folgenden $h$ Handelstage gehalten.
-Anschließend rückt das Fenster um $h$ Tage weiter, sodass sich insgesamt 40~Kombinationen ergeben.
-Als Basisfall werden durchgängig $T = 1008$ (vier Jahre) und $h = 1$ berichtet, da diese Kombination beide Modellbestandteile am besten zur Geltung bringt.
-Vier Jahre liefern genügend Beobachtungen, um neben den univariaten GARCH-Parametern auch die beiden DCC-Parameter verlässlich zu schätzen, ohne dass das Fenster so lang wird, dass es über mehrere Marktphasen mittelt.
-Ein Prognosehorizont von einem Tag entspricht zudem der natürlichen Ein-Schritt-Prognose der Modelle, weshalb sich die Qualität der Kovarianzschätzung dort am unmittelbarsten auf die Gewichte auswirkt.
-Durch den Vergleich der Ergebnisse des Basisfalls mit den übrigen Kombinationen kann überprüft werden, ob die beobachteten Ergebnisse robust gegenüber anderen Trainings- und Prognosefenstern sind.
-Zudem kann überprüft werden, welche Fensterlänge den optimalen Trade-off zwischen Schätzfehlern aufgrund von zu wenigen Daten und Fehlspezifikation aufgrund von sich mit der Zeit ändernden Parametern liefert.
+Anschließend rückt das Fenster um $h$ Tage weiter, bis das Ende der Stichprobe erreicht ist, wobei sich aus den zehn Fensterlängen und den vier Prognosehorizonten insgesamt 40~Kombinationen ergeben.
+Deren Vergleich zeigt zum einen, ob die Befunde robust gegenüber der Wahl von Trainings- und Prognosefenster sind, und zum anderen, bei welcher Fensterlänge sich Schätzfehler aus zu wenigen Beobachtungen und Fehlspezifikation aus sich ändernden Parametern am besten ausgleichen.
 
-Um die unterschiedlichen Datenzeiträume der einzelnen Sektor-Indizes zu berücksichtigen, werden in jedem Zeitfenster nur die Sektoren verwendet, die an mindestens 90\% der Handelstage im Trainingsfenster verfügbar sind, wodurch die Anzahl an Anlagen über die Zeit variiert.
+Je Zeitfenster werden dabei nur Sektoren beachtet, die an mindestens 90\,\% der Handelstage verfügbar sind, um so eine ausreichende Datenbasis für die Schätzung zu gewährleisten und zugleich Sektoren einzubeziehen, für die Daten erst ab einem späteren Zeitpunkt vorliegen.
+Das investierbare Universum wird somit in jedem Fenster neu bestimmt und variiert sowohl über die Zeit als auch über die Fensterlänge.
+Als Basisfall werden durchgängig $T = 1008$ (vier Jahre) und $h = 1$ berichtet und von da ausgehend die Robustheit der Ergebnisse überprüft.
 
-\paragraph{Bewertungszeitraum.}
-Ein rollierendes Design hat die Eigenschaft, dass der Out-of-Sample-Zeitraum mit der Länge des Trainingsfensters wandert, da die Bewertung bei einem Jahr Training im März~2000 beginnt, bei zehn Jahren jedoch erst im November~2008.
+Ein Nachteil des Untersuchungsdesigns ist jedoch, dass der Out-of-Sample-Zeitraum mit der Länge des Trainingsfensters wandert.
 Ein Vergleich der Spezifikationen über ihre jeweils volle Historie würde deshalb nicht die Fensterlänge isolieren, sondern zugleich unterschiedliche Marktphasen gegenüberstellen.
-Der Effekt ist dabei gerichtet, weil das längste Fenster nach dem Einbruch der Finanzkrise beginnt und nur die anschließende Erholung abdeckt, wodurch seine Sharpe Ratio gegenüber kurzen Fenstern systematisch angehoben wird.
+Sämtliche Vergleiche über Trainingsfenster und Prognosehorizonte hinweg werden daher auf dem gemeinsamen Bewertungszeitraum ab dem 01.01.2010 gerechnet, sodass alle Zeilen der Robustheitstabellen dieselben rund 4.280 Handelstage umfassen und alle Ergebnisse über die gleichen Marktphasen bestimmt werden.
+Der Basisfall wird zusätzlich zuerst über seine volle verfügbare Historie ab Februar~2003 berichtet, da dort keine Vergleichbarkeitsfrage besteht.
+Wie weit beide Rechnungen auseinanderliegen zeigt der \hyperref[sec:strukturbruch]{Abschnitt zur Robustheit}.
 
-Sämtliche Vergleiche über Trainingsfenster und Prognosehorizonte hinweg werden daher auf dem gemeinsamen Bewertungszeitraum ab dem 01.01.2010 gerechnet.
-Damit sind Einbruch und Erholung der Finanzkrise für alle Spezifikationen gleichermaßen ausgeschlossen, sodass alle Zeilen der Robustheitstabellen dieselben rund 4.280 Handelstage umfassen.
-Der Basisfall wird demgegenüber über seine volle verfügbare Historie ab Februar~2003 berichtet, da dort keine Vergleichbarkeitsfrage besteht.
-Beide Rechnungen werden im \hyperref[sec:strukturbruch]{Abschnitt zum Strukturbruch} ausdrücklich gegenübergestellt.
-
-\subsection{Kovarianzschätzer}
+\subsection{Kovarianzschätzer}\label{subsec:kovarianz}
 
 Verglichen werden drei Schätzer der bedingten Kovarianzmatrix, die eine aufsteigende Leiter an Dynamik abbilden, wobei jeder Schritt genau eine Modellkomponente hinzufügt.
 Dadurch lässt sich der Beitrag dieser Komponente isolieren.
 
-Der historische Schätzer ist die Stichprobenkovarianz der Trainingsrenditen und unterstellt konstante Varianzen und Korrelationen über das gesamte Fenster.
+Der historische Schätzer ist die schlichte Stichprobenkovarianz der Trainingsrenditen, in der die Konstanzannahme unverändert erhalten bleibt.
 Er dient als statischer Referenzpunkt, da er keine Parameterschätzung im engeren Sinn benötigt, dafür aber träge ist und erst mit der Verzögerung des gesamten Fensters auf Veränderungen des Risikoniveaus reagiert.
 
 Der GARCH-Schätzer löst dieses Problem für die Varianzen, indem er die Volatilitätscluster explizit modelliert, die ein konstantes Varianzmodell per Konstruktion ignoriert.
@@ -166,12 +172,11 @@ Ein GARCH(1,1) nach \textcite{bollerslev1986} beschreibt die bedingte Varianz al
 \end{equation}
 
 Dabei steuert $\alpha$, wie stark ein neuer Schock die Varianz bewegt, während $\beta$ deren Persistenz misst, wobei für Stationarität $\omega > 0$, $\alpha, \beta \geq 0$ und $\alpha + \beta < 1$ gelten muss.
-Die Umsetzung folgt dem CCC-Ansatz von \textcite{bollerslev1990}, bei dem für jeden Sektor ein GARCH(1,1) per Quasi-Maximum-Likelihood geschätzt und die Varianzprognose über den Horizont $h$ gemittelt wird.
-Die Korrelationsmatrix bleibt hierbei die konstante Stichprobenkorrelation der standardisierten Residuen $z_t$.
+Die Umsetzung folgt dem Constant-Conditional-Correlation-Ansatz (CCC) von \textcite{bollerslev1990}, bei dem für jeden Sektor ein GARCH(1,1) per Quasi-Maximum-Likelihood geschätzt und die Varianzprognose über den Zeitraum $h$ getroffen wird.
+Konstant bleibt hierbei die Korrelationsmatrix, die als Stichprobenkorrelation der standardisierten Residuen $z_t$ geschätzt wird.
 Diese werden statt der Rohrenditen verwendet, da in ihnen die Volatilitätscluster bereits herausgefiltert sind und Tage hoher Volatilität die Korrelationsschätzung sonst nach oben verzerren würden.
 
-Der DCC-GARCH-Schätzer nimmt die verbleibende Restriktion zurück, weil eine konstante Korrelationsmatrix nicht abbilden kann, dass Korrelationen in Stressphasen ansteigen.
-\textcite{engle2002} überträgt die Rekursion aus \hyperref[eq:garch]{Gleichung~\ref*{eq:garch}} daher auf die Korrelation selbst.
+Der DCC-GARCH-Schätzer nimmt die verbleibende Restriktion zurück und überträgt die Rekursion aus \hyperref[eq:garch]{Gleichung~\ref*{eq:garch}} nach \textcite{engle2002} auf die Korrelation selbst.
 
 \begin{equation}
   Q_t = (1 - a - b)\,\bar{Q} + a\,z_{t-1}z_{t-1}' + b\,Q_{t-1},
@@ -187,23 +192,24 @@ Die Kovarianzmatrix ergibt sich anschließend als $\Sigma_t = D_t R_t D_t$, wobe
 Da GARCH- und DCC-Schätzer dieselben Varianzprognosen und dieselben standardisierten Residuen verwenden, isoliert ihr Vergleich exakt den Beitrag der dynamischen Korrelation.
 Der Vergleich beider mit der historischen Matrix isoliert entsprechend den Beitrag der dynamischen Volatilität.
 
-\subsection{Portfoliomodelle}
+\subsection{Portfoliomodelle}\label{subsec:portfolios}
 
-Allen vier Allokationsverfahren ist gemeinsam, dass sie ohne Renditeprognosen auskommen und die Gewichte allein aus Varianzen, Kovarianzen und Korrelationen bestimmen.
-Damit entfällt die Fehlerquelle, die nach \textcite{broadie1993} die Lage der effizienten Grenze am stärksten verzerrt.
-Die Verfahren unterscheiden sich jedoch darin, wie stark sie die geschätzte Kovarianzmatrix ausnutzen, weshalb sie unterschiedlich anfällig für deren Fehler sind.
+Allen vier Allokationsverfahren ist gemeinsam, dass in ihre Gewichte ausschließlich die zweiten Momente eingehen und keine Renditeprognose.
+Damit entfällt die Fehlerquelle, die nach \citeauthor{broadie1993} die Lage der effizienten Grenze am stärksten verzerrt.
+Die Darstellung folgt dem eingangs genannten Spektrum und beginnt bei dem Verfahren, das die geschätzte Matrix am intensivsten nutzt und deshalb am empfindlichsten auf ihre Fehler reagiert.
 
 Am einen Ende dieses Spektrums steht das Minimum-Varianz-Portfolio (MVP), das die Portfoliovarianz $w'\Sigma w$ unter der Budgetrestriktion $\mathbf{1}'w = 1$ und einem Leerverkaufsverbot $w \geq 0$ minimiert.
 Es nutzt die Kovarianzmatrix vollständig aus, einschließlich ihrer Inversen, und überzeugt nach \textcite{behr2008} besonders in volatilen Marktphasen.
 Zugleich ist es das anfälligste Verfahren, da die Minimierung gezielt die Richtungen kleinster geschätzter Varianz aufsucht, in denen die Schätzfehler relativ am größten sind.
-Fehler werden dadurch nicht ausgemittelt, sondern verstärkt, weshalb \citeauthor{lee2011} auf die typischerweise stark konzentrierten MVP-Lösungen hinweist.
+Fehler werden dadurch nicht ausgemittelt, sondern verstärkt, weshalb \textcite{lee2011} auf die typischerweise stark konzentrierten MVP-Lösungen hinweist.
 Weil der Kovarianzschätzer hier am unmittelbarsten durchschlägt, ist das MVP das aussagekräftigste Modell für die zweite Forschungsfrage.
 
 Das Equal-Risk-Contribution-Portfolio (ERC) verfolgt hingegen das Ziel, das Gesamtrisiko nicht zu minimieren, sondern gleichmäßig auf die Anlagen zu verteilen.
 Der Risikobeitrag der Anlage $i$ beträgt $\mathrm{RC}_i = w_i\,(\Sigma w)_i / \sqrt{w'\Sigma w}$, wobei die Gewichte so gewählt werden, dass alle $\mathrm{RC}_i$ übereinstimmen.
-Das Ergebnis liegt konstruktionsbedingt zwischen MVP und 1/N und ist in der Regel deutlich besser diversifiziert, wobei \textcite{chaves2011} zeigen, dass ERC das naive Portfolio dennoch nicht durchgängig schlägt.
+Das Ergebnis liegt konstruktionsbedingt zwischen MVP und 1/N und ist in der Regel deutlich besser diversifiziert.
+Dennoch schlägt ERC das naive Portfolio nach \textcite{chaves2011} nicht durchgängig.
 
-Hierarchical Risk Parity (HRP) nach \textcite{deprado2016} ersetzt die Matrixinversion durch eine hierarchische Struktur.
+Hierarchical Risk Parity (HRP) nach \citeauthor{deprado2016} ersetzt die Matrixinversion durch eine hierarchische Struktur.
 Zunächst werden die Sektoren über die Korrelationsdistanz $d_{ij} = \sqrt{0{,}5\,(1 - \rho_{ij})}$ geclustert und die Kovarianzmatrix quasi-diagonal geordnet, sodass ähnliche Anlagen nebeneinander stehen.
 Anschließend wird das Kapital durch rekursive Bisektion verteilt, wobei auf jeder Ebene der Teilbaum mit der geringeren Varianz das höhere Gewicht erhält.
 Entscheidend ist, dass HRP die Kovarianzmatrix nie invertiert und nur ihre Ordnungsinformation sowie die Varianzen der Teilcluster nutzt.
@@ -213,11 +219,10 @@ Das Verfahren ist dadurch robust gegenüber schlecht konditionierten Matrizen, a
 Als Vergleichsmaßstab dient das gleichgewichtete 1/N-Portfolio, das keine Schätzung der zweiten Momente benötigt und damit immun gegen Schätzfehler ist.
 Es bildet den relevanten Maßstab für die erste Forschungsfrage, da ein Optimierungsverfahren seinen Aufwand nur rechtfertigt, wenn dessen Gewinn den Verlust durch Schätzfehler übersteigt.
 
-\subsection{Bewertungskriterien}
+\subsection{Bewertungskriterien}\label{subsec:kriterien}
 
 Die Bewertung trennt zwischen der Prognosequalität der Kovarianzmatrix und der ökonomischen Performance der daraus abgeleiteten Portfolios.
 
-\paragraph{Realisierter Proxy.}
 Da die wahre bedingte Kovarianzmatrix der Testperiode nicht beobachtbar ist, messen beide statistischen Verlustmaße die Prognose $\Sigma$ gegen denselben realisierten Proxy.
 
 \begin{equation}
@@ -229,18 +234,17 @@ Dabei ist $r_t$ der Vektor der logarithmierten Tagesrenditen, wodurch $S$ ein er
 Für $h = 1$ besteht der Proxy aus einem einzigen äußeren Produkt und hat damit den Rang eins, ist also maximal verrauscht.
 Genau darauf zielt die Wahl der Verlustfunktionen, da beide zur Klasse der bezüglich unvollkommener Proxies robusten Verluste gehören.
 Für diese ist die erwartete Rangfolge zweier Prognosen dieselbe, unabhängig davon, ob gegen den verrauschten Proxy oder gegen die unbeobachtbare Wahrheit gemessen wird.
-\textcite{patton2011} entwickelt dieses Konzept für den univariaten Fall der Varianzprognose, während \textcite{laurent2012} es auf vollständige Kovarianzmatrizen übertragen.
+\citeauthor{patton2011} entwickelt dieses Konzept für den univariaten Fall der Varianzprognose, während \citeauthor{laurent2012} es auf vollständige Kovarianzmatrizen übertragen.
 Das Rauschen kostet folglich Teststärke, verzerrt die Rangfolge jedoch nicht.
 
-\paragraph{Statistische Kriterien.}
-Als erstes Maß dient der multivariate QLIKE-Verlust, der eine Unterschätzung des Risikos stärker bestraft als eine Überschätzung und dadurch ökonomisch besser motiviert ist als ein symmetrisches Maß.
+Als erstes statistisches Maß dient der multivariate Quasi-Likelihood-Verlust (QLIKE), der eine Unterschätzung des Risikos stärker bestraft als eine Überschätzung und dadurch ökonomisch besser motiviert ist als ein symmetrisches Maß.
 
 \begin{equation}
   \mathrm{QLIKE}(\Sigma, S) = \ln|\Sigma| + \operatorname{tr}(\Sigma^{-1} S)
   \label{eq:qlike}
 \end{equation}
 
-Als zweites Maß wird der Kovarianz-MSE herangezogen, der den quadratischen Abstand über alle Matrixeinträge misst und Über- und Unterschätzung symmetrisch gewichtet.
+Als zweites Maß wird der Mean Squared Error (MSE) der Kovarianzeinträge herangezogen, der den quadratischen Abstand über alle Matrixeinträge misst und Über- wie Unterschätzung symmetrisch gewichtet.
 
 \begin{equation}
   \mathrm{MSE}(\Sigma, S) = \frac{1}{N^2}\sum_{i,j}\left(\Sigma_{ij} - S_{ij}\right)^2
@@ -252,18 +256,17 @@ Die Mittelung erfolgt bewusst über den MSE und nicht über eine je Fenster gezo
 
 Bei der Interpretation der Niveaus sind zwei Eigenschaften zu beachten.
 Der QLIKE-Verlust ist nicht dimensionsnormiert, da der Term $\ln|\Sigma|$ über alle Eigenwerte summiert und sein Niveau somit mit der Zahl der Anlagen $N$ skaliert.
-Der MSE mittelt hingegen über die Matrixeinträge und ist von der Dimension weit weniger betroffen, folgt dafür aber dem Volatilitätsniveau der Bewertungsperiode und dem Horizont $h$, über den der Proxy mittelt.
+Weit weniger betroffen ist der MSE, der über die Matrixeinträge mittelt, dafür aber dem Volatilitätsniveau der Bewertungsperiode und dem Horizont $h$ des Proxys folgt.
 In beiden Fällen ist daher nur die Differenz zwischen den Schätzern innerhalb einer Spezifikation aussagekräftig, nicht das Niveau zwischen Spezifikationen.
 
-\paragraph{Ökonomische Kriterien.}
 Ökonomisch werden die annualisierte Rendite, die realisierte Volatilität, die Sharpe Ratio und der Turnover berichtet.
 Die Sharpe Ratio wird dabei in zwei Varianten ausgewiesen, einmal mit einem risikofreien Zins von null und einmal auf Überschussrenditen über die Fed Funds Rate.
 Der Turnover ist die Summe der absoluten Gewichtsänderungen zwischen den gedrifteten Endgewichten der Vorperiode und den neuen Zielgewichten und entspricht damit dem je Rebalancierung umgeschlagenen Anteil des Portfoliovolumens.
-Der Backtest selbst rechnet kostenfrei, weshalb die Wirkung von Transaktionskosten erst im \hyperref[sec:limitationen]{Abschnitt zu den Limitationen} ex post quantifiziert wird.
+Gerechnet wird dabei kostenfrei, weshalb die Wirkung von Transaktionskosten erst ex post über eine Kostenstaffel auf den Turnover quantifiziert wird.
 
 Signifikanzaussagen beruhen auf zwei Tests.
-Unterschiede in der Prognosegüte werden mit dem Test von \textcite{diebold1995} in der Erweiterung von \textcite{west1996} auf die Verlustdifferenzen geprüft, wobei die Langfristvarianz mit einem Bartlett-Kern geschätzt wird.
-Unterschiede in den Sharpe Ratios werden mit dem Test von \textcite{jobson1981} in der Korrektur von \textcite{memmel2003} geprüft, der die Korrelation der beiden Renditereihen berücksichtigt.
+Unterschiede in der Prognosegüte werden mit dem Test von \textcite{diebold1995} in der Erweiterung von \textcite{west1996} auf die Verlustdifferenzen geprüft, wobei die Langfristvarianz dieses DMW-Tests mit einem Bartlett-Kern geschätzt wird.
+Für Unterschiede in den Sharpe Ratios dient der Test von \textcite{jobson1981} in der Korrektur von \textcite{memmel2003}, der die Korrelation der beiden Renditereihen berücksichtigt.
 
 % =============================================================================
 \section{Ergebnisse}\label{sec:ergebnisse}
@@ -271,7 +274,7 @@ Unterschiede in den Sharpe Ratios werden mit dem Test von \textcite{jobson1981} 
 
 Die Darstellung folgt der Trennung der Bewertungskriterien.
 Zunächst wird geprüft, ob die GARCH-basierten Schätzer die Kovarianzmatrix besser prognostizieren, bevor untersucht wird, ob sich ein solcher Vorteil auch in der Portfolioperformance niederschlägt.
-Anschließend wird die Stabilität beider Befunde über die Trainings- und Prognosefenster betrachtet.
+Anschließend wird die Stabilität beider Befunde über Trainingsfenster, Prognosehorizonte und Teilperioden betrachtet.
 
 % -----------------------------------------------------------------------------
 \subsection{Statistische Prognosequalität}\label{sec:statistisch}
@@ -283,13 +286,13 @@ QLIKE und MSE stimmen in dieser Reihenfolge überein.
 
 \input{Abbildungen/tab_statistik_basis}
 
-Der DMW-Test in \hyperref[tab:dmw]{Tab.~\ref*{tab:dmw}} zeigt jedoch, dass die beiden Verlustmaße unterschiedlich scharf trennen.
-Unter QLIKE wird die Nullhypothese gleicher erwarteter Verluste in allen drei paarweisen Vergleichen auf dem 1-\%-Niveau verworfen.
+Wie scharf die beiden Verlustmaße trennen, unterscheidet sich allerdings erheblich.
+Der DMW-Test in \hyperref[tab:dmw]{Tab.~\ref*{tab:dmw}} verwirft die Nullhypothese gleicher erwarteter Verluste unter QLIKE in allen drei paarweisen Vergleichen auf dem 1-\%-Niveau.
 Besonders präzise geschätzt ist dabei der Vorsprung von DCC gegenüber GARCH, obwohl die Differenz klein ausfällt.
 Der Grund hierfür liegt darin, dass beide Schätzer dieselben Varianzprognosen verwenden, wodurch sich die Verlustdifferenz fast ausschließlich aus dem Korrelationsbeitrag speist.
 Unter dem MSE sind die Abstände zur historischen Matrix hingegen nur auf dem 5-\%-Niveau signifikant, während der Unterschied zwischen DCC und GARCH nicht mehr von null zu trennen ist.
-Der symmetrische Verlust wird von wenigen extremen Beobachtungen dominiert und ist daher erheblich verrauschter.
-Belastbar ist somit, dass beide dynamischen Schätzer die historische Matrix unter beiden Maßen schlagen, wobei sich der Zusatznutzen der dynamischen Korrelation nur unter QLIKE nachweisen lässt.
+Ursache ist das Rauschen, da der symmetrische Verlust von wenigen extremen Beobachtungen dominiert wird.
+Belastbar ist somit, dass beide dynamischen Schätzer die historische Matrix unter beiden Maßen schlagen, während sich der Zusatznutzen der dynamischen Korrelation nur unter QLIKE nachweisen lässt.
 
 \input{Abbildungen/tab_dmw}
 
@@ -304,7 +307,7 @@ Der MSE zeigt dasselbe Muster, ordnet DCC aber auch im kürzesten Fenster vorne 
 
 Die Niveaus beider Verluste sind zwischen den Zeilen dieser Tabelle nicht vergleichbar, obwohl alle Zeilen denselben Zeitraum abdecken.
 Beim QLIKE liegt das an der Dimension der Kovarianzmatrix, beim MSE im unteren Block dagegen am Horizont, über den der Proxy mittelt.
-Für die statistische Lesart der zweiten Forschungsfrage fällt die Antwort damit dennoch eindeutig aus, da GARCH- und DCC-GARCH-Modelle die Prognose der Kovarianzmatrix gegenüber der historischen Schätzung signifikant und unter dem MSE ausnahmslos verbessern.
+Für die statistische Lesart der zweiten Forschungsfrage fällt die Antwort dennoch eindeutig aus, da GARCH- und DCC-GARCH-Modelle die Prognose der Kovarianzmatrix gegenüber der historischen Schätzung signifikant und unter dem MSE ausnahmslos verbessern.
 
 % -----------------------------------------------------------------------------
 \subsection{Ökonomische Performance}\label{sec:oekonomisch}
@@ -324,16 +327,23 @@ Der eigentliche Treiber steht in der letzten Spalte, in der der mittlere Turnove
 Die dynamischen Schätzer reagieren auf jede neue Volatilitätsschätzung und schichten das Portfolio permanent um, während die träge Stichprobenkovarianz die Gewichte nahezu unverändert lässt.
 Bei HRP und ERC fällt der Anstieg mit dem Faktor acht beziehungsweise sechs erheblich geringer aus, was die Robustheitsorientierung dieser Verfahren widerspiegelt.
 
-Statistisch abgesichert sind diese Unterschiede allerdings nicht, da \hyperref[tab:jobson_korkie]{Tab.~\ref*{tab:jobson_korkie}} für keinen der relevanten Vergleiche einen auch nur annähernd signifikanten $p$-Wert ausweist.
+Statistisch abgesichert sind die Unterschiede in der Sharpe Ratio allerdings nicht, da \hyperref[tab:jobson_korkie]{Tab.~\ref*{tab:jobson_korkie}} für keinen der relevanten Vergleiche einen auch nur annähernd signifikanten $p$-Wert ausweist.
 Dies gilt sowohl zwischen den Kovarianzschätzern als auch gegenüber dem 1/N-Portfolio.
 Das ist weniger ein Argument gegen die Modelle als eines gegen die Sharpe Ratio als Auswahlkriterium, da sie von den realisierten Renditen dominiert wird, auf die die Kovarianzmatrix nur mittelbar wirkt.
 Genau diesen Einwand formulieren \citeauthor{engle2006}.
 
 \input{Abbildungen/tab_jobson_korkie}
 
+Was sich in der Sharpe Ratio nicht sichern lässt, wird über die Kosten des Turnovers hingegen unmittelbar greifbar.
+Legt man eine Staffel proportionaler Transaktionskosten auf das umgeschlagene Volumen, fällt die Sharpe Ratio des MVP mit DCC-Kovarianz bereits bei 5~Basispunkten unter die des 1/N-Portfolios, während die historische Variante nahezu unverändert bleibt.
+Bei 20~Basispunkten werden die dynamischen MVP-Varianten negativ, wie \hyperref[tab:transaktionskosten]{Tab.~\ref*{tab:transaktionskosten}} zeigt.
+Der ökonomische Nachteil der dynamischen Schätzer ist damit bereits ohne Kosten angelegt und wird mit Kosten dominant.
+
+\input{Abbildungen/tab_transaktionskosten}
+
 Die Zählbilanz über alle 40~Läufe in \hyperref[tab:bilanz]{Tab.~\ref*{tab:bilanz}} ordnet den Basisfall ein und macht sichtbar, dass der ökonomische Befund je nach Portfoliomodell unterschiedlich ausfällt.
 Zur ersten Forschungsfrage zeigt sich, dass HRP und ERC mit historischer Kovarianz das 1/N-Portfolio in allen 40~Konstellationen schlagen, das MVP dagegen nur in der Hälfte der Fälle.
-Das MVP ist das anfälligste der drei Verfahren, da die Varianzminimierung Schätzfehler in den kleinsten Eigenwerten der Kovarianzmatrix maximal ausnutzt und zu konzentrierten Portfolios führt.
+Ausschlaggebend ist die bereits angelegte Anfälligkeit des MVP, dessen Varianzminimierung Schätzfehler in den kleinsten Eigenwerten der Kovarianzmatrix maximal ausnutzt und zu konzentrierten Portfolios führt.
 Die im Basisfall beste Sharpe Ratio des MVP ist insofern nicht repräsentativ.
 
 Zur zweiten Forschungsfrage zeigt sich ein klares Muster entlang der Portfoliomodelle, da die dynamischen Schätzer die historische Matrix beim MVP in gut der Hälfte der Läufe schlagen, beim HRP nur vereinzelt und beim ERC in keinem einzigen.
@@ -351,13 +361,13 @@ Die absoluten Unterschiede fallen dabei klein aus, weshalb angesichts der insign
 
 Deutlicher ist der Befund über den Prognosehorizont in \hyperref[tab:sharpe_horizont]{Tab.~\ref*{tab:sharpe_horizont}}.
 Wird seltener rebalanciert, bleibt die Sharpe Ratio der historischen Matrix beim MVP praktisch konstant, während sie für DCC deutlich fällt und der Turnover je Rebalancierung gleichzeitig auf mehr als das Doppelte steigt.
-Über längere Horizonte handeln die dynamischen Modelle somit gegen zunehmend veraltete Prognosen an, wodurch sich ihr Vorteil in einen Nachteil umkehrt.
+Über längere Horizonte handeln die dynamischen Modelle somit gegen zunehmend veraltete Prognosen an, wodurch sich ihr Vorteil auch ohne Kosten in einen Nachteil umkehrt.
 Da der Bewertungszeitraum über alle Zeilen identisch ist und allein die Rebalancierungsfrequenz variiert, ist dieser Vergleich frei von den Stichprobenproblemen, die der folgende Abschnitt behandelt.
 
 \input{Abbildungen/tab_sharpe_horizont}
 
 % -----------------------------------------------------------------------------
-\subsection{Robustheit über Zeiträume und ein Strukturbruch}\label{sec:strukturbruch}
+\subsection{Robustheit über Zeiträume und Anlageuniversen}\label{sec:strukturbruch}
 % -----------------------------------------------------------------------------
 
 Sämtliche bisher berichteten Vergleiche über Trainingsfenster hinweg wurden bereits auf dem gemeinsamen Zeitraum ab 2010 gerechnet.
@@ -400,85 +410,66 @@ Dort ist das Universum mit 20~Anlagen konstant und der datengenerierende Prozess
 
 Robust ist der Befund dort, wo tatsächlich nur ein Faktor variiert wird.
 Über die Prognosehorizonte bleiben Bewertungszeitraum und Universum konstant, wodurch der Vorteil der historischen Matrix monoton mit dem Horizont wächst.
-Über alle 40~Läufe hinweg gilt zudem die statistische Rangfolge unter dem MSE ausnahmslos.
+Zudem gilt die statistische Rangfolge unter dem MSE über alle 40~Läufe hinweg ausnahmslos.
 
 % =============================================================================
 \section{Einordnung in die Literatur}\label{sec:literatur}
 % =============================================================================
 
-\textit{Grobentwurf. Die Belege sind zu vervollständigen und die Argumentation an die endgültige Fassung der Ergebnisse anzupassen.}
+% TODO: Zu ergaenzen sind aktuelle Arbeiten zu HRP-Varianten (HERC, NCO) sowie
+% zur Kombination von DCC-Modellen mit Risk-Parity-Ansaetzen.
 
-\paragraph{Risikobasierte Allokation gegenüber 1/N.}
-Der Befund, dass alle drei risikobasierten Verfahren das naive Portfolio im Basisfall übertreffen, steht in Spannung zu \textcite{demiguel2009}, die 1/N gegenüber optimierten Strategien als schwer zu schlagen ausweisen.
-Der Unterschied dürfte weniger auf die Verfahren als auf das Untersuchungsobjekt zurückgehen, da hier über breit diversifizierte Sektorindizes statt über Einzeltitel optimiert wird, wodurch die Kovarianzmatrix stabiler zu schätzen ist.
-Innerhalb der risikobasierten Verfahren fügen sich die Ergebnisse gut in die vorliegende Evidenz.
-Die hohe Robustheit von HRP mit 40 von 40 Läufen über 1/N entspricht den Aussagen von \citeauthor{deprado2016} und \citeauthor{sen2022}, während die Beobachtung, dass ERC besser diversifiziert, das naive Portfolio aber nicht durchgängig schlägt, sich mit \textcite{chaves2011} deckt.
-Die Anfälligkeit des MVP für Schätzfehler samt seiner Konzentrationsneigung ist bei \citeauthor{lee2011} und \citeauthor{behr2008} beschrieben.
-Dass das MVP im Basisfall dennoch die höchste Sharpe Ratio erzielt, über alle Läufe hinweg aber nur in der Hälfte der Fälle über 1/N liegt, illustriert genau diese Instabilität.
+Dieser Abschnitt hält die Befunde gegen die eingangs skizzierte Literatur und benennt, wo sie diese stützen und wo sie ihr widersprechen.
 
-\paragraph{Statistische gegenüber ökonomischer Relevanz.}
+Der Befund, dass alle drei risikobasierten Verfahren das naive Portfolio im Basisfall übertreffen, steht in Spannung zu \citeauthor{demiguel2009}, die 1/N gegenüber optimierten Strategien als schwer zu schlagen ausweisen.
+Die Ursache dürfte weniger in den Verfahren als im Untersuchungsobjekt liegen, da hier über breit diversifizierte Sektorindizes statt über Einzeltitel optimiert wird und die Kovarianzmatrix dadurch stabiler zu schätzen ist.
+Innerhalb der risikobasierten Verfahren fügen sich die Ergebnisse dagegen gut in die vorliegende Evidenz ein.
+Die hohe Robustheit von HRP mit 40 von 40 Läufen über 1/N entspricht den Aussagen von \citeauthor{deprado2016} und \citeauthor{sen2022}.
+Mit \citeauthor{chaves2011} deckt sich zudem die Beobachtung, dass ERC zwar besser diversifiziert, das naive Portfolio aber nicht durchgängig schlägt.
+Dass das MVP im Basisfall dennoch die höchste Sharpe Ratio erzielt, über alle Läufe hinweg aber nur in der Hälfte der Fälle über 1/N liegt, illustriert genau die Instabilität, die \citeauthor{lee2011} und \citeauthor{behr2008} beschreiben.
+
 Das zentrale Ergebnis dieser Arbeit, ein nahezu vollständiger statistischer, aber nur beim MVP nennenswerter ökonomischer Vorsprung der GARCH-Modelle, reiht sich in eine etablierte Diskussion ein.
-\citeauthor{engle2006} argumentieren, dass die Auswahl eines Kovarianzschätzers anhand der Sharpe Ratio irreführend sein kann, was die durchweg insignifikanten Tests in \hyperref[tab:jobson_korkie]{Tab.~\ref*{tab:jobson_korkie}} für den vorliegenden Datensatz unmittelbar bestätigen.
-\citeauthor{patton2011} liefert mit den robusten Verlustfunktionen die Alternative, der diese Arbeit mit QLIKE und MSE folgt, wobei \citeauthor{laurent2012} die multivariate Erweiterung beisteuern.
-Den statistischen Teil der Ergebnisse stützen \citeauthor{ardia2017}, die zeigen, dass eine Fehlspezifikation der Kovarianzmatrix die Portfoliogewichte spürbar verzerrt.
-Am nächsten liegt jedoch \textcite{moura2020}, da die Autoren für hochdimensionale bedingte Kovarianzmatrizen ebenfalls finden, dass die statistisch beste Spezifikation nicht die ökonomisch beste sein muss und Transaktionskosten den Ausschlag geben.
+Die durchweg insignifikanten Tests in \hyperref[tab:jobson_korkie]{Tab.~\ref*{tab:jobson_korkie}} bestätigen den Einwand von \citeauthor{engle2006} für den vorliegenden Datensatz unmittelbar, während die von \citeauthor{patton2011} und \citeauthor{laurent2012} vorgeschlagenen robusten Verluste im selben Datensatz sehr wohl trennscharf sind.
+Nur scheinbar im Widerspruch dazu stehen \citeauthor{ardia2017}, die eine Fehlspezifikation der Kovarianzmatrix als spürbare Verzerrung der Portfoliogewichte ausweisen.
+Verzerrte Gewichte schlagen sich hier nämlich nur dort in der Performance nieder, wo ein Verfahren die Matrix intensiv nutzt, sodass sich beide Befunde nicht ausschließen, sondern die Verzerrung je nach Allokationsverfahren unterschiedlich teuer ist.
+Am nächsten liegt jedoch \citeauthor{moura2020}, da die Autoren für hochdimensionale bedingte Kovarianzmatrizen ebenfalls finden, dass die statistisch beste Spezifikation nicht die ökonomisch beste sein muss und Transaktionskosten den Ausschlag geben.
 Die Turnover- und Kostenrechnung in \hyperref[tab:transaktionskosten]{Tab.~\ref*{tab:transaktionskosten}} repliziert diesen Mechanismus in einem Sektoruniversum.
-
-\paragraph{Forschungslücke.}
-Die Verbindung beider Themenfelder, risikobasierter Allokationsverfahren einschließlich HRP auf der einen und multivariater GARCH-Kovarianzprognosen auf der anderen Seite, ist bislang nur vereinzelt untersucht worden.
-Ergänzend fällt auf, dass die Sensitivität von Rollfensterstudien gegenüber der Zusammensetzung des Anlageuniversums selten explizit thematisiert wird, obwohl sie die Kennzahlenniveaus vollständig dominieren kann.
-\textit{[Noch zu ergänzen: aktuelle Arbeiten zu HRP-Varianten (HERC, NCO) sowie zur Kombination von DCC-Modellen mit Risk-Parity-Ansätzen.]}
 
 % =============================================================================
 \section{Limitationen}\label{sec:limitationen}
 % =============================================================================
 
-\paragraph{Transaktionskosten.}
-Der Backtest rechnet ohne Handelskosten, was angesichts der Turnover-Unterschiede die schwerwiegendste Einschränkung darstellt.
-Die Größenordnung zeigt \hyperref[tab:transaktionskosten]{Tab.~\ref*{tab:transaktionskosten}}, da bereits bei 5~Basispunkten auf das umgeschlagene Volumen die Sharpe Ratio des MVP mit DCC-Kovarianz unter die des 1/N-Portfolios fällt, während die historische Variante nahezu unverändert bleibt.
-Bei 20~Basispunkten werden die dynamischen MVP-Varianten negativ.
-Die Rechnung ist eine Näherung, da ein kostenbewusster Optimierer weniger handeln würde, kehrt die Aussage des Ergebnisteils jedoch nicht um, sondern verschärft sie.
-Der ökonomische Nachteil der GARCH-Modelle ist bereits ohne Kosten vorhanden und wird mit Kosten dominant.
+Die Aussagekraft der Ergebnisse ist in mehrfacher Hinsicht begrenzt, wobei die Einschränkungen im Folgenden nach ihrem Gewicht für die Interpretation geordnet werden.
 
-\input{Abbildungen/tab_transaktionskosten}
+Am schwersten wiegt, dass der Backtest ohne Handelskosten rechnet und diese erst ex post auf den ausgewiesenen Turnover angesetzt werden.
+Die Rechnung ist damit eine Näherung, da ein kostenbewusster Optimierer weniger handeln und einen Teil der Belastung vermeiden würde.
+Sie kehrt die Aussage des \hyperref[sec:oekonomisch]{Abschnitts zur ökonomischen Performance} allerdings nicht um, sondern verschärft sie, weil der ökonomische Nachteil der dynamischen Schätzer bereits ohne Kosten vorhanden ist.
 
-\paragraph{Zusammensetzung des Anlageuniversums.}
-Der unbalancierte Panelaufbau begrenzt die Vergleichbarkeit über Trainingsfenster und Teilperioden hinweg, wobei die Einschränkung auf den gemeinsamen Bewertungszeitraum ab 2010 zwar den Stichprobeneffekt behebt, nicht aber den Universumseffekt.
+Der unbalancierte Panelaufbau begrenzt zudem die Vergleichbarkeit über Trainingsfenster und Teilperioden hinweg, da die Einschränkung auf den gemeinsamen Bewertungszeitraum ab 2010 zwar den Stichprobeneffekt behebt, nicht aber den Universumseffekt.
 Eine sauberere Untersuchung würde das Universum über alle Spezifikationen hinweg auf die 16~durchgängig verfügbaren Sektoren fixieren, wofür allerdings auf rund 40\,\% der zuletzt verfügbaren Sektoren verzichtet werden müsste.
-Ein solcher Robustheitslauf steht aus, ebenso wie eine Normierung des QLIKE-Verlusts auf $N$ für Vergleiche über unterschiedliche Dimensionen hinweg.
+Ein solcher Robustheitslauf steht ebenso aus wie eine Normierung des QLIKE-Verlusts auf $N$, die Niveauvergleiche über unterschiedliche Dimensionen hinweg zulassen würde.
+Die synthetischen Datensätze können diese Lücke nicht schließen, da sie ein vollständig balanciertes Panel bilden, in dem alle 20~Anlagen ab dem ersten Tag verfügbar sind.
+Das ist gewollt, weil es die Gegenprobe zum Strukturbruch erst ermöglicht, bedeutet aber zugleich, dass erst ein simuliertes Panel mit gestaffelt eintretenden Anlagen den Universumseffekt isoliert quantifizieren könnte.
 
-\paragraph{Reichweite der synthetischen Validierung.}
-Die simulierten Datensätze bilden ein vollständig balanciertes Panel, in dem alle 20~Anlagen ab dem ersten Tag verfügbar sind und das investierbare Universum in jedem Rollfenster konstant bleibt.
-Das ist gewollt, da es die Gegenprobe zum Strukturbruch erst ermöglicht, bedeutet aber zugleich, dass die Simulation den Universumseffekt der empirischen Daten nicht nachbildet.
-Ein simuliertes Panel mit gestaffelt eintretenden Anlagen wäre der naheliegende Weg, diesen Effekt isoliert zu quantifizieren.
-
-\paragraph{Numerische Probleme der historischen Matrix.}
-Im Anschluss an die Universumserweiterung 2022 ist die Stichprobenkovarianz an 66~Rebalancierungsterminen nicht positiv definit, weshalb für sie kein QLIKE-Verlust berechnet werden kann.
-Die Mittelwerte der Schätzer beruhen dadurch streng genommen auf unterschiedlichen Terminmengen.
-Da die fehlenden Termine unmittelbar nach der Universumserweiterung liegen und dort besonders negative QLIKE-Werte auftreten, begünstigt dies die dynamischen Schätzer geringfügig.
+Ein technisches Problem derselben Ursache betrifft die historische Matrix, die im Anschluss an die Universumserweiterung 2022 an 66~Rebalancierungsterminen nicht positiv definit ist und dort keinen QLIKE-Verlust zulässt.
+Die Mittelwerte der Schätzer beruhen dadurch streng genommen auf unterschiedlichen Terminmengen, was die dynamischen Schätzer geringfügig begünstigt, da an den fehlenden Terminen besonders negative QLIKE-Werte auftreten.
 Auf einer gemeinsamen Terminmenge gerechnet schrumpft ihr Vorsprung um rund einen halben QLIKE-Punkt, ohne dass sich die Rangfolge ändert.
 Der MSE ist von dem Problem nicht betroffen, da er keine Invertierung voraussetzt, während sich das Problem systematisch durch einen Shrinkage-Schätzer im Sinne von \textcite{ledoit2004} lösen ließe.
 Dieser wäre zugleich ein interessanterer Vergleichsmaßstab als die rohe Stichprobenkovarianz.
 
-\paragraph{Realisierter Proxy.}
-Für $h = 1$ besteht der realisierte Proxy $S$ aus einem einzigen äußeren Produkt und hat damit den Rang eins.
-Die Verlustfunktionen bleiben nach \citeauthor{patton2011} zwar rangerhaltend, jedoch ist das Signal-Rausch-Verhältnis gering, was insbesondere die Teststärke des MSE-basierten DMW-Tests begrenzt.
-Dort werden nur noch Signifikanzen auf dem 5-\%-Niveau erreicht und der Unterschied zwischen GARCH und DCC ist nicht mehr nachweisbar.
+Auf der Messseite ist der realisierte Proxy die wesentliche Einschränkung, da er für $h = 1$ aus einem einzigen äußeren Produkt besteht und damit den Rang eins hat.
+Die Verlustfunktionen bleiben nach \citeauthor{patton2011} zwar rangerhaltend, jedoch begrenzt das geringe Signal-Rausch-Verhältnis die Teststärke des MSE-basierten DMW-Tests spürbar.
 Intraday-Daten würden einen erheblich präziseren Proxy liefern, standen für diese Arbeit aber nicht zur Verfügung.
+Hinzu kommt, dass ausschließlich die relative Prognosegüte bewertet wurde und nicht die absolute Kalibrierung der prognostizierten Volatilität.
+Ob die Modelle das Risikoniveau im Mittel treffen, was für Value-at-Risk-Anwendungen entscheidend wäre, bleibt damit offen.
 
-\paragraph{Kalibrierung des Risikoniveaus.}
-Bewertet wurde ausschließlich die relative Prognosegüte, nicht die absolute Kalibrierung der prognostizierten Volatilität.
-Ob die Modelle das Risikoniveau im Mittel treffen, was für Value-at-Risk-Anwendungen entscheidend wäre, bleibt damit offen und wäre in einer Erweiterung zu prüfen.
-
-\paragraph{Modellspezifikation.}
-Es wird ausschließlich GARCH(1,1) unter Normalverteilungsannahme geschätzt, wobei Aktienrenditen typischerweise linksschief und leptokurtisch sind.
+Auf der Modellseite wird ausschließlich GARCH(1,1) unter Normalverteilungsannahme geschätzt, obwohl Aktienrenditen typischerweise linksschief und leptokurtisch sind.
 Erweiterungen um Asymmetrie, etwa GJR-GARCH oder EGARCH, sowie um fat-tailed Innovationen liegen daher nahe.
 Die DCC-Parameter werden zudem mit korrelationsgetargetetem $\bar{Q}$ und begrenzter Iterationszahl geschätzt, ohne dass Standardfehler ausgewiesen werden.
+Auf der Allokationsseite sind Leerverkaufsverbot und Vollinvestition die einzigen Restriktionen, während praxisübliche Obergrenzen je Position nicht gesetzt werden.
 
-\paragraph{Weitere Punkte.}
-Über 40~Läufe hinweg werden zahlreiche Tests durchgeführt, ohne für multiples Testen zu korrigieren.
+Schließlich werden über 40~Läufe hinweg zahlreiche Tests durchgeführt, ohne für multiples Testen zu korrigieren.
 Die Analyse beschränkt sich außerdem auf ein einziges Marktsegment, wobei Sektorindizes zudem nicht unmittelbar investierbar sind und Replikationskosten daher unberücksichtigt bleiben.
-Schließlich sind Leerverkaufsverbot und Vollinvestition die einzigen Restriktionen, während praxisübliche Obergrenzen je Position nicht gesetzt werden.
 
 % =============================================================================
 \section{Fazit}\label{sec:fazit}
@@ -486,102 +477,69 @@ Schließlich sind Leerverkaufsverbot und Vollinvestition die einzigen Restriktio
 
 Die Arbeit hat zwei Fragen getrennt untersucht, nämlich ob risikobasierte Portfoliomodelle das naive 1/N-Portfolio schlagen und ob GARCH-basierte Kovarianzprognosen gegenüber der historischen Schätzung einen Mehrwert stiften.
 
-Zur ersten Frage fällt die Antwort differenziert aus und hängt stark vom gewählten Verfahren ab.
+Zur ersten Frage hängt die Antwort stark vom gewählten Verfahren ab.
 HRP und ERC mit historischer Kovarianz übertreffen das 1/N-Portfolio in allen 40~untersuchten Konstellationen und erweisen sich als robust gegenüber Variationen von Trainings- und Prognosefenster.
 Das Minimum-Varianz-Portfolio erzielt im Basisfall zwar die höchste Sharpe Ratio, schlägt 1/N über alle Läufe hinweg aber nur in der Hälfte der Fälle und reagiert am empfindlichsten auf Schätzfehler.
 Für die Praxis sprechen diese Ergebnisse damit eher für die robusteren Verfahren als für die theoretisch elegantere Varianzminimierung, wobei einschränkend gilt, dass keiner der Vorsprünge gegenüber 1/N statistisch signifikant ist.
 
-Zur zweiten Frage hängt die Antwort davon ab, welches Kriterium angelegt wird, worin zugleich der Hauptbefund liegt.
+Zur zweiten Frage entscheidet das angelegte Kriterium über die Antwort, worin zugleich der Hauptbefund liegt.
 Statistisch ist das Ergebnis eindeutig, da DCC-GARCH die Kovarianzmatrix in allen 40~Läufen unter dem MSE und in nahezu allen unter dem QLIKE-Verlust besser prognostiziert als die historische Schätzung und die Unterschiede im DMW-Test signifikant sind.
-Der Zusatzbeitrag der dynamischen Korrelation gegenüber der konstanten fällt klein aus, wird unter QLIKE aber sehr präzise geschätzt, während er sich unter dem verrauschteren MSE nicht nachweisen lässt.
-
-Ökonomisch übersetzt sich dieser Vorsprung nur dort, wo die Kovarianzmatrix tatsächlich intensiv genutzt wird.
-Beim MVP schlagen die dynamischen Schätzer die historische Matrix in gut der Hälfte der Läufe, beim HRP nur vereinzelt und beim ERC in keinem einzigen.
-Das ist konsistent mit der Konstruktion der Verfahren, da HRP und ERC die Matrix bewusst nur grob nutzen und gerade deshalb robust, zugleich aber auch unempfindlich gegenüber ihrer Verbesserung sind.
-Der Preis der Dynamik ist der Turnover, der beim MVP um den Faktor~32 höher liegt.
-Bereits moderate Transaktionskosten von 5~Basispunkten drücken die dynamischen Varianten unter das 1/N-Portfolio, wobei sich ihr Vorteil mit wachsendem Prognosehorizont auch ohne Kosten ins Gegenteil kehrt.
+Ökonomisch übersetzt sich dieser Vorsprung jedoch nur dort, wo die Kovarianzmatrix tatsächlich intensiv genutzt wird, also beim MVP und nicht bei HRP oder ERC.
+Das ist konsistent mit der Konstruktion der Verfahren, da beide die Matrix bewusst nur grob nutzen und gerade deshalb robust, zugleich aber auch unempfindlich gegenüber ihrer Verbesserung sind.
+Der Preis der Dynamik ist der Turnover, der beim MVP um den Faktor~32 höher liegt und bereits bei Transaktionskosten von 5~Basispunkten ausreicht, um die dynamischen Varianten unter das 1/N-Portfolio zu drücken.
 
 Ein methodischer Nebenbefund verdient darüber hinaus Beachtung.
 Die Auswertung über verschiedene Trainingsfenster, die üblicherweise als Robustheitsprüfung verstanden wird, variiert im vorliegenden Design zugleich den Bewertungszeitraum und die Zusammensetzung des Anlageuniversums.
 Beide Effekte sind erheblich und gerichtet, da über die volle Historie das längste Trainingsfenster überlegen erscheint, weil es den Einbruch der Finanzkrise ausschließt und nur die Erholung erfasst.
 Dass sich dieser Effekt auch beim 1/N-Portfolio zeigt, das gar nicht schätzt, belegt seinen rein stichprobenbedingten Charakter.
-Alle Vergleiche über Fenster und Horizonte hinweg werden daher einheitlich ab 2010 bewertet, wodurch rund die Hälfte der scheinbaren Fenstersensitivität verschwindet.
-Der verbleibende Teil geht auf das Universum zurück, da das Niveau des QLIKE-Verlusts mit einer Korrelation von $-0{,}9999$ praktisch vollständig durch die Zahl der investierbaren Sektoren bestimmt wird.
-Auf den synthetischen Datensätzen mit konstantem Universum und parameterstabilem Prozess tritt dieses Muster erwartungsgemäß nicht auf.
-Für die Interpretation folgt daraus, dass Niveauvergleiche über Fensterlängen hinweg ohne Kontrolle von Zeitraum und Universum nicht belastbar sind, was für Rollfensterstudien auf unbalancierten Panels allgemein gelten dürfte.
+Nach der Angleichung des Bewertungszeitraums ab 2010 verschwindet rund die Hälfte der scheinbaren Fenstersensitivität, während der verbleibende Teil mit einer Korrelation von $-0{,}9999$ praktisch vollständig auf die Zahl der investierbaren Sektoren zurückgeht.
+Auf den synthetischen Datensätzen mit konstantem Universum und parameterstabilem Prozess tritt dieses Muster erwartungsgemäß nicht auf, weshalb Niveauvergleiche über Fensterlängen hinweg ohne Kontrolle von Zeitraum und Universum nicht belastbar sind.
 
 Der übergreifende Schluss lautet damit, dass eine bessere Risikoprognose nicht automatisch eine bessere Anlageentscheidung ist.
 Die GARCH-Modelle leisten das, wofür sie konstruiert sind, und die synthetische Validierung zeigt, dass sie genau dann einen Mehrwert liefern, wenn der datengenerierende Prozess ihre Annahmen erfüllt.
-Auf realen Sektordaten ist die verwertbare Struktur jedoch zu schwach, um die Kosten der laufenden Umschichtung zu rechtfertigen, weshalb nicht die Prognosegüte die bindende Restriktion darstellt, sondern der Handel, den ihre Nutzung auslöst.
+Auf realen Sektordaten ist die verwertbare Struktur jedoch zu schwach, um die Kosten der laufenden Umschichtung zu rechtfertigen.
+Nicht die Prognosegüte ist folglich die bindende Restriktion, sondern der Handel, den ihre Nutzung auslöst.
 
 % =============================================================================
 \appendix
 \section{Synthetische Validierung}\label{sec:anhang_synth}
 % =============================================================================
 
-Ob die Modelle korrekt implementiert sind, lässt sich an echten Daten nicht
-prüfen, weil der wahre datengenerierende Prozess unbekannt ist. Dafür werden
-drei simulierte Datensätze mit jeweils 20~Anlagen und 6.000~Handelstagen
-verwendet, die dieselbe unbedingte Risikostruktur besitzen (annualisierte
-Volatilitäten zwischen 15\,\% und 35\,\%, durchschnittliche Korrelation 0,35)
-und sich ausschließlich in der Dynamik der zweiten Momente unterscheiden. Der
-\emph{Monte-Carlo}-Datensatz enthält unabhängige Ziehungen mit konstanter
-Kovarianz und bildet den Nullfall ab, in dem die historische Matrix korrekt
-spezifiziert ist. Der \emph{GARCH}-Datensatz ergänzt eine GARCH(1,1)-Dynamik je
-Anlage ($\alpha = 0{,}08$, $\beta = 0{,}90$) bei konstanter Korrelation. Der
-\emph{DCC}-Datensatz fügt zusätzlich eine DCC-Rekursion hinzu
-($a = 0{,}03$, $b = 0{,}96$). Die Ergebnisse bilden damit eine Leiter, auf der
-jeweils ein Schätzer korrekt spezifiziert ist.
+Ob die Modelle korrekt implementiert sind, lässt sich an echten Daten nicht prüfen, da der wahre datengenerierende Prozess unbekannt ist.
+Dafür werden drei simulierte Datensätze mit jeweils 20~Anlagen und 6.000~Handelstagen verwendet, die dieselbe unbedingte Risikostruktur besitzen und sich ausschließlich in der Dynamik der zweiten Momente unterscheiden.
+Die annualisierten Volatilitäten liegen dabei zwischen 15\,\% und 35\,\% bei einer durchschnittlichen Korrelation von 0,35.
+Der Monte-Carlo-Datensatz enthält unabhängige Ziehungen mit konstanter Kovarianz und bildet den Nullfall ab, in dem die historische Matrix korrekt spezifiziert ist.
+Beim GARCH-Datensatz kommt eine GARCH(1,1)-Dynamik je Anlage mit $\alpha = 0{,}08$ und $\beta = 0{,}90$ bei konstanter Korrelation hinzu, während der DCC-Datensatz zusätzlich eine DCC-Rekursion mit $a = 0{,}03$ und $b = 0{,}96$ enthält.
+Die Ergebnisse bilden damit eine Leiter, auf der jeweils ein Schätzer korrekt spezifiziert ist.
 
-Tabelle~\ref{tab:synth_basis} zeigt, dass die Modelle dieser Leiter folgen. Im
-Monte-Carlo-Fall unterscheiden sich die drei Schätzer unter beiden Verlustmaßen
-praktisch nicht, und die historische Matrix erzielt beim MVP die minimal höchste
-Sharpe Ratio. Wo keine Struktur vorhanden ist, bringt das komplexere Modell also
-nichts, wie es sein soll. Im GARCH-Fall schlagen beide dynamischen Schätzer die
-historische Matrix deutlich, in der Prognosegüte ebenso wie in Sharpe Ratio und
-realisierter Volatilität. Im DCC-Fall schließlich schlägt DCC auch den
-GARCH-Schätzer klar.
+Dass die Modelle dieser Leiter folgen, zeigt \hyperref[tab:synth_basis]{Tab.~\ref*{tab:synth_basis}}.
+Im Monte-Carlo-Fall unterscheiden sich die drei Schätzer unter beiden Verlustmaßen praktisch nicht, wobei die historische Matrix beim MVP die minimal höchste Sharpe Ratio erzielt.
+Wo keine Struktur vorhanden ist, bringt das komplexere Modell folglich nichts.
+Im GARCH-Fall schlagen beide dynamischen Schätzer die historische Matrix deutlich, sowohl in der Prognosegüte als auch in Sharpe Ratio und realisierter Volatilität.
+Im DCC-Fall schlägt DCC schließlich auch den GARCH-Schätzer klar.
 
 \input{Abbildungen/tab_synth_basis}
 
-Die DMW-Tests in Tabelle~\ref{tab:synth_dmw} bestätigen dieses Muster formal.
-Im Monte-Carlo-Prozess ist die Verlustdifferenz der dynamischen Schätzer
-gegenüber der historischen Matrix positiv, also minimal schlechter, und zwischen
-GARCH und DCC nicht von null verschieden. Die zusätzliche Parametrisierung
-erzeugt hier reines Rauschen. Im GARCH-Prozess sind beide dynamischen Schätzer
-signifikant besser als die historische Matrix, unterscheiden sich aber
-untereinander nicht, was korrekt ist, da die Korrelation dort konstant ist. Erst
-im DCC-Prozess wird der Unterschied zwischen DCC und GARCH signifikant. Die
-Implementierung erkennt
-also jeweils genau die Struktur, die tatsächlich vorhanden ist.
+Die DMW-Tests in \hyperref[tab:synth_dmw]{Tab.~\ref*{tab:synth_dmw}} bestätigen dieses Muster formal.
+Im Monte-Carlo-Prozess ist die Verlustdifferenz der dynamischen Schätzer gegenüber der historischen Matrix positiv, also minimal schlechter, und zwischen GARCH und DCC nicht von null verschieden, weshalb die zusätzliche Parametrisierung dort reines Rauschen erzeugt.
+Im GARCH-Prozess sind beide dynamischen Schätzer signifikant besser als die historische Matrix, unterscheiden sich untereinander jedoch nicht, was korrekt ist, da die Korrelation dort konstant ist.
+Erst im DCC-Prozess wird der Unterschied zwischen DCC und GARCH signifikant, sodass die Implementierung jeweils genau die Struktur erkennt, die tatsächlich vorhanden ist.
 
 \input{Abbildungen/tab_synth_dmw}
 
-Für die Diskussion des Strukturbruchs in Abschnitt~\ref{sec:strukturbruch} ist
-Tabelle~\ref{tab:synth_stabilitaet} der entscheidende Gegentest. Da das
-Universum konstant 20~Anlagen umfasst und die Parameter des Prozesses über die
-gesamte Stichprobe unverändert bleiben, sollte sich das Niveau der
-Prognosekennzahlen über die Trainingsfenster hinweg nicht systematisch
-verschieben. Bewertet wird nach demselben Protokoll wie in
-Abschnitt~\ref{sec:strukturbruch}, also ab 2010. Genau das ist der Fall. Das
-QLIKE-Niveau der historischen Matrix schwankt über alle zehn Fenster nur um
-wenige Zehntel, während die entsprechende Spannweite in den empirischen Daten
-über 30~Punkte beträgt. Beim MSE ist das Niveau sogar praktisch konstant. Auch
-die Rangfolge kehrt sich in keinem Fenster um, denn DCC prognostiziert in allen
-20~ausgewiesenen Läufen unter beiden Verlustmaßen besser als die historische
-Matrix, und die Differenz stabilisiert sich bei längeren Trainingsfenstern auf
-einem konstanten Niveau.
+Für die Diskussion des Strukturbruchs ist \hyperref[tab:synth_stabilitaet]{Tab.~\ref*{tab:synth_stabilitaet}} der entscheidende Gegentest.
+Da das Universum konstant 20~Anlagen umfasst und die Parameter des Prozesses über die gesamte Stichprobe unverändert bleiben, sollte sich das Niveau der Prognosekennzahlen über die Trainingsfenster hinweg nicht systematisch verschieben.
+Bewertet wird nach demselben Protokoll wie im empirischen Teil, also ab 2010.
+Genau das ist der Fall, da das QLIKE-Niveau der historischen Matrix über alle zehn Fenster nur um wenige Zehntel schwankt, während die entsprechende Spannweite in den empirischen Daten über 30~Punkte beträgt.
+Beim MSE ist das Niveau sogar praktisch konstant.
+Auch die Rangfolge kehrt sich in keinem Fenster um, weil DCC in allen 20~ausgewiesenen Läufen unter beiden Verlustmaßen besser prognostiziert als die historische Matrix und sich die Differenz bei längeren Trainingsfenstern auf einem konstanten Niveau stabilisiert.
 
 \input{Abbildungen/tab_synth_stabilitaet}
 
-Erwähnenswert ist, dass die ökonomischen Kennzahlen auch hier spürbar
-schwanken, obwohl der Prozess vollkommen stabil ist. Beim
-GARCH-Datensatz schlägt der historische Schätzer in den beiden kürzesten
-Fenstern sogar den DCC-Schätzer, obwohl er dort mit Sicherheit falsch
-spezifiziert ist. Das ist kein Widerspruch, sondern eine weitere Bestätigung des
-Arguments aus Abschnitt~\ref{sec:oekonomisch}: Die Sharpe Ratio ist selbst bei
-bekanntem datengenerierendem Prozess zu verrauscht, um Kovarianzschätzer
-zuverlässig zu ordnen, während die Prognosekennzahlen ein klares Signal liefern.
+Erwähnenswert ist, dass die ökonomischen Kennzahlen auch hier spürbar schwanken, obwohl der Prozess vollkommen stabil ist.
+Beim GARCH-Datensatz schlägt der historische Schätzer in den beiden kürzesten Fenstern sogar den DCC-Schätzer, obwohl er dort mit Sicherheit falsch spezifiziert ist.
+Das ist kein Widerspruch, sondern eine weitere Bestätigung des Arguments aus dem \hyperref[sec:oekonomisch]{Abschnitt zur ökonomischen Performance}.
+Selbst bei bekanntem datengenerierendem Prozess ist die Sharpe Ratio zu verrauscht, um Kovarianzschätzer zuverlässig zu ordnen, während die Prognosekennzahlen ein klares Signal liefern.
 
 % =============================================================================
 \printbibliography[title={Literaturverzeichnis}]

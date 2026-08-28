@@ -182,3 +182,74 @@ cython_debug/
 SP500_Daily.csv
 
 *weights.csv
+
+# LaTeX - Hilfsdateien (aux files)
+## Kern
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fot
+*.cb
+*.cb2
+*.lb
+.*.lb
+## Zwischenformate
+*.dvi
+*.xdv
+*.ps
+*.pdfsync
+## latexmk / SyncTeX
+*.fdb_latexmk
+*.synctex
+*.synctex.gz
+*.synctex(busy)
+*.synctex.gz(busy)
+## Literaturverzeichnis (biblatex/biber/bibtex)
+*.bbl
+*.bcf
+*.blg
+*.brf
+*.run.xml
+*-blx.aux
+*-blx.bib
+## Index und Glossar
+*.idx
+*.ilg
+*.ind
+*.ist
+*.glg
+*.glo
+*.gls
+*.glsdefs
+*.acn
+*.acr
+*.alg
+*.xdy
+*.lol
+## Abkuerzungsverzeichnis (acro/glossaries)
+*.acs
+*.acx
+## Beamer
+*.nav
+*.snm
+*.vrb
+## sonstige Pakete
+*.auxlock
+*.figlist
+*.makefile
+*.fignum
+*.gz(busy)
+*.upa
+*.upb
+*.wrt
+*.sav
+*.bak
+## Editor-Artefakte (LaTeX Workshop u. ae.)
+*-SAVE-ERROR
+
+# lokale Backups
+backup/

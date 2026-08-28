@@ -1,0 +1,1067 @@
+%Nicht anfassen, so ist der Dokumentenaufbau
+\documentclass[a4paper, 12pt]{article}
+\input{settings/packages}
+\input{settings/page}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%Abkürzungsverzeichnis%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\DeclareAcronym{lstm}{
+  short = LSTM,
+  long  = Long Short-Term Memory
+}
+\DeclareAcronym{xgboost}{
+  short = XGBoost,
+  long  = eXtreme Gradient Boosting
+}
+\DeclareAcronym{ohlc}{
+  short = OHLC,
+  long  = Open-High-Low-Close
+}
+\DeclareAcronym{sec}{
+  short = SEC,
+  long  = Securities and Exchange Commission
+}
+\DeclareAcronym{etf}{
+  short = ETF,
+  long  = Exchange Traded Fund
+}
+\DeclareAcronym{ml}{
+  short = ML,
+  long  = Machine-Learning
+}
+\DeclareAcronym{rnn}{
+  short = RNN,
+  long  = Rekurrentes Neuronales Netz
+}
+\DeclareAcronym{rsi}{
+  short = RSI,
+  long  = Relative Strength Index
+}
+\DeclareAcronym{macd}{
+  short = MACD,
+  long  = Moving Average Convergence Divergence
+}
+\DeclareAcronym{mfi}{
+  short = MFI,
+  long  = Money Flow Index
+}
+\DeclareAcronym{sma}{
+  short = SMA,
+  long  = Simple Moving Average (Gleitender Durchschnitt)
+}
+\DeclareAcronym{gru}{
+  short = GRU,
+  long  = Gated Recurrent Unit
+}
+\DeclareAcronym{btc}{
+  short = BTC,
+  long  = Bitcoin
+}
+\DeclareAcronym{xbt}{
+  short = XBT,
+  long  = Bitcoin
+}
+\DeclareAcronym{usd}{
+  short = USD,
+  long  = US-Dollar
+}
+\DeclareAcronym{usdt}{
+  short = USDT,
+  long  = Tether
+}
+\DeclareAcronym{logReg}{
+  short = LogReg,
+  long  = Logistische Regression
+}
+
+\begin{document}
+
+\input{settings/titlepage}
+\setcounter{page}{1}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%Ab hier Inhalt einfügen%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\renewcommand{\abstractname}{Abstrakt}
+\begin{abstract}
+Diese Replikationsstudie untersucht Teile der Arbeit von \textcite{Goutte2023}, in der verschiedene Deep-Learning-Modelle zur Vorhersage von Kauf- und Verkaufssignalen für Bitcoin genutzt wurden.
+Konkret wird der Fokus auf die Vorhersage von Kaufsignalen mit den Modellen Long Short-Term Memory (LSTM), eXtreme Gradient Boosting (XGBoost) und der logistischen Regression gelegt.
+Bei der Replikation zeigt sich, dass die grundlegenden Ergebnisse von \textcite{Goutte2023} nachvollziehbar sind und diese auch bei anderen Modellparametern und Zeiträumen bestehen bleiben.
+Jedoch wird auch deutlich, dass den Autoren der Studie wesentliche Ungenauigkeiten unterlaufen sind.
+So wurden in einzelnen Fällen Gleichungen verwendet, die von den in der Studie genannten Gleichungen abweichen.
+Für einzelne Abbildungen wurden zudem auch Zeiträume verwendet, die vom genannten Untersuchungszeitraum abweichen.
+Da zusätzlich wichtige Informationen zu den verwendeten Merkmalen und dem Vorgehen fehlen, ist eine exakte Replikation der Studie unmöglich.
+Folglich kann die in dieser Arbeit angewendete Methodik von dem Vorgehen der Autoren abweichen.
+\end{abstract}
+
+\section{Einleitung}
+Seit der Veröffentlichung des Bitcoin-Whitepapers durch \citeauthor{BitcoinWhitepaper} im Jahr \citeyear{BitcoinWhitepaper} hat der Kryptowährungsmarkt zunehmend an Bedeutung gewonnen, wodurch sich Kryptowährungen mittlerweile als eigene Assetklasse neben beispielsweise Wertpapieren, Anleihen und Rohstoffen etabliert haben.
+ So konnte der Kryptowährungsmarkt im Dezember 2024 mit einer Marktkapitalisierung von 3,73 Billionen US-Dollar einen neuen Rekordwert erreichen.
+Davon entfallen rund 64\% der Marktkapitalisierung auf den Bitcoin, wodurch dieser mit Abstand die größte Kryptowährung ist (\cite{2025a, 2025}).
+
+Mittlerweile spielen auch institutionelle Investoren eine wichtige Rolle innerhalb der Kryptomärkte, was vor allem auf regulatorische Anpassungen in der nahen Vergangenheit zurückzuführen ist.
+Von zentraler Bedeutung ist dabei die Zulassung von Bitcoin-ETFs (Exchange Traded Funds) durch die US-amerikanische Börsenaufsichtsbehörde SEC (Securities and Exchange Commission) im Januar 2024, wodurch der Zugang für institutionelle und private Anleger vereinfacht wurde.
+
+Diese Entwicklung hat dazu beigetragen, dass sich sowohl die Liquidität als auch die Markteffizienz im Bitcoin-Markt erhöht haben, wie die Studien von \textcite{Tran2020} und \textcite{Yi_2023} zeigen.
+Da Ineffizienzen im Markt oft die Grundlage für profitable Handelsstrategien bilden, ist es sinnvoll zu überprüfen, ob ehemals rentable Strategien trotz der höheren Markteffizienz ihre Profitabilität beibehalten.
+\vspace{\baselineskip}
+
+Eine solche Überprüfung ist auch unter dem Gesichtspunkt der Replication Crisis sinnvoll, da mehrere Untersuchungen zeigen konnten, dass viele veröffentlichte Ergebnisse nicht replizierbar sind.
+Dies ist auch im Bereich der Finanzforschung der Fall, wie die Studien von \textcite{Mclean2016} und \textcite{Linnainmaa2018} belegen.
+So konnten die Autoren zeigen, dass die Ergebnisse vieler Studien über andere Zeiträume oder unter anderen Voraussetzungen nicht bestehen bleiben.
+\vspace{\baselineskip}
+
+Aus diesen Gründen wird in dieser Arbeit die Studie \citetitle{Goutte2023} von \textcite{Goutte2023} repliziert.
+In dieser Studie haben \citeauthor{Goutte2023} verschiedene Modelle, wie beispielsweise das LSTM, das XGBoost-Modell und die logistische Regression, verwendet, um Kaufsignale für Bitcoin vorherzusagen.
+Der Fokus lag dabei darauf, wie sich die Art der Darstellung und die Einbindung von technischen Indikatoren auf die Vorhersagegenauigkeit der Modelle auswirkt.
+In ihrer Arbeit konnten sie dabei zeigen, dass die Verwendung der Kerzendarstellung und die Einbindung technischer Indikatoren die Vorhersagen geringfügig verbesserten.
+
+Die Replikationsstudie ist in mehrere Abschnitte gegliedert, um das Vorgehen und die Ergebnisse transparent darzustellen.
+Der \hyperref[sec:Literatur]{folgende Abschnitt} gibt einen Überblick über die Literatur in Bezug auf die Replication Crisis und zur Kursvorhersage in verschiedenen Märkten.
+Dabei wird die Basisstudie in die aktuelle Literatur eingeordnet.
+Der \hyperref[sec:Methodik]{\ref*{sec:Methodik}.~Abschnitt} legt die Methodik dar, wobei konkret auf die Datenbeschaffung, die Berechnung von Merkmalen, den Aufbau der Modelle und das Vorgehen bei der Evaluierung eingegangen wird und jeweils relevante Veränderungen gegenüber der Basisstudie hervorgehoben werden.
+Im \hyperref[sec:Ergebnisse]{folgenden Abschnitt} werden die relevanten Ergebnisse zur vollständigen Replikation sowie zu den einzelnen Untersuchungen hinsichtlich unterschiedlicher Datenquellen, verschiedener Datenaufteilungen und der Verwendung anderer Zeiträume präsentiert.
+Anschließend werden die relevanten Erkenntnisse zusammengefasst und die Limitationen dieser Studie hervorgehoben.
+Am Ende wird ein Ausblick auf mögliche zukünftige Forschungsfragen gegeben.
+
+
+\section{Literaturüberblick}
+
+\subsection{Replication Crisis}\label{sec:Literatur}
+Der Begriff der Replication Crisis beschreibt das Problem, dass ein erheblicher Teil der Ergebnisse von veröffentlichten Studien nicht reproduziert werden kann.
+Als eine der grundlegenden Untersuchungen im Zusammenhang mit der Replication Crisis kann die Arbeit von \textcite{Baker2016} gesehen werden, in der sie den Umfang der Replication Crisis in der Forschung aufzeigte.
+Laut der von ihr durchgeführten Umfrage waren mehr als 70\% der befragten Forscher nicht in der Lage, die Ergebnisse von anderen Forschern zu replizieren, wobei dies bei der Hälfte der Befragten auch für die eigenen Ergebnisse galt.
+Als zentrale Gründe für die Replication Crisis nannten die Befragten das selektive Veröffentlichen positiver oder signifikanter Ergebnisse und den Druck, Studien zu veröffentlichen.
+\vspace{\baselineskip}
+
+Zahlreiche Studien zeigen, dass diese Ergebnisse auch für die Forschung im Bereich Finanzen relevant sind.
+In ihrer Untersuchung prüften \textcite{Mclean2016} 97 Faktoren, die in wissenschaftlichen Studien identifiziert wurden, auf ihre Performance außerhalb des Studienzeitraums.
+Dafür berechneten die Autoren die Performance der Faktorportfolios für drei Perioden: den Studienzeitraum, den Zeitraum zwischen dem Studienzeitraum und der Veröffentlichung, und für den Zeitraum unmittelbar nach der Veröffentlichung.
+Die Performance des Faktorportfolios war dabei im Zeitraum vor der Veröffentlichung im Durchschnitt 26\% niedriger als innerhalb des Studienzeitraums.
+Dieses Ergebnis deutet darauf hin, dass ein signifikanter Anteil der identifizierten Faktoren die Performance nicht messbar beeinflusst.
+\citeauthor{Mclean2016} erklärten dieses Ergebnis damit, dass viele Faktoren durch Data-Mining identifiziert wurden und somit keinen nachhaltigen Einfluss hätten.
+
+Zu einem ähnlichen Ergebnis kamen auch \textcite{Linnainmaa2018} in ihrer Studie, in der sie die Performance und Volatilität von Faktoren out-of-sample untersuchten.
+Sie stellten fest, dass die Sharpe-Ratio und die Performance abnahmen, wenn der Zeitraum nur leicht variiert wurde.
+Die Volatilität und Korrelation mit anderen Faktoren nahmen hingegen zu, weshalb \citeauthor{Linnainmaa2018} davon ausgingen, dass viele Faktoren ein Ergebnis von Data-Snooping seien.
+
+Basierend auf den Ergebnissen ähnlicher Studien argumentierten \textcite{Harvey2016}, dass ein Großteil der Ergebnisse aus der Finanzforschung wahrscheinlich falsch sei.
+Die Autoren schlugen daher ein neues Framework zum Testen von Faktoren vor, in dem höhere Anforderungen gestellt werden, um die Anzahl nicht-signifikanter Faktoren zu reduzieren.
+Als einen der Gründe für die Replication Crisis identifizierten \textcite{Harvey2016} den Druck, Studien zu publizieren.
+Durch diesen haben Autoren den Anreiz, die Datenanalyse gezielt so auszuwählen oder anzupassen, dass statistisch signifikante Ergebnisse entstehen, die für Veröffentlichungen über vermeintlich relevante Faktoren verwendet werden können.
+Des Weiteren führten die Autoren an, dass es im Bereich der Finanzforschung schwieriger als in anderen Bereichen sei, eine Replikation zu veröffentlichen, wodurch eher an Studien zu neuen Faktoren gearbeitet werde als an der Überprüfung von bereits veröffentlichten Faktoren.
+
+Da profitable Handelsstrategien, ähnlich wie Faktoren, auf der Annahme wiederholbarer Ineffizienzen im Markt basieren, betrifft das Problem der Replication Crisis auch Studien zu Machine-Learning-Modellen (ML-Modelle).
+Diese Probleme können zum Teil noch verstärkt werden, da ML-Modelle in der Lage sind komplexere Muster zu erkennen, wodurch das Risiko von Overfitting erhöht wird.
+Daher ist es essenziell, dass auch in diesem Bereich Replikationsstudien durchgeführt werden, um die Aussagekraft der Modelle sicherzustellen.
+
+\subsection{Kursvorhersage mit Machine-Learning-Modellen}
+
+\subsubsection{Markteffizienzhypothese}
+Die Markteffizienzhypothese wurde durch die Arbeit \citetitle{Fama1965} von \textcite{Fama1965} maßgeblich geprägt.
+In dieser Studie definierte \citeauthor{Fama1965} einen effizienten Markt als einen Markt mit vielen rationalen und auf Profitmaximierung ausgerichteten Investoren, die unter Berücksichtigung aller relevanten Informationen versuchen, die zukünftigen Kurse vorherzusagen.
+In einem solchen Markt wären sämtliche vom Markt erwarteten zukünftigen Entwicklungen bereits im heutigen Preis enthalten.
+
+Die Markteffizienzhypothese ist dabei von zentraler Bedeutung für die Kursvorhersage, da sich der Kurs in einem effizienten Markt am besten durch den Random Walk beschreiben lässt und es für Investoren nicht möglich ist, eine Strategie zu entwickeln, die eine konstante Überrendite erzielt.
+Stattdessen benötigen ML-Modelle Märkte, in denen wiederholt Ineffizienzen auftreten, um eine profitable Handelsstrategie zu entwickeln. 
+
+Der Kryptomarkt eignet sich hierfür besonders gut, da dieser als noch relativ junger Markt eine geringere Markteffizienz aufweist als viele traditionelle Märkte.
+So zeigten \textcite{Yi_2023}, dass der Bitcoin-Markt in den letzten Jahren zwar liquider und effizienter wurde, dennoch traten weiterhin Ineffizienzen auf, weshalb die Autoren den Markt als schwach-effizient einstuften.
+Die Ergebnisse implizieren auch, dass ML-Modelle weiterhin profitable Strategien entwickeln können, wobei das Profitpotenzial mit der Zeit abgenommen hat.
+
+\citeauthor{Yi_2023} bestätigten damit auch die Ergebnisse von \textcite{Tran2020}, die signifikante Ineffizienzen in Kryptomärkten feststellen konnten.
+Gleichzeitig stellten \citeauthor{Tran2020} auch Anzeichen für die Steigerung der Markteffizienz im Laufe der Zeit fest.
+
+\subsubsection{Kursvorhersagen in anderen Märkten}
+Die Kursvorhersage von Assetpreisen ist seit jeher ein Fokus der Finanzforschung, wobei sich schon früh neben der Fundamentalanalyse und der technischen Analyse die Verwendung von statistischen Modellen etablierte.
+Beispielsweise verwendeten \citeauthor{Meese1983} bereits im Jahr \citeyear{Meese1983} verschiedene Modelle, wie beispielsweise Autoregressions-Modelle, zur Vorhersage von Wechselkursen und konnten feststellen, dass keines der verwendeten Modelle in der Lage war, über einen Zeitraum von einem bis zwölf Monaten den Random Walk zu schlagen.
+
+Da die traditionellen Modelle jedoch nicht in der Lage waren, alle Beziehungen zwischen Merkmalen abzubilden, wurden frühzeitig komplexere Modelle zur Kursvorhersage verwendet, um die vielschichtige Marktstruktur einfangen zu können.
+Bereits im Jahr \citeyear{White1988} untersuchte \citeauthor{White1988} die Anwendung von neuronalen Netzen zur Kursvorhersage der IBM-Aktie.
+Trotz der Verwendung eines neuronalen Netzes war er nicht in der Lage, den Random Walk zu schlagen.
+ 
+Im Bereich der Wechselkursvorhersage verwendete \textcite{Kuan1995} Feed-Forward und rekurrente neuronale Netze zur Vorhersage von Wechselkursen.
+Hierbei konnten sie, anders als \citeauthor{White1988}, bei zwei der fünf untersuchten Währungspaare die Performance des Random Walks schlagen.
+
+\textcite{Ghoshal2020} setzten in ihrer Studie Convolutional Neural Networks zur Prognose von Aktienkursen ein und verglichen die Performance mit herkömmlichen Modellen.
+Hierfür verwendeten sie die Kerzendarstellung der Aktienkurse, um Chartmuster zu identifizieren und die Vorhersagegenauigkeit zu verbessern.
+Das Vorgehen führte jedoch zu keinem signifikanten Informationsgewinn, der für die Vorhersage nutzbar gewesen wäre.
+Den von \citeauthor{Ghoshal2020} verwendeten Ansatz nutzten \textcite{Goutte2023} in der Basisstudie als Inspiration für die Optimierung des Schwellwerts und den Aufbau der neuronalen Netze.
+
+\subsubsection{Kursvorhersage von Bitcoin}
+Innerhalb des letzten Jahrzehnts ist auch die Vorhersage innerhalb der Kryptowährungsmärkte in den Fokus der Forschung gerückt, wobei sich der Großteil der Studien mit dem Bitcoin-Kurs befasst.
+Dabei lassen sich viele verschiedene Ansätze beobachten:
+
+\textcite{Akyildirim2021} versuchten die Richtung der Kursänderung für zwölf der größten Kryptowährungen vorherzusagen, indem sie neben den Kursdaten noch einzelne technische Indikatoren als Merkmale verwendeten.
+Durch die Einbindung der technischen Indikatoren konnten einzelne ML-Modelle teilweise vielversprechende Vorhersagen über den Kurs liefern.
+
+In seiner Studie verglich \textcite{Anghel2021} die Performance von Handelsstrategien basierend auf ML-Modellen mit aus der technischen Analyse stammenden Handelsstrategien.
+Es zeigte sich, dass beide Vorgehensweisen zwar Vorhersagen über die Preisentwicklung von Bitcoin treffen konnten, jedoch konnte keine der Handelsstrategien eine abnormale Rendite liefern.
+Die ML-basierten Strategien lieferten zudem eine schlechtere Rendite als die Strategien aus der technischen Analyse, was sich vor allem auf häufigere Trades ohne Mehrwert zurückführen ließ.
+
+\textcite{Berger2024} analysierten die Fähigkeit von ökonomischen Zeitreihenmodellen und ML-Modellen hinsichtlich der Vorhersage der täglichen Rendite von Bitcoin.
+Dabei ergab die Analyse, dass beide Modellarten verlässliche Prognosen ermöglichten.
+ML-Modelle lieferten jedoch bessere Ergebnisse als ökonomische Zeitreihenmodelle.
+Zudem konnten LSTMs im Vergleich zu einfachen RNNs trotz ihrer höheren Komplexität keine erkennbar besseren Ergebnisse erzielen.
+
+\textcite{Bouteska2024} hingegen konnten zeigen, dass komplexere ML-Modelle bei der Richtungsvorhersage von Kursänderungen bessere Ergebnisse lieferten.
+In ihrer Studie verglichen die Autoren die Performance von statistischen Methoden mit Ensemble- und Deep-Learning-Modellen auf Basis von vier verschiedenen Kryptowährungen, wobei die komplexeren ML-Modelle für alle Datensätze bessere Ergebnisse lieferten.
+
+\textcite{Chen2021} konnten zeigen, dass durch die Einbindung von technischen und wirtschaftlichen Daten die Vorhersagegenauigkeit verbessert werden konnte.
+Für ihre Studie verwendeten sie Daten zur Bitcoin-Blockchain, wie beispielsweise die Hash-Rate und Transaktionsgebühren, aber auch wirtschaftlich relevante Daten wie den Gold- und Ölpreis, um Vorhersagen über den Bitcoin-Kurs zu treffen, wobei das LSTM die besten Ergebnisse lieferte.
+
+In der Studie von \textcite{Jakubik2023} untersuchten die Autoren, wie sich das Einbinden von Finanznachrichten auf die Vorhersagegenauigkeit von ML-Modellen auswirkte.
+Hierfür analysierten sie Financial Times-Artikel mit ML-Modellen und bildeten so einen Sentiment-Score, der dann zur Vorhersage des Bitcoin-Kurses verwendet wurde.
+Mit diesem Vorgehen zeigten \citeauthor{Jakubik2023}, dass alle untersuchten Modelle bessere Ergebnisse aufwiesen, wenn Finanznachrichten mit einbezogen wurden.
+
+\textcite{He2024} verglichen in ihrer Arbeit die Performance von LSTMs mit hybriden Modellen.
+Mit ihrer Untersuchung konnten sie zeigen, dass die Vorhersagegenauigkeit von hybriden Modellen signifikant besser war als die der LSTMs, wobei insbesondere die 5-day-ahead und 15-day-ahead-Prognosen vielversprechende Ergebnisse lieferten.
+
+\subsection{\citetitle{Goutte2023}}
+In die Reihe der Studien zur Vorhersage von Bitcoin fügt sich die Basisstudie von \textcite{Goutte2023} ein, in der die Autoren untersuchten, welche Modelle und Datendarstellungen sich zur Vorhersage eigneten.
+Dafür trainierten die Autoren sieben verschiedene Modelle auf stündlichen Bitcoin-Kursdaten.
+Diese Daten wurden jeweils als Open-High-Low-Close-Daten (OHLC) und als Kerzendarstellung sowohl mit als auch ohne technische Indikatoren verwendet.
+Die Ergebnisse zeigten dabei, dass der Bitcoin-Kurs Informationen enthalten könnte, die zur Vorhersage der zukünftigen Entwicklung genutzt werden können.
+Zudem konnten die auf den Vorhersagen basierenden Handelsstrategien zeitweise die Buy-and-Hold-Strategie schlagen, wobei dies jedoch nicht durchgängig möglich war.
+Bei den verschiedenen Modellen zeigte sich, dass neuronale Netze, insbesondere LSTMs und GRUs (Gated Recurrent Unit), die besten Ergebnisse gemessen an der Precision liefern konnten.
+Kerzendaten mit technischen Indikatoren lieferten bei den Datensätzen die besten Ergebnisse, wobei aber kein signifikanter Unterschied zwischen den Ergebnissen der Datensätze festgestellt werden konnte.
+
+\section{Methodik}\label{sec:Methodik}
+In diesem Abschnitt wird das für die Replikation verwendete Vorgehen erläutert.
+Dabei wird dargelegt, wie \textcite{Goutte2023} in der Basisstudie vorgegangen sind und welche Veränderungen vorgenommen werden, um die Robustheit der Ergebnisse überprüfen zu können.
+
+\subsection{Datenbeschaffung}
+Für die Vorhersage der Modelle werden stündliche Datenpunkte benötigt, die das Hoch, das Tief, den Eröffnungs- und Schlusskurs sowie das Handelsvolumen in Bitcoin und die Anzahl der Trades beinhalten.
+Damit die Replikation möglichst nahe an der Basisstudie ist, wird das Vorgehen zur Beschaffung dieser Daten von \textcite{Goutte2023} übernommen.
+In der Basisstudie wurden hierfür die BTC/USDT-Handelsdaten über die Binance-API bezogen und dann in stündliche Datenpunkte aggregiert.
+Dafür verwendeten die Autoren den Zeitraum vom Beginn der Datenerfassung von Binance im Jahr 2017 bis zum August 2022.
+Aufgrund von API-Beschränkungen, die den Abruf aller Daten des Studienzeitraums verhindern, werden die Daten stattdessen über die Binance-Website \parencite{Binance} bezogen.
+Bei der anschließenden Aggregation werden alle Trades innerhalb einer Stunde zu einem Datenpunkt zusammengefasst, der die bereits genannten Merkmale umfasst.
+
+Damit auch überprüft werden kann, ob die Ergebnisse bei anderen Datenbasen bestehen bleiben, werden zudem die stündlichen Kerzendaten für das BTC/USDT-Handelspaar direkt über die Binance-API \parencite{Binance-Klines} bezogen.
+Neben anderen kleineren Abweichungen unterscheiden sich die beiden Datensätze vor allem bei der Anzahl der Trades, wobei dies vermutlich auf eine Aggregation von Trades zur Berechnung der Kerzendaten zurückzuführen ist.
+Des Weiteren werden auch die stündlichen Kerzendaten für das XBT/USD-Handelspaar von \textcite{Kraken} verwendet, um Daten einer anderen großen Kryptobörse zu untersuchen.
+
+\subsection{Feature Engineering}
+Auf Basis dieser Daten werden weitere Merkmale berechnet und diese anschließend in drei Merkmalsgruppen unterteilt, um zu untersuchen, welche Merkmale die besten Ergebnisse liefern.
+Das Vorgehen zur Berechnung und Unterteilung der Merkmale gleicht dabei dem Vorgehen in der Basisstudie.
+
+Die erste Gruppe bilden die OHLC-Daten, die sich aus dem Open-, High-, Low- und Close-Kurs der Stunde zusammensetzen.
+Wie in der Basisstudie kommen noch das Volumen und die Anzahl der Trades sowie zyklische Merkmale, die sich aus dem Sinus und dem Cosinus der Stunde und des Wochentags zusammensetzen, hinzu.
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics{Abbildungen/candle.jpg}
+	\caption{Erklärung der Kerzendarstellung}{Bildquelle: \textcite{Goutte2023}}
+	\label{fig:candle}
+\end{figure}
+
+Die Merkmale der zweiten Gruppe basieren auf der Kerzendarstellung, die eine alternative Visualisierung der OHLC-Daten (\hyperref[fig:candle]{siehe Abb.~\ref*{fig:candle}}) ist.
+Diese Darstellung findet insbesondere bei der technischen Analyse Anwendung.
+Als Merkmale werden hierbei die Maße der Kerze (\hyperref[eq:candle-2]{Gleichung~\ref*{eq:candle-2}-\ref*{eq:candle-4}}), der Schlusskurs sowie das Volumen, die Anzahl der Trades und zyklische Merkmale verwendet, während die Kerzenfarbe wie in der Basisstudie nicht verwendet wird.
+Ohne die Verwendung der Farbe liegt jedoch ein Informationsverlust vor, da aus den gegebenen Daten nicht mehr das Hoch, das Tief und der Eröffnungskurs berechnet werden können.
+Dies schränkt die Vergleichbarkeit der Kerzen- und OHLC-Daten ein, weshalb es sich um eine fehlerhafte Angabe der Autoren handeln könnte.
+{\allowdisplaybreaks
+\begin{align}
+	Color &= \Biggl\{
+	\begin{array}{ll}
+  		White &\textbf{wenn\ \ } Open \leq Close \\
+  		Black &\textbf{wenn\ \ } Open > Close
+ 	\end{array}
+	\label{eq:candle-1}
+	\\[1.5em]
+	Body &= | Open - Close |	
+	\label{eq:candle-2}
+	\\[1.5em]
+  Upper\ Shadow &= \Biggl\{
+  \begin{array}{ll}
+  	High - Close &\textbf{wenn\ \ } Open < Close \\
+  	High - Open &\textbf{wenn\ \ } Open > Close
+  \end{array}
+  \label{eq:candle-3}
+  \\[1.5em]
+  Lower\ Shadow &= \Biggl\{
+  \begin{array}{ll}
+  	Open - Low &\textbf{wenn\ \ } Open < Close \\
+  	Close - Low &\textbf{wenn\ \ } Open > Close
+  \end{array}
+  \label{eq:candle-4}
+\end{align}
+}
+
+Die dritte Gruppe bilden zwölf verschiedene Indikatoren, die häufig in der technischen Analyse Anwendung finden.
+Zum einen werden die gleitenden Durchschnitte für 15, 20, 25 und 30 Perioden verwendet, die den durchschnittlichen Schlusskurs über die Perioden angeben.
+Der gleitende Durchschnitt dient der Identifikation von Aufwärts- und Abwärtstrends.
+So wird allgemein von einem Aufwärtstrend ausgegangen, wenn der aktuelle Kurs über dem gleitenden Durchschnitt liegt.
+\begin{equation}
+  SMA_{n, t} = \frac{\sum_{i=0}^{n-1} Close_{t-i}}{n}
+\end{equation}
+
+Als weiteren technischen Indikator wird der Relative Strength Index (RSI) für 15, 20, 25 und 30 Perioden verwendet.
+Der RSI gibt dabei die historische Stärke bzw. Schwäche eines Assets an.
+So gilt ein Asset bei einem RSI unter 30 in der Regel als überverkauft und bei einem RSI über 70 als überkauft.
+\begin{equation}
+	RSI_{n,t} = 100 - \frac{100}{1 + \frac{average\ gain_t}{average\ loss_t}}
+\end{equation}
+
+Zur Berechnung des durchschnittlichen Gewinns bzw. Verlusts wird der exponentiell gleitende Durchschnitt (EMA) mit $\alpha=\frac{1}{n}$ eingesetzt.
+
+\citeauthor{Goutte2023} verwendeten zudem die MACD-Linie (Moving Average Convergence Divergence), die das Verhältnis zweier exponentiell gleitender Durchschnitte angibt, wodurch das Momentum erkennbar wird.
+Steigt der Wert der MACD-Linie, geht man von einem positiven Momentum aus, während ein fallender Wert auf ein negatives Momentum hindeutet.
+\begin{equation}
+  MACD-Linie_t = EMA_{12, t} - EMA_{26, t}
+\end{equation}
+
+Anders als beim RSI wird hier für den exponentiell gleitenden Durchschnitt $\alpha=\frac{2}{1 + n}$ verwendet.
+
+Ähnlich wie der RSI kann auch der Williams \%R als Indikator genutzt werden, um zu erkennen, ob ein Asset überkauft oder überverkauft ist, wobei Werte über -20 als überkauft und Werte unter -80 als überverkauft gelten.
+\begin{equation}
+	Williams\ \%R_t = \frac{max(High_{t-13\ bis\ t})-Close_t}{max(High_{t-13\ bis\ t}) - min(Low_{t-13\ bis\ t})} \times -100
+\end{equation}
+
+Als weiteren Indikator verwendeten \textcite{Goutte2023} den stochastischen Oszillator.
+\begin{equation}
+  \%K = \frac{Close_t - min(Low_{t-13\ bis\ t})}{max(High_{t-13\ bis\ t}) - min(Low_{t-13\ bis\ t})} \times 100
+\end{equation}
+
+Bei diesem Indikator gilt ein Asset bei einem Wert über 80 als überkauft und bei einem Wert unter 20 als überverkauft. 
+
+Zusätzlich wird auch der Money Flow Index (MFI) berechnet, der unter Berücksichtigung der Geldflüsse angibt, ob ein Asset überkauft oder überverkauft ist.
+\begin{equation}
+	\begin{aligned}
+		Typical\ Price_t &= \frac{High_t + Low_t + Close_t}{3}\\
+		Raw\ Money\ Flow_t &= Typical\ Price \times Volume_t \\
+		Money\ Flow\ Ratio_t &= \frac{\sum_{t-13}^t Positive\ Money\ Flow}{\sum_{t-13}^t Negative\ Money\ Flow} \\
+		MFI_t &= 100 - \frac{100}{1 + Money\ Flow\ Ratio_t}
+	\end{aligned}
+	\vspace{0.25\baselineskip}
+\end{equation}
+
+Für die Berechnung der Money Flow Ratio gilt ein Geldfluss als positiv, wenn der Typical Price höher ist als in der Vorperiode.
+Ist dieser niedriger, so gilt der Geldfluss als negativ.
+\vspace{\baselineskip}
+\begin{table}[!h]
+    \centering
+    \csvreader[
+    	tabular = {lccccc}, % Vertikale Linien entfernt
+    	table head = {
+        \toprule
+        Merkmal & Anzahl & Mittelwert & Standardabw. & Minimum & Maximum \\
+        \midrule
+    	},
+    	table foot = \bottomrule,
+    	late after line = \\,
+    	respect all,
+    	separator=semicolon
+	]
+	{Abbildungen/stats.csv}
+	{}
+	{\csvcoli & \csvcolii & \csvcoliii & \csvcoliv & \csvcolv & \csvcolvi}
+
+    \caption{Deskriptive Statistik aller Merkmale}
+    \label{tab:stats}
+\end{table}
+
+Die deskriptiven Statistiken zu den Merkmalen (\hyperref[tab:stats]{Tab.~\ref*{tab:stats}}) entsprechen abgesehen von minimalen Abweichungen den Statistiken der Basisstudie von \citeauthor{Goutte2023} (\hyperref[tab:stats-paper]{siehe Tab. \ref*{tab:stats-paper}}).
+Die Abweichungen könnten dabei auf kleinere Unterschiede zwischen den API-Daten und den Daten, die von Binance auf der Website bereitgestellt werden, zurückzuführen sein.
+Es ist jedoch anzumerken, dass in der Basisstudie zum Teil andere Gleichungen zur Berechnung der technischen Indikatoren genannt wurden.
+Bei deren Verwendung würden die Ergebnisse jedoch nicht mehr mit den deskriptiven Statistiken übereinstimmen.
+So wurde die Gleichung zur Berechnung des MACD-Histogramms angegeben, wobei die Werte der deskriptiven Statistik auf die Verwendung der MACD-Linie hindeuten.
+Daher dienen die deskriptiven Statistiken der Basisstudie als Orientierung für diese Replikation.
+
+Gleichzeitig wird für diese Tabelle anstelle des Untersuchungszeitraums ein Zeitraum bis Ende 2022 verwendet, da nur so die in der Basisstudie genannte Anzahl an Beobachtungen erreicht werden kann.
+Auf Nachfrage wurde mir von den Autoren mitgeteilt, dass ihnen bei der Erstellung der deskriptiven Statistiken ein Fehler unterlaufen sei und sie fälschlicherweise den Zeitraum bis Ende 2022 zur Berechnung verwendet hätten.
+\vspace{\baselineskip}
+
+Für die Untersuchung werden sowohl die OHLC-Gruppe als auch die Candle-Gruppe jeweils einmal mit und ohne die technischen Indikatoren verwendet, um die Modelle zu trainieren und Vorhersagen zu treffen.
+Die Gruppen werden dabei als raw bzw. extended bezeichnet, wobei beispielsweise OHLC-raw für die OHLC-Daten ohne die technischen Indikatoren steht.
+
+
+Bevor die Modelle trainiert werden, werden die Daten in 50\% Trainings-, 25\% Validierungs- und 25\% Testdaten unterteilt.
+Dies entspricht der Aufteilung von \textcite{Goutte2023}, wobei diese Anteile als Teil der Replikation angepasst und die Ergebnisse analysiert werden.
+
+\subsection{Modelle}
+Um eine detailliertere Untersuchung der einzelnen Modelle zu ermöglichen, beschränkt sich diese Replikation auf drei der von \textcite{Goutte2023} verwendeten Modelle.
+Daher werden in dieser Replikation drei Modelle aus unterschiedlichen Bereichen untersucht:
+die logistische Regression als lineares Modell, das XGBoost-Modell als Vertreter der Ensemble-Modelle und das LSTM als neuronales Netz. 
+
+\subsubsection{Logistische Regression}
+Die logistische Regression ist ein weit verbreitetes Modell aus dem Bereich der linearen Modelle, das zur binären Klassifikation eingesetzt werden kann.
+Hierbei ist die Ausgabe der logistischen Regression die Wahrscheinlichkeit, dass ein Datenpunkt zur positiven Klasse gehört.
+
+Wie bei anderen Regressionsmodellen wird zunächst eine Linearkombination $z$ aus den Merkmalen $x$ und dem Gewichtsvektor $w$ berechnet.
+\begin{align}
+	\label{eq:LR-1}
+	z &= w_0 + \sum_{i=1}^n w_i x_i \\
+	\label{eq:LR-2}
+	\hat p (X_i) &= \frac{1}{1+\exp^{-z}}
+\end{align}
+
+Um das Ergebnis in eine Wahrscheinlichkeit umzuwandeln, wird der Wert in den Wertebereich zwischen 0 und 1 abgebildet (\hyperref[eq:LR-2]{Gleichung~\ref*{eq:LR-2}}).
+Dies entspricht in diesem Fall der Wahrscheinlichkeit, dass der Datenpunkt das Label eines Kaufsignals hat \parencite{Scikit-LR}.
+
+Beim Training der logistischen Regression wird dabei die folgende Zielfunktion minimiert: 
+\begin{equation}
+	\min_{w} \frac{1}{n} \sum_{i=1}^n \left( -y_i \log (\hat p(X_i)) - (1-y_i)\log(1-\hat p (X_i)) \right) + \frac{r(w)}{nC}
+\end{equation}
+
+Die Minimierung dieser Gleichung entspricht dabei der Maximum-Likelihood-Schätzung, wobei mit $\frac{r(w)}{nC}$ ein Regularisierungsterm eingebunden wird, der Overfitting verhindern soll \parencite{Scikit-LR}.
+
+Einer der Vorteile der logistischen Regression ist, dass das Modell aufgrund seiner geringen Komplexität einfach zu interpretieren ist.
+Dies gilt dabei sowohl für das Ergebnis als auch für die Koeffizienten, die Einblick in den Einfluss der einzelnen Merkmale zulassen.
+Aufgrund der geringen Komplexität wird die logistische Regression häufig auch als Vergleichsmodell verwendet, um so einen Vergleich mit komplexeren Modellen, wie z.B. mit neuronalen Netzen, zu ermöglichen.
+
+In ihrer Studie verwendeten \textcite{Goutte2023} die Implementierung der logistischen Regression von Scikit-Learn mit den Standardwerten, wobei die Parameterauswahl nicht weiter begründet wurde.
+Daher wird in dieser Replikation ein Grid-Search-Verfahren eingebunden, um die Parameter des Modells zu optimieren und so die Robustheit der Ergebnisse zu überprüfen (\hyperref[tab:Modelle-Kompakt]{siehe Tab.~\ref*{tab:Modelle-Kompakt}}).
+
+
+\subsubsection{eXtreme Gradient Boost (XGBoost)}
+Das XGBoost-Modell ist ein weit verbreitetes und leistungsstarkes Modell, das zu den Boosting-Ensembles zählt.
+XGBoost stellt dabei eine Weiterentwicklung der Gradient Boosting Machines dar, die von \textcite{Chen2016} entwickelt wurde.
+
+Als Ensemble-Modell kombiniert XGBoost mehrere Entscheidungsbäume, um die Robustheit und Performance der Vorhersagen zu steigern.
+Hierbei werden beim Training der neuen Entscheidungsbäume die Fehler der alten Bäume berücksichtigt, wodurch das Modell schneller bessere Ergebnisse erreicht.
+Da es durch dieses Vorgehen schnell zu einem Overfitting an die Trainingsdaten kommen kann, ist es essenziell, dass Regularisierungsmethoden verwendet werden, die dies bestrafen.
+Dies wird beim XGBoost mit folgender Zielfunktion erreicht:
+
+\begin{equation}
+	\tilde{\mathcal{L}}^{(t)}(q) = -\frac{1}{2} \sum_{j=1}^{T} \frac{\left(\sum_{i \in I_j} g_i\right)^2}{\sum_{i \in I_j} h_i + \lambda} + \gamma T.
+	\label{eq:XGBoost}
+\end{equation}
+
+Beim Training des XGBoost-Modells wird für jeden einzelnen Entscheidungsbaum die Verlustfunktion (\hyperref[eq:XGBoost]{Gleichung~\ref*{eq:XGBoost}}) minimiert.
+Die Werte $g_i$ und $h_i$ sind dabei die erste bzw. zweite Ableitung der Verlustfunktion des gesamten Ensembles für den Datenpunkt $i$.
+Durch diese Terme erhalten Datenpunkte indirekt einen größeren Einfluss auf die Baumstruktur, wenn diese von den vorherigen Bäumen häufig falsch vorhergesagt wurden.
+Um Overfitting zu vermeiden, wird der Parameter $\lambda$ zur Regularisierung eingesetzt.
+Des Weiteren wird mit der Einbindung von $\gamma T$, wobei T die Anzahl der Blätter darstellt, eine höhere Anzahl von Blättern bestraft und folglich die Komplexität der einzelnen Bäume begrenzt.
+Außerdem wird eine weitere Teilung nur dann vorgenommen, wenn der Gewinn durch diese Teilung größer ist als der Regularisierungsparameter $\gamma$ \parencite{Chen2016}.
+
+Durch diese und weitere Anpassungen, die beispielsweise das parallele Training ermöglichen, konnten \citeauthor{Chen2016} die Komplexität verringern und die Laufgeschwindigkeit erhöhen.
+
+\textcite{Goutte2023} verwendeten in ihrer Studie die von \citeauthor{Chen2016} entwickelte XGBoost-Bibliothek, wobei für die Anzahl der Bäume 100 und für die restlichen Parameter die Standardwerte verwendet wurden.
+Um die Robustheit der Ergebnisse zu überprüfen, werden in dieser Replikation auch hier die Parameter des Modells mittels Grid-Search variiert (\hyperref[tab:Modelle-Kompakt]{siehe Tab.~\ref*{tab:Modelle-Kompakt}}).
+
+
+\subsubsection{Long Short-Term Memory (LSTM)}
+Das Long Short-Term Memory Modell ist ein Typ des rekurrenten neuronalen Netzes (RNN), der im Jahr \citeyear{Hochreiter1997} von \citeauthor{Hochreiter1997} vorgestellt wurde.
+Rekurrente neuronale Netze sind eine spezielle Klasse von neuronalen Netzen, die zur Verarbeitung von sequenziellen Daten, wie beispielsweise Aktienkurse, ausgelegt sind, indem die RNN-Zellen einen verdeckten Zustand haben, der an den nachfolgenden Zeitschritt weitergegeben wird.
+Dafür wird in jedem Zeitschritt aus der Eingabe und dem verdeckten Zustand der Vorperiode der neue Ausgabewert und der neue verdeckte Zustand berechnet.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.6\textwidth]{Abbildungen/lstm.png}
+	\caption{Aufbau einer LSTM-Zelle}{Bildquelle: \textcite{Varsamopoulos2019}}
+		\label{fig:LSTM}
+\end{figure}
+
+Bei der Verwendung von klassischen RNNs tritt jedoch das Vanishing-Gradient-Problem auf, wodurch länger zurückliegende Zeitschritte kaum Einfluss auf die Gradienten bei der Backpropagation und somit auf die Gewichtsanpassung haben.
+Dadurch können klassische RNNs Abhängigkeiten, die sich über längere Zeiträume erstrecken, kaum oder gar nicht erkennen.
+Das von \textcite{Hochreiter1997} vorgestellte LSTM löst dieses Problem, indem die Architektur angepasst und ein Zellzustand integriert wird, der als Langzeitgedächtnis fungiert.
+Gleichzeitig bleibt auch der verdeckte Zustand erhalten, der tendenziell die kurzfristigen Dynamiken abbildet.
+
+Daneben verwendet jede LSTM-Zelle ein Input-Gate, Forget-Gate und Output-Gate (siehe Abb.~\ref{fig:LSTM}), durch die der Zellzustand, der verdeckte Zustand und die Ausgabe in jedem Zeitschritt neu berechnet werden.
+Dieser Aufbau ermöglicht es dem LSTM, längerfristige Abhängigkeiten zu erkennen und schneller zu konvergieren \parencite{Berger2024}.
+
+\begin{figure*} [h]
+	\begin{align}
+		\label{eq:LSTM-1}
+		i_t &= \sigma(W_{ix} x_t + W_{ih} h(t-1) + b_i) \\
+		\label{eq:LSTM-2}
+		f_t &= \sigma(W_{fx}x_t + W_{fh} h(t-1) + b_f) \\
+		\label{eq:LSTM-3}
+		o_t &= \sigma(W_{ox} x_t + W_{oh} h(t-1) + b_o) \\
+		\label{eq:LSTM-4}
+		\tilde{C_t} &= \tanh(W_{gx} x_t + W_{gh} h(t-1) + b_g) \\
+		\label{eq:LSTM-5}
+		C_t &= f_t \otimes C_{t-1} + i_t \otimes \tilde{C_t} \\
+		\label{eq:LSTM-6}
+		h_t &= \tanh(C_t) \otimes o_t
+	\end{align}
+	\vspace{-0.8cm}
+	\captionsetup{labelformat=empty}
+	\caption*{Relevante Gleichungen für das LSTM \parencite{Berger2024}}
+	\addtocounter{figure}{-1}
+\end{figure*}
+
+
+In jedem Zeitschritt erhält die LSTM-Zelle dabei mit dem Datenpunkt $x_t$ und dem verdeckten Zustand der Vorperiode $h_{t-1}$ zwei Eingaben.
+Aus diesen Werten wird dann berechnet, welche Informationen $C_{t-1}$ vergessen werden sollen (Gleichung \ref{eq:LSTM-2}) und welche Informationen abgespeichert werden sollen (Gleichung \ref{eq:LSTM-1}).
+Gleichzeitig wird aus den beiden Eingaben auch ein neuer Kandidatwert für den Zellzustand berechnet (Gleichung \ref{eq:LSTM-4}), der dann in Kombination mit den Ausgaben des Input- und Forget-Gates verwendet wird, um den bisherigen Zellzustand anzupassen (Gleichung \ref{eq:LSTM-5}).
+Der neue Zellzustand wird dann in Kombination mit der Ausgabe des Output-Gates verwendet, um die Ausgabe zu berechnen (Gleichungen \ref{eq:LSTM-3} und \ref{eq:LSTM-6}) \parencite{Berger2024}.
+
+Aufgrund dieser Anpassungen eignen sich LSTMs hervorragend zur Vorhersage von Zeitreihen und somit zur Vorhersage von Aktienpreisen und Wechselkursen, weshalb LSTMs in diesen Bereichen sehr häufig verwendet werden \parencite{AyiteyJunior2023}.
+\vspace{\baselineskip}
+
+In ihrer Studie verwendeten \citeauthor{Goutte2023} auch ein LSTM, wobei sie den Aufbau des LSTMs (Tab.~\ref{tab:Modelle-Kompakt}) an den Modellen von \textcite{Ghoshal2020} orientierten.
+Daher wird auch bei diesem Modell eine Grid-Search verwendet, um so die Hyperparameter des LSTMs zu optimieren und zu überprüfen, ob die Ergebnisse auch mit anderen LSTM-Konfigurationen erzielt werden können.
+Das Vorgehen zur Optimierung der Hyperparameter orientiert sich an der Studie von \textcite{Jakubik2023}, wobei jedoch nur einzelne Parameter betrachtet werden.
+Für die anderen Parameter werden die Werte von \textcite{Goutte2023} verwendet, um die Laufzeit zu reduzieren.
+
+Des Weiteren werden in dieser Replikationsstudie auch LSTMs aus den Studien von \textcite{He2024} und \textcite{Berger2024} (\hyperref[tab:Modelle-Kompakt]{siehe Tab.~\ref*{tab:Modelle-Kompakt}}) verwendet, wobei kleine Anpassungen vorgenommen werden, damit die Modelle auch für diese Aufgabe verwendet werden können.
+
+Um die Stabilität der LSTMs zu erhöhen und dadurch die Performance zu verbessern, werden die Merkmale vor der Verwendung für das LSTM neu skaliert, wodurch das LSTM schneller zu einem Ergebnis konvergiert.
+Dieses Vorgehen kann als Standard für neuronale Netze angesehen werden, jedoch machten \textcite{Goutte2023} in der Basisstudie keine Angaben zur Skalierung der Daten.
+Da die Ergebnisse bei Verwendung des Min-Max-Skalierers der Basisstudie am nächsten kamen, wird dieser für die Replikation verwendet.
+
+\subsubsection{Benchmark}
+Als Benchmark für die Beurteilung der anderen Modelle wird ein naiver Prädiktor verwendet.
+Die Vorhersage entspricht dabei dem Anteil der Perioden in den letzten 24 Stunden, in denen der Kurs angestiegen ist.
+Nach der Vorhersage wird, wie bei den anderen Modellen, ein Schwellwert bestimmt, der die Precision auf den Validierungsdaten optimiert, damit das Vorgehen bei allen Modellen gleich ist.
+
+Der naive Prädiktor wird verwendet, um besser beurteilen zu können, ob die erhöhte Komplexität der ML-Modelle auch zu einer besseren Performance führt.
+
+\subsection{Vorhersage}
+Da diese Replikation nur das Long-Only-Modell behandelt, wird folglich nur ein Label berechnet:
+\[
+y = \Biggl\{ 
+\begin{array}{ll}
+	1 &\textbf{wenn\ \ } Close_t < Close_{t+1} \\
+	0 &\textbf{wenn\ \ } Close_t \geq Close_{t+1}
+\end{array}
+\]
+
+Das Label ist dabei ein Kaufsignal (1), wenn der Schlusskurs der folgenden Periode höher ist als der Schlusskurs der aktuellen Periode.
+Sollte dies nicht der Fall sein, wird ein Nicht-Kaufen-Signal ausgegeben.
+Für die Vorhersage wird eine Lookback-Periode von 24 Perioden verwendet, was bedeutet, dass die Daten der Perioden $t-23$ bis $t$ verwendet werden, um das Signal in der Periode~$t$ vorherzusagen.
+
+Auf Basis dieser Vorhersagen für die Validierungsdaten wird dann ein Schwellwert ermittelt, der die Precision der Modelle unter Berücksichtigung eines Recall-Intervalls optimiert.
+Damit das Vorgehen bei allen Modellen genutzt werden kann, wird beim XGBoost-Modell und der logistischen Regression statt der direkten Vorhersage die Wahrscheinlichkeit dafür genommen, dass das Label des Datenpunkts ein Kaufsignal ist.
+
+\begin{equation}
+   a = \underset{a \epsilon A}{\mathrm{arg\ max}}\ Precision(a, Prediction_{Validation})
+\end{equation}
+ 
+Dies entspricht dem Vorgehen von \textcite{Goutte2023}, wobei in dieser Replikation ein Recall-Intervall von 0,08 bis 0,15 verwendet wird, da dies ungefähr dem Intervall aus der Basisstudie entspricht, welches jedoch nicht explizit angegeben ist.
+Für die Benchmark wird hingegen ein erweitertes Intervall von 0,08 bis 0,25 verwendet, da ansonsten nur drei Schwellwerte möglich wären.
+ 
+% Weil jedoch auch andere Metriken sinnvoll als Optimierungsziel verwendet werden können, werden ich im Rahmen der Replikation die durchschnittliche Rendite und die Accuracy optimieren und die Ergebnisse vergleichen.
+ 
+\subsection{Evaluation} \label{subsec:Evaluation}
+Um die Modelle vergleichen zu können, werden verschiedene Metriken für die Auswertung herangezogen.
+Zum einen sind das die Precision und der Recall, da diese Metriken auch zur Optimierung des Schwellwerts verwendet wurden.
+Da das Ziel der gesamten Studie jedoch ist, mit den Vorhersagen eine profitable Handelsstrategie zu entwickeln, werden auch ökonomische Werte beachtet.
+Dazu gehören zum einen die durchschnittliche Rendite pro Periode sowie die Sharpe-Ratio.
+Da die Werte für die Sharpe-Ratio bei Verwendung der Gleichung aus der Basisstudie stark von den Werten der Autoren abweichen, wird stattdessen die \hyperref[eq:sharpe]{Gleichung~\ref*{eq:sharpe}} verwendet. 
+Diese wurde auf Nachfrage von den Autoren mitgeteilt, was bedeutet, dass die Autoren die falsche Gleichung in der Basisstudie angegeben haben.
+Als risikofreien Zinssatz wird wie in der Basisstudie 0\% verwendet.
+
+
+\begin{align}
+	Gesamtrendite &= \prod_{t=0}	^n (1 + Rendite_t \times Vorhersage_t) - 1 \\
+	Durchschnittliche\ Rendite &= \frac{Gesamtrendite}{\sum_{t=0}^n Vorhersage_t} \\
+	Sharpe-Ratio &= \frac{((1 + Gesamtrendite)^{\frac{365 * 24}{N}} - 1) - r_f}{\sigma_{Rendite} \cdot \sqrt{24 \cdot 365}}
+	\label{eq:sharpe}
+\end{align}
+
+Darüber hinaus wird auch eine andere Gleichung für die Gesamtrendite verwendet, da die Autoren in der Basisstudie diese mit $\prod_{t=0}^n (1 + Rendite_t \times Vorhersage_t)$ berechnet haben, wodurch selbst bei einer Strategie, die durchgängig nicht investiert ist, das Ergebnis den Wert~1 annehmen würde.
+Folglich wäre auch der Wert für die durchschnittliche Rendite verfälscht, wobei auch hier von fehlerhaften Gleichungen in der Basisstudie auszugehen ist.
+\vspace{\baselineskip}
+
+Der Fokus von \textcite{Goutte2023} lag dabei auf der durchschnittlichen Rendite und der Sharpe-Ratio, da diese eine höhere Aussagekraft über die einzelnen Trades haben als die Precision.
+So könnten Modelle zwar eine hohe Precision aufweisen, jedoch nicht profitabel sein, wenn wichtige Perioden mit größeren Kurssprüngen falsch vorhergesagt werden.
+
+Um die Ergebnisse auch mit der naiven Buy-and-Hold-Strategie zu vergleichen, wird die entstehende Handelsstrategie simuliert und visuell dargestellt.
+\citeauthor{Goutte2023} gingen in der Simulation dabei so vor, dass bei einem Kaufsignal eine \$1 Long-Position eröffnet wird, die beim nächsten Hold-Signal geschlossen wird.
+In der Replikation wird die Handelsstrategie jedoch so simuliert, dass bei einem Kaufsignal immer das gesamte Kapital investiert wird.
+
+\begin{equation}
+	Strategie_{t+1} = Strategie_t \times (1 + Performance_t \times Vorhersage_t)
+\end{equation}
+
+Folglich hat die Performance der vergangenen Perioden einen stärkeren Einfluss auf die nachfolgende Performance der Strategie.
+Dieses Vorgehen wurde gewählt, da es einer realistischen Anwendung des Modells näher kommt und auch nur so der Chart mit der berechneten Gesamtrendite übereinstimmt.
+In der Replikation hat sich aber auch gezeigt, dass es keinen bemerkenswerten Unterschied zwischen den Varianten gibt.
+
+Anfallende Transaktionskosten werden wie auch in der Basisstudie nicht berücksichtigt, da diese stark vom gehandelten Volumen sowie indirekten Faktoren, wie beispielsweise dem Spread, abhängen, zu denen es keine verlässlichen Daten gibt.
+
+Um des Weiteren zu überprüfen, ob die Unterschiede zwischen den Ergebnissen der einzelnen Datensätze signifikant sind, wird in der Replikation ein T-Test durchgeführt.
+Der T-Test orientiert sich am Vorgehen der Basisstudie.
+Es wird ein Block-T-Test verwendet, was bedeutet, dass die Renditen in Blöcke aufgeteilt und dann mittels Resampling neu angeordnet werden, um so den p-Wert zu berechnen.
+Hierfür wird eine Blocklänge von $n^{\frac{1}{3}}$ verwendet und das Resampling 10.000-mal wiederholt, damit das Vorgehen dem von \citeauthor{Goutte2023} entspricht.
+Inspiriert von den Forderungen von \textcite{Harvey2016} wird für den Test ein 95\%-Konfidenzintervall anstelle des von den Autoren verwendeten 90\%-Konfidenzintervalls genutzt.
+
+Da die Ergebnisse insbesondere beim LSTM zwischen den Durchläufen stark variieren, wird in der Replikation der Schritt der Vorhersage für mehrere Random Seeds durchgeführt und die Mittelwerte der Metriken verwendet, um so den Einfluss von Ausreißern zu reduzieren.
+Bei der Verwendung von Grid-Search wird aufgrund der höheren Rechenzeit nur ein Durchlauf verwendet.
+Zudem wird bei der Evaluierung der Ergebnisse der Fokus mehr auf Precision und Recall liegen, da diese Werte zwischen den Durchläufen weniger stark schwanken als die durchschnittliche Rendite und die Sharpe-Ratio.
+
+
+\section{Ergebnisse} \label{sec:Ergebnisse}
+Die Darstellung und Auswertung der Ergebnisse beginnt mit der Replikation der exakten Vorgehensweise der Basisstudie und behandelt anschließend schrittweise die Ergebnisse der einzelnen Forschungsfragen.
+Dabei wird insbesondere auf Abweichungen von den Ergebnissen der Basisstudie eingegangen.
+
+
+\subsection{Replikation des exakten Vorgehens}
+Wenn das Vorgehen mit den gegebenen Informationen aus der Basisstudie vollständig repliziert wird, entsprechen die Precision und der Recall bei den erweiterten Datensätzen ungefähr den Ergebnissen der Basisstudie.
+Kleinere Abweichungen sind zwar vorhanden, jedoch deuten diese nicht auf fundamentale Unterschiede hin.
+Solche Abweichungen sind vermutlich auf kleinere Unterschiede in den Daten oder im Vorgehen, wie beispielsweise bei der Festlegung des Schwellwerts oder der Datenskalierung, zurückzuführen.
+So hat sich gezeigt, dass bereits eine andere Anordnung der Merkmale oder die Verwendung anderer Random Seeds, insbesondere beim LSTM, selbst nach zehn Durchläufen zu größeren Abweichungen bei der Precision führen kann.
+Im Zuge der Replikation konnten in mehreren Durchläufen auch Ergebnisse erzielt werden, die sehr nahe an den Ergebnissen der Basisstudie waren, weshalb die Ergebnisse als replizierbar eingestuft werden können.
+
+Die größeren Abweichungen bei der durchschnittlichen Rendite und der Sharpe-Ratio sind vermutlich auf die höhere Varianz zwischen den Durchläufen zurückzuführen, wie es bereits im \hyperref[subsec:Evaluation]{Abschnitt zur Evaluation} erwähnt wurde.
+
+\begin{table}[h]
+    \centering
+    \begin{adjustbox}{width=\textwidth}
+    	\csvreader[
+    		tabular = {lcccccccccc}, % Vertikale Linien entfernt
+    		table head = {
+        	\toprule
+        	Modell & Darstellung & Indikatoren & \multicolumn{4}{c}{Validierung} & \multicolumn{4}{c}{Test} \\
+        	\cmidrule(r){4-7} \cmidrule(l){8-11} % Partielle Linien statt durchgehender
+        	& & & Precision & Recall & Avg. Return & Sharpe & Precision & Recall & Avg. Return & Sharpe \\
+        	\midrule
+    		},
+    		table foot = \bottomrule,
+    		late after line = \\,
+    		respect all,
+    		separator=semicolon
+		]
+		{Abbildungen/Ergebnisse/results-base.csv}
+		{}
+		{\csvcoli & \csvcolii & \csvcoliii & \csvcoliv & \csvcolv & \csvcolvi & \csvcolvii & \csvcolviii & \csvcolix & \csvcolx & \csvcolxi}
+    \end{adjustbox}
+    \caption{Meine Ergebnisse für die vollständige Replikation}{\footnotesize Precision, Recall, durchschnittliche Rendite, Sharpe-Ratio für jeweils Validierungs- und Testdaten}
+    \label{tab:results-Standard}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \begin{adjustbox}{width=\textwidth}
+    	\csvreader[
+    		tabular = {lcccccccccc}, % Vertikale Linien entfernt
+    		table head = {
+        	\toprule
+        	Modell & Darstellung & Indikatoren & \multicolumn{4}{c}{Validierung} & \multicolumn{4}{c}{Test} \\
+        	\cmidrule(r){4-7} \cmidrule(l){8-11} % Partielle Linien statt durchgehender
+        	& & & Precision & Recall & Avg. Return & Sharpe & Precision & Recall & Avg. Return & Sharpe \\
+        	\midrule
+    		},
+    		table foot = \bottomrule,
+    		late after line = \\,
+    		respect all,
+    		separator=semicolon
+		]
+		{Abbildungen/Ergebnisse/paper-long.csv}
+		{}
+		{\csvcoli & \csvcolii & \csvcoliii & \csvcoliv & \csvcolv & \csvcolvi & \csvcolvii & \csvcolviii & \csvcolix & \csvcolx & \csvcolxi}
+    \end{adjustbox}
+    \caption{Ergebnisse für die drei Modelle aus der Basisstudie}
+    \label{tab:results-paper}
+\end{table}
+
+
+Bei den raw-Datensätzen sind die replizierten Ergebnisse jedoch für alle Modelle deutlich schlechter als die Ergebnisse in der Basisstudie, obwohl in vereinzelten Durchläufen mit bestimmten Random Seeds die Ergebnisse etwas näher an die Basisstudie heranreichten.
+Gleichzeitig gibt es bei den raw-Datensätzen auch einzelne Durchläufe, in denen der Schwellwert so festgelegt wird, dass auf den Testdaten kein einziges Kaufsignal vorhergesagt wird.
+Diese Datenpunkte wurden bei der Berechnung der Durchschnittswerte für die Testdaten nicht beachtet, da sie die Ergebnisse zu stark verfälschen würden.
+
+Da dieses Muster jedoch bei allen Modellen auftritt, liegt die Vermutung nahe, dass wichtige Informationen zum Vorgehen in der Basisstudie fehlen.
+Dies könnten beispielsweise Informationen zur Verarbeitung der Daten sein oder zusätzliche Merkmale, die nicht in der Studie aufgelistet wurden.
+
+Die Vermutung scheint sich auch zu bestätigen, wenn man bei den Kerzendaten die Farbe der Kerze hinzunimmt, da so die Ergebnisse (\hyperref[tab:results-Standard-color]{Tab. \ref*{tab:results-Standard-color}}) mit kleineren Abweichungen den Ergebnissen der Basisstudie entsprechen.
+Auch die Candle-extended-Daten nähern sich durch die Einbindung der Kerzenfarbe den Ergebnissen der Basisstudie an, weshalb für die restlichen Untersuchungen die Farbe als weiteres Merkmal verwendet wird.
+
+\begin{table}[h]
+    \centering
+    \begin{adjustbox}{width=\textwidth}
+    	\csvreader[
+    		tabular = {lcccccccccc}, % Vertikale Linien entfernt
+    		table head = {
+        	\toprule
+        	Modell & Darstellung & Indikatoren & \multicolumn{4}{c}{Validierung} & \multicolumn{4}{c}{Test} \\
+        	\cmidrule(r){4-7} \cmidrule(l){8-11} % Partielle Linien statt durchgehender
+        	& & & Precision & Recall & Avg. Return & Sharpe & Precision & Recall & Avg. Return & Sharpe \\
+        	\midrule
+    		},
+    		table foot = \bottomrule,
+    		late after line = \\,
+    		respect all,
+    		separator=semicolon
+		]
+		{Abbildungen/Ergebnisse/results-base-color.csv}
+		{}
+		{\csvcoli & \csvcolii & \csvcoliii & \csvcoliv & \csvcolv & \csvcolvi & \csvcolvii & \csvcolviii & \csvcolix & \csvcolx & \csvcolxi}
+    \end{adjustbox}
+    \caption{Ergebnisse bei Verwendung der Kerzenfarbe als Merkmal}
+    \label{tab:results-Standard-color}
+\end{table}
+
+Da jedoch die Frage nach den verwendeten Merkmalen von den Autoren unbeantwortet blieb, kann nicht nachgewiesen werden, dass wirklich die Kerzenfarbe verwendet wurde.
+Stattdessen könnten die Autoren ein anderes Merkmal sowohl zu den OHLC- als auch zu den Kerzendaten hinzugefügt haben, was dann auch die schlechteren Ergebnisse bei den OHLC-Daten erklären würde.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.6\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Abbildungen/val-chart-base.png}
+        \caption{Validierungsdaten Candle-raw}
+    \end{subfigure}
+	\hfill
+    \begin{subfigure}[b]{0.6\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Abbildungen/test-chart-base.png}
+        \caption{Testdaten Candle-raw}
+    \end{subfigure}
+    \caption{Simulation der Handelsstrategie für das LSTM}
+    \label{fig:base}
+\end{figure}
+ 
+Wenn man zusätzlich auch die Visualisierung der Handelsstrategie betrachtet (\hyperref[fig:base]{Abb.~\ref*{fig:base}}), bestätigt auch diese das Ergebnis der Basisstudie:
+So kann in einzelnen Fällen eine positive Rendite erzielt werden, selbst wenn sich der Bitcoin im Abwärtstrend befindet.
+In Aufwärtstrends hingegen kann die Handelsstrategie nicht mit der Buy-and-Hold-Strategie mithalten.
+Dieses Bild zeigt sich auch in den Charts aus der Basisstudie, wobei \citeauthor{Goutte2023} die Strategie von einem anderen Modell für die Darstellung verwendet haben, weshalb das genaue Verhalten des verwendeten Modells nicht überprüft werden kann.
+\vspace{\baselineskip}
+
+Besonders auffällig ist zudem, dass die Zeiträume der Visualisierungen aus der Basisstudie nicht mit den Zeiträumen übereinstimmen, die in der Replikation für die Validierungs- und Testdaten verwendet werden.
+Da jedoch der Endzeitpunkt der Visualisierung des Testzeitraums mit dem Endzeitpunkt des Untersuchungszeitraums übereinstimmt, liegt die Vermutung nahe, dass die Autoren für diese Abbildungen eine andere Datenaufteilung verwendet haben.
+So würde man bei Verwendung eines 60:20:20-Splits auf die entsprechenden Zeiträume kommen, wie man am Bitcoin-Kurs in der \hyperref[fig:60-split]{Abbildung \ref*{fig:60-split}} erkennen kann.
+Für die Replikation wird jedoch weiterhin der 50:25:25-Split verwendet, da nur dieser im Text erwähnt wird und auch andere Abbildungen auf diese Aufteilung hindeuten.
+
+\begin{figure}[ht]
+     \centering
+     \begin{subfigure}[t]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth, height=0.18\textheight]{Abbildungen/paper-val-chart.jpg}
+         \caption{Basisstudie: Validierungsdaten}
+     \end{subfigure}
+	\hfill
+     \begin{subfigure}[t]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth, height=0.18\textheight]{Abbildungen/paper-test-chart.jpg}
+         \caption{Basisstudie: Testdaten}
+     \end{subfigure}
+          
+     \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=0.18\textheight]{Abbildungen/60-20-20-split-val.png}
+        \caption{60-20-20 Split: Validierungsdaten}
+    \end{subfigure}
+	\hfill
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=0.18\textheight]{Abbildungen/60-20-20-split-test.png}
+        \caption{60-20-20 Split: Testdaten}
+    \end{subfigure}
+     \caption{Vergleich der Abbildungen aus der Basisstudie mit einem 60-20-20-Split}
+      \label{fig:60-split}
+\end{figure}
+
+
+\subsection{Analyse der Robustheit mit alternativen Datenquellen}
+Wenn man die Ergebnisse der Modelle über den gleichen Zeitraum basierend auf den unterschiedlichen Datenquellen vergleicht, lassen sich keine nennenswerten Unterschiede feststellen.
+
+\begin{table}[h]
+    \centering
+    \begin{adjustbox}{width=\textwidth}
+    	\csvreader[
+    		tabular = {llcccccccccc}, % Vertikale Linien entfernt
+    		table head = {
+        	\toprule
+        	Quelle & Modell & Darstellung & Indikatoren & \multicolumn{4}{c}{Validierung} & \multicolumn{4}{c}{Test} \\
+        	\cmidrule(r){5-8} \cmidrule(l){9-12} % Partielle Linien statt durchgehender
+        	& & & & Precision & Recall & Avg. Return & Sharpe & Precision & Recall & Avg. Return & Sharpe \\
+        	\midrule
+    		},
+    		table foot = \bottomrule,
+    		late after line = \\,
+    		respect all,
+    		separator=semicolon
+		]
+		{Abbildungen/Ergebnisse/results-data.csv}
+		{}
+		{\csvcoli & \csvcolii & \csvcoliii & \csvcoliv & \csvcolv & \csvcolvi & \csvcolvii & \csvcolviii & \csvcolix & \csvcolx & \csvcolxi & \csvcolxii}
+    \end{adjustbox}
+    \caption{Ergebnisse für verschiedene Datenquellen}
+    \label{tab:results-Splits}
+\end{table}
+
+Zwar gibt es kleinere Abweichungen zwischen den einzelnen Datenquellen, jedoch unterscheiden sich diese je nach Modell geringfügig.
+Beispielsweise bleiben bei dem LSTM, das auf den Daten von Kraken trainiert wurde, die durchschnittliche Precision auf den Validierungsdaten leicht hinter den beiden anderen LSTMs zurück, während die logistische Regression auf diesen Daten leicht bessere Ergebnisse liefern kann.
+Bei den Testdaten zeigt sich jedoch ein anderes Bild, weshalb wahrscheinlich keine fundamentalen Unterschiede vorliegen.
+Stattdessen liegt die Vermutung nahe, dass diese Unterschiede vor allem auf den Zufall zurückzuführen sind.
+Gleichzeitig bleiben die Muster, die auch auf den Handelsdaten zu erkennen sind, weitestgehend bestehen.
+Dazu gehören die besseren Ergebnisse der Modelle basierend auf Kerzendaten und der Modelle basierend auf den technischen Indikatoren.
+
+
+Um abschließend zu klären, ob sich die Performance der Modelle zwischen verschiedenen Datenbasen unterscheidet, bedürfte es tiefergehender Analysen, die den Fokus insbesondere auf die Markteffizienz der einzelnen Kryptobörsen legen und beispielsweise auch kleinere Kryptobörsen betrachten.
+
+\subsection{Einfluss der Datenaufteilung auf die Ergebnisse}
+Um zu gewährleisten, dass die Ergebnisse sich mit der Basisstudie vergleichen lassen, wird der Zeitraum der Basisstudie beibehalten und nur der Anteil der Trainingsdaten verändert, wobei der Validierungs- und Testzeitraum jeweils gleich lang bleibt.
+Hierbei werden die Auswirkungen eines Trainingsanteils von 40\%, 50\%, 60\% und 70\% untersucht, da so in allen Fällen genügend Daten vorliegen, um insbesondere das LSTM richtig zu trainieren.
+Gleichzeitig reichen aber auch die Validierungs- und Testdaten aus, um aussagekräftige Metriken für die Evaluierung auf diesen Daten zu berechnen. 
+
+\begin{table}[h]
+    \centering
+    \begin{adjustbox}{width=\textwidth}
+    	\csvreader[
+    		tabular = {llcccccccc}, % Vertikale Linien entfernt
+    		table head = {
+        	\toprule
+        	Aufteilung & Modell & \multicolumn{4}{c}{Validierung} & \multicolumn{4}{c}{Test} \\
+        	\cmidrule(r){3-6} \cmidrule(l){7-10} % Partielle Linien statt durchgehender
+        	& & Precision & Recall & Avg. Return & Sharpe & Precision & Recall & Avg. Return & Sharpe \\
+        	\midrule
+    		},
+    		table foot = \bottomrule,
+    		late after line = \\,
+    		respect all,
+    		separator=semicolon
+		]
+		{Abbildungen/Ergebnisse/results-splits.csv}
+		{}
+		{\csvcoli & \csvcolii & \csvcoliii & \csvcoliv & \csvcolv & \csvcolvi & \csvcolvii & \csvcolviii & \csvcolix & \csvcolx}
+    \end{adjustbox}
+    \caption{Ergebnisse für verschiedene Aufteilungen der Daten}
+    \label{tab:results-data}
+\end{table}
+
+Die Ergebnisse zeigen dabei, dass die Vorhersagegenauigkeit auf den Validierungsdaten gemessen an der Precision für alle Modelle mit einem höheren Anteil an Trainingsdaten abnimmt.
+Für das XGBoost ist dies auch für die Testdaten der Fall, wobei die Vorhersagegenauigkeit bei der logistischen Regression zunimmt, während diese beim LSTM keine Veränderung zeigt.
+Allerdings ist die Vorhersagegenauigkeit auf den Validierungsdaten für alle Modelle und Aufteilungen höher als für die Testdaten, wie es auch in der Basisstudie der Fall ist.
+Ein Grund für die Veränderungen in den Ergebnissen könnte sein, dass sich die relevanten Muster oder die Markteffizienz über die Zeit verändert haben, wobei die Modelle die Muster jeweils unterschiedlich gut erkennen können. 
+Jedoch sind die Abweichungen insgesamt gering, weshalb diese auch durch Zufall entstanden sein könnten.
+
+\subsection{Sensitivitätsanalyse der Modellparameter}
+Dieser Abschnitt fokussiert sich hauptsächlich auf das LSTM, da neben den Parametern wie Dropout und Learning Rate sich auch der Aufbau des neuronalen Netzes stark unterscheiden kann, weshalb die Ergebnisse große Unterschiede aufweisen können.
+
+\begin{table}[h]
+    \centering
+    \begin{adjustbox}{width=\textwidth}
+    	\csvreader[
+    		tabular = {lcccccccccc}, % Vertikale Linien entfernt
+    		table head = {
+        	\toprule
+        	Modell & Darstellung & Indikatoren & \multicolumn{4}{c}{Validierung} & \multicolumn{4}{c}{Test} \\
+        	\cmidrule(r){4-7} \cmidrule(l){8-11} % Partielle Linien statt durchgehender
+        	& & & Precision & Recall & Avg. Return & Sharpe & Precision & Recall & Avg. Return & Sharpe \\
+        	\midrule
+    		},
+    		table foot = \bottomrule,
+    		late after line = \\,
+    		respect all,
+    		separator=semicolon
+		]
+		{Abbildungen/Ergebnisse/results-lstms.csv}
+		{}
+		{\csvcoli & \csvcolii & \csvcoliii & \csvcoliv & \csvcolv & \csvcolvi & \csvcolvii & \csvcolviii & \csvcolix & \csvcolx & \csvcolxi}
+    \end{adjustbox}
+    \caption{Ergebnisse für verschiedene LSTMs}
+    \label{tab:results-LSTMs}
+\end{table}
+
+Bei den verschiedenen LSTMs zeigt sich, dass die Tendenz, dass die erweiterten Datensätze und die Kerzendaten jeweils bessere Ergebnisse liefern, bei allen Modellen bestehen bleibt.
+Die drei LSTMs erreichen insgesamt ähnliche Ergebnisse wie das LSTM von \textcite{Goutte2023}, wobei das Grid-Search LSTM und das LSTM von \textcite{He2024} bei den Testdaten gemessen an der Precision bessere Ergebnisse als das Basismodell erreichen können.
+Insbesondere das Grid-Search LSTM sticht hervor, wobei dies an den deutlich geringeren Recall-Werten liegen kann.
+So geht das Modell nur wenige vielversprechende Trades ein, wodurch es die meiste Zeit nicht investiert ist.
+Deshalb muss die höhere Precision nicht unbedingt auf eine höhere langfristige Rendite hindeuten.
+Nichtsdestotrotz liefern alle LSTMs auf den Testdaten eine schlechtere Performance als auf den Validierungsdaten, wie es auch bei dem LSTM aus der Basisstudie der Fall ist.
+
+Bei dem mit Grid-Search optimierten LSTM ist anzumerken, dass diese Werte nur auf einem Durchlauf beruhen und sich der Aufbau grundlegend an dem der Basisstudie orientiert.
+Entsprechend sind Abweichungen nach oben oder unten zu erwarten, wenn zusätzliche Durchläufe durchgeführt und weitere Varianten des Modellaufbaus berücksichtigt werden.
+
+
+\begin{table}[h]
+    \centering
+    \begin{adjustbox}{width=\textwidth}
+    	\csvreader[
+    		tabular = {lcccccccccc}, % Vertikale Linien entfernt
+    		table head = {
+        	\toprule
+        	Modell & Darstellung & Indikatoren & \multicolumn{4}{c}{Validierung} & \multicolumn{4}{c}{Test} \\
+        	\cmidrule(r){4-7} \cmidrule(l){8-11} % Partielle Linien statt durchgehender
+        	& & & Precision & Recall & Avg. Return & Sharpe & Precision & Recall & Avg. Return & Sharpe \\
+        	\midrule
+    		},
+    		table foot = \bottomrule,
+    		late after line = \\,
+    		respect all,
+    		separator=semicolon
+		]
+		{Abbildungen/Ergebnisse/results-grid.csv}
+		{}
+		{\csvcoli & \csvcolii & \csvcoliii & \csvcoliv & \csvcolv & \csvcolvi & \csvcolvii & \csvcolviii & \csvcolix & \csvcolx & \csvcolxi}
+    \end{adjustbox}
+    \caption{Ergebnisse für verschiedene Modelle}
+    \label{tab:results-Grids}
+\end{table}
+
+Beim XGBoost-Modell und der logistischen Regression (\hyperref[tab:results-Grids]{Tab.~\ref*{tab:results-Grids}}) zeigt sich, dass die mit Grid-Search optimierten Modelle sowohl auf den Validierungsdaten als auch auf den Testdaten bessere Ergebnisse liefern als die Modelle aus der Basisstudie.
+Insbesondere weist das XGBoost-Modell durch die Parameter-Optimierung eine starke Verbesserung gegenüber dem XGBoost von \citeauthor{Goutte2023} auf.
+
+Allerdings stammen die Ergebnisse der beiden Modelle jeweils nur aus einem Durchlauf, weshalb die Ergebnisse weniger robust sind als die Ergebnisse der anderen Untersuchungen.
+Jedoch kann man auch hier die Muster erkennen, dass in den meisten Fällen die Kerzendarstellung bessere Ergebnisse liefert als die OHLC-Darstellung.
+Die Unterschiede sind aber gering und bei einzelnen Modellen liefert auch die OHLC-Darstellung die besseren Ergebnisse.
+Des Weiteren bleibt auch in dieser Untersuchung der OHLC-raw-Datensatz hinter den Ergebnissen der anderen Datensätze und den Ergebnissen aus der Basisstudie zurück, wobei die logistische Regression eine Ausnahme bildet.
+Dies verstärkt die Vermutung, dass die Autoren wichtige Informationen zum Verfahren oder zu zusätzlichen Merkmalen nicht in der Studie erwähnten, was eine vollständige Replikation unmöglich macht.
+
+
+\subsection{Einfluss des Modellzeitraums auf die Modelle}
+In diesem Abschnitt liegt der Fokus hauptsächlich auf den Modellen, die auf den Daten von Kraken trainiert wurden, da Kraken Daten ab Oktober 2013 bereitstellt, wodurch auch der Zeitraum vor dem Studienzeitraum der Basisstudie betrachtet werden kann.
+Um auch eine Vergleichbarkeit mit den Ergebnissen der Studie zu gewährleisten, wird die Länge des betrachteten Zeitraums beibehalten und dieser nur in kleineren Schritten verschoben, um die Entwicklung über die Zeit zu untersuchen.
+
+\begin{table}[h]
+    \centering
+    \begin{adjustbox}{width=\textwidth}
+    	\csvreader[
+    		tabular = {lccccccccc}, % Vertikale Linien entfernt
+    		table head = {
+        	\toprule
+        	Startjahr & Modell & \multicolumn{4}{c}{Validierung} & \multicolumn{4}{c}{Test} \\
+        	\cmidrule(r){3-6} \cmidrule(l){7-10} % Partielle Linien statt durchgehender
+        	& & Precision & Recall & Avg. Return & Sharpe & Precision & Recall & Avg. Return & Sharpe \\
+        	\midrule
+    		},
+    		table foot = \bottomrule,
+    		late after line = \\,
+    		respect all,
+    		separator=semicolon
+		]
+		{Abbildungen/Ergebnisse/results-timeframe.csv}
+		{}
+		{\csvcoli & \csvcolii & \csvcoliii & \csvcoliv & \csvcolv & \csvcolvi & \csvcolvii & \csvcolviii & \csvcolix & \csvcolx}
+    \end{adjustbox}
+    \caption{Ergebnisse über verschiedene Zeiträume}{\footnotesize Zur Übersichtlichkeit wurden die Daten pro Startjahr aggregiert. Die vollständige Übersicht ist in den \hyperref[tab:results-timeframe-ext]{Tabellen~\ref*{tab:results-timeframe-ext} bis} \ref{tab:results-timeframe-ext-2} zu finden.}
+    \label{tab:results-timeframe}
+\end{table}
+
+Bei allen Modellen treten größere Schwankungen in den Ergebnissen auf.
+Zwar können die verschiedenen Modelle immer eine Precision von über 50\% erreichen, jedoch schwankt die Precision über die Zeit zwischen ca. 51\% und 62\%, wenn man die Durchschnittswerte pro Modell und Zeitraum betrachtet.
+
+Allerdings lässt sich kein Trend erkennen, der auf eine abnehmende Precision hindeutet.
+Eine solche Entwicklung wäre jedoch gemäß der Annahme einer steigenden Markteffizienz zu erwarten.
+Stattdessen zeigt sich insbesondere bei der logistischen Regression und dem LSTM ein ähnliches Bild (siehe Abb. \ref{fig:timestep}+\ref{fig:timestep-logreg}):
+Bis ungefähr Mitte 2017 steigt die Precision sowohl auf den Test- als auch Validierungsdaten stetig an.
+Ab Mitte 2017 ähnelt die Entwicklung der Precision einer zyklischen Entwicklung, wobei dies mit den Zyklen des Bitcoin-Kurses zusammenhängen könnte.
+Jedoch reichen die heutigen Daten nicht aus, um diese Entwicklung zu bestätigen, weshalb man in der Zukunft zu diesem Untersuchungsaspekt zurückkehren müsste.
+
+\input{Abbildungen/Chart-LSTM.tex}
+
+
+Gleichzeitig zeigt sich aber auch, dass die Entwicklung der Validierungsdaten annähernd der Entwicklung auf den Testdaten entspricht, wobei die zeitliche Verschiebung der Länge des Validierungszeitraums gleicht.
+Ein möglicher Grund für die beiden Beobachtungen könnte die Entwicklung der Markteffizienz sein, da diese in der Regel nicht über den gesamten Zeitraum konstant ist und es stattdessen Marktphasen mit einer geringeren Markteffizienz gibt, die von den ML-Modellen für bessere Ergebnisse genutzt werden können.
+
+\input{Abbildungen/Chart-LogReg.tex}
+
+\input{Abbildungen/Chart-XGB.tex}
+
+Beim XGBoost-Modell zeigt sich zwar auch ein ähnliches Bild, jedoch gibt es merkliche Unterschiede zu den anderen Modellen.
+So ist die Entwicklung der Precision auf den Testdaten nahe an der Entwicklung der anderen Modelle, während die Entwicklung auf den Validierungsdaten größere Abweichungen aufweist.
+
+Die Beobachtungen, dass die Entwicklung der Precision auf den Validierungsdaten annähernd der Entwicklung auf den Testdaten entspricht und dass dieses Muster bei allen Modellen annähernd gleich auftritt, deuten darauf hin, dass die Performance maßgeblich von den Eigenschaften der Daten beeinflusst wird.
+Der wahrscheinlichste Faktor ist hierbei die Markteffizienz, die vermutlich stark vom Zyklus des Bitcoin beeinflusst wird, wodurch diese und folglich auch die Performance der Modelle über die Zeit stark schwanken.
+
+\subsection{Zusammenfassende Ergebnisse}
+Um abschließend zu klären, inwieweit sich die Ergebnisse aus der Basisstudie replizieren lassen, sollten die aggregierten Ergebnisse aller Untersuchungen betrachtet werden.
+Hierfür werden die Ergebnisse der Modelle aus der Basisstudie für alle Zeiträume, Datenaufteilungen und Datenbasen zu einem Ergebnis (\hyperref[tab:results-agg]{Tab.~\ref*{tab:results-agg}}) aggregiert.
+
+\begin{table}[h]
+    \centering
+    \begin{adjustbox}{width=\textwidth}
+    	\csvreader[
+    		tabular = {lcccccccccc}, % Vertikale Linien entfernt
+    		table head = {
+        	\toprule
+        	Modell & Darstellung & Indikatoren & \multicolumn{4}{c}{Validierung} & \multicolumn{4}{c}{Test} \\
+        	\cmidrule(r){4-7} \cmidrule(l){8-11} % Partielle Linien statt durchgehender
+        	& & & Precision & Recall & Avg. Return & Sharpe & Precision & Recall & Avg. Return & Sharpe \\
+        	\midrule
+    		},
+    		table foot = \bottomrule,
+    		late after line = \\,
+    		respect all,
+    		separator=semicolon
+		]
+		{Abbildungen/Ergebnisse/results-agg.csv}
+		{}
+		{\csvcoli & \csvcolii & \csvcoliii & \csvcoliv & \csvcolv & \csvcolvi & \csvcolvii & \csvcolviii & \csvcolix & \csvcolx & \csvcolxi}
+    \end{adjustbox}
+    \caption{Aggregierte Ergebnisse der Modelle aus der Studie}
+    \label{tab:results-agg}
+\end{table}
+
+Die Ergebnisse aller drei Modelle entsprechen, abgesehen von den OHLC-raw-Daten, annähernd den Ergebnissen von \textcite{Goutte2023}.
+Insbesondere zeigt sich, dass trotz der Veränderungen die Performance auf den Kerzendaten in den meisten Fällen besser ist als auf den OHLC-Daten.
+Zudem liefern die erweiterten Datensätze bessere Ergebnisse als die Datensätze ohne technische Indikatoren, wobei die Unterschiede wie auch in der Basisstudie gering ausfallen.
+Jedoch liefert die logistische Regression die besten Ergebnisse, während es in der Basisstudie das LSTM war, wobei sowohl in der Replikation als auch in der Basisstudie die Unterschiede relativ gering sind.
+In beiden Fällen zeigt sich jedoch, dass das XGBoost-Modell hinter den anderen Modellen zurückbleibt.
+
+Wie auch in der Basisstudie zeigt sich in diesen Ergebnissen, dass viele Modelle im Testzeitraum eine positive Rendite erzielen können, wenn keine Transaktionskosten beachtet werden.
+Jedoch sind auch in der Replikation die Renditen so gering, dass die Modelle wahrscheinlich nach Abzug der Gebühren, des Spreads und der Slippage nicht mehr profitabel wären.
+Da der Bitcoin-Kurs über den betrachteten Zeitraum deutlich anstieg und einzelne Testzeiträume vollständig in Bull-Märkten lagen, kommen die Modelle nicht annähernd an die Buy-and-Hold-Strategie heran.
+Dies zeigen beispielsweise die Sharpe-Ratios, die nur in wenigen Fällen über eins liegen und zum Teil auch negativ sind, selbst wenn der risikofreie Zinssatz als 0\% angenommen wird.
+
+Bei den Ergebnissen des T-Tests zeigt sich, dass in keinem Durchlauf signifikante Unterschiede zwischen den Ergebnissen der verschiedenen Datensätze vorliegen, wie es auch in der Basisstudie der Fall ist.
+Der niedrigste gemessene p-Wert liegt bei ungefähr 37\%, weshalb selbst die Verwendung des 95\%-Intervals anstelle des 90\%-Intervals keinen Einfluss auf das Ergebnis hat.
+
+\section{Fazit}
+Zusammenfassend lässt sich festhalten, dass sich die Ergebnisse von \textcite{Goutte2023} grundlegend replizieren lassen, obwohl einzelne Abweichungen auftreten.
+Lediglich die Ergebnisse der OHLC-Daten ohne Indikatoren reichen nicht an die Ergebnisse aus der Basisstudie heran.
+Die anderen Ergebnisse stellen sich auch als robust heraus, da trotz der Veränderungen nur geringe Abweichungen auftreten und die Muster aus der Basisstudie bestehen bleiben.
+Es bestätigt sich auch, dass die Modelle zeitweise die Buy-and-Hold-Strategie schlagen können, wobei die Renditen der Modelle über längere Zeiträume nicht mithalten können.
+Die Aussage von \citeauthor{Goutte2023}, dass die Kurshistorie des Bitcoin relevante Informationen zur Kursvorhersage enthalten könnte, hält auch in der Replikation stand, da alle drei Modelle bessere Ergebnisse liefern konnten als der naive Prädiktor.
+Jedoch hat sich auch gezeigt, dass die Performance über die Zeit zum Teil stark schwankt, wobei die Schwankung möglicherweise mit dem Bitcoin-Zyklus und der daraus resultierenden Veränderung der Markteffizienz zusammenhängen könnte.
+\vspace{\baselineskip}
+
+Bei der Arbeit an der Replikation hat sich jedoch herausgestellt, dass die Autoren der Basisstudie an vielen Stellen ungenau gearbeitet haben, was eine Replikation der Studie deutlich erschwert und zum Teil unmöglich macht.
+So passen mehrere Abbildungen aus der Basisstudie nicht zu den Angaben der Autoren.
+Beispielsweise wurde für die deskriptive Statistik und eine Abbildung ein Zeitraum verwendet, der sich von dem genannten Untersuchungszeitraum unterscheidet.
+Gleichzeitig wurde für zwei weitere Abbildungen eine andere Aufteilung der Daten in Trainings-, Validierungs- und Testdaten verwendet.
+Zudem treten Abweichungen bei Gleichungen auf, wie beispielsweise bei der Berechnung der Sharpe-Ratio, bei der sich die angegebene Gleichung von der unterscheidet, die mir auf Nachfrage von den Autoren bereitgestellt wurde.
+Auch bei den Indikatoren wurden Gleichungen angegeben, die unter Berücksichtigung der deskriptiven Statistik anscheinend nicht verwendet wurden.
+Weiterhin fehlen auch wichtige Details zur Datenverarbeitung und zu den verwendeten Merkmalen, was eine mögliche Erklärung für die Unterschiede bei den OHLC-Daten ohne die technischen Indikatoren sein könnte.
+Insgesamt entsteht der Eindruck, dass unterschiedliche Teile der Arbeit unabhängig voneinander ohne gegenseitige Abstimmung bearbeitet wurden.
+
+Die Replikation wurde zusätzlich erschwert, da die Autoren selbst auf Nachfrage den Code nicht bereitstellten und sich die Kommunikation als schwierig erwies.
+So wurden einzelne Nachfragen beantwortet, andere blieben jedoch unbeantwortet, weshalb auf Standardwerte oder auf Werte, die in Tests die besten Ergebnisse lieferten, zurückgegriffen werden musste.
+Daher kann nicht sichergestellt werden, dass das in der Replikation verwendete Vorgehen dem Vorgehen von \citeauthor{Goutte2023} entspricht.
+
+Dies spiegelt auch die Ansicht von \textcite{Harvey2016} wider, derzufolge eine Replikation in der Finanzforschung schwieriger ist als in anderen Bereichen, wodurch die Replication Crisis verstärkt wird.
+Da das Verhalten der Autoren kein Einzelfall ist und sich bei der Suche nach möglichen Studien für eine Replikation häufig ähnliche Fälle zeigten, sollten Studien aus Fachzeitschriften, die nicht verlangen, dass der Code zur Replikation veröffentlicht wird, grundsätzlich kritisch betrachtet werden.
+
+Da es jedoch im Sinne der Forschung sein sollte, dass Ergebnisse auf ihre Validität überprüft werden, sollte Code für eine Replikation grundsätzlich mit der Studie veröffentlicht werden, um Replikationen zu vereinfachen.
+Dies erfordert zum einen die Bereitschaft von Autoren, den Code direkt zu veröffentlichen oder auf Nachfrage zu teilen, und zum anderen mehr Fachzeitschriften, die Replication Packages als Bedingung für die Veröffentlichung verlangen, wie es beispielsweise beim Journal of Finance der Fall ist.
+
+\section{Weitergehende Forschung}
+Eine logische Fortführung dieser Replikation wäre es, die anderen Teile der Arbeit von \textcite{Goutte2023} zu replizieren.
+Dies umfasst zum einen die anderen Modelle, aber auch die Vorhersage von Verkaufssignalen.
+Hierbei wäre es dann auch sinnvoll, nochmals zu versuchen, von den Autoren den verwendeten Code oder mehr Details zum Vorgehen zu erhalten, da dies für diese Replikation leider nicht möglich war.
+
+Zudem könnte ein größerer Fokus auf unterschiedliche Datenquellen liegen.
+In dieser Replikation wurden mit Binance und Kraken zwar zwei verschiedene Börsen betrachtet, wobei diese vermutlich zu den größten und effizientesten Börsen gehören.
+Stattdessen könnte man in einer weiterführenden Studie den Fokus auf kleinere Börsen legen, die wahrscheinlich größere Ineffizienzen aufweisen, die dann von den Modellen ausgenutzt werden könnten.
+Darauf wurde in dieser Replikation verzichtet, da keine verlässlichen Daten für den Untersuchungszeitraum von kleineren Börsen gefunden werden konnten.
+
+Auch die Festlegung des Schwellwerts könnte verändert werden, da auch andere Kriterien sinnvoll dafür eingesetzt werden können.
+Beispielsweise wäre es sinnvoll, den Schwellwert nach der durchschnittlichen Rendite über alle Perioden zu optimieren, da der wirtschaftliche Nutzen der Modelle im Fokus stehen sollte.
+
+Die Verwendung anderer technischer Indikatoren wäre eine weitere sinnvolle Veränderung, da die Autoren eine Auswahl an technischen Indikatoren verwendet haben, ohne dass sie diese begründet haben.
+Daher wäre es sinnvoll, andere Indikatoren zu verwenden, wobei man sich an der aktuellen Literatur orientieren kann.
+Dabei kann man sich auf die Literaturanalyse von \textcite{AyiteyJunior2023} stützen, da sie in ihrer Analyse auch die verwendeten Indikatoren betrachtet haben.
+
+Ein weiterer Teil einer weiterführenden Replikation sollte die Kombination der einzelnen Untersuchungen sein.
+So wurde in dieser Replikation jede Veränderung isoliert von den anderen untersucht, wodurch stets nur geringe Abweichungen auftraten.
+Daher ist es sinnvoll, diese Veränderungen zu kombinieren und beispielsweise unterschiedliche Datenaufteilungen zu unterschiedlichen Zeitpunkten zu untersuchen, um die Robustheit der Ergebnisse zu bestimmen.
+Davon wurde in dieser Replikation abgesehen, da der Umfang sonst zu groß werden würde.
+\vspace{\baselineskip}
+
+Zusätzlich könnte man auch untersuchen, ob die Ergebnisse der Modelle bestehen bleiben, wenn man diese auf andere Kryptowährungen anwendet.
+Hierbei könnte man neben beispielsweise Ethereum und Litecoin auch kleinere Kryptowährungen untersuchen, wobei dies tendenziell eher eine Weiterführung der Basisstudie statt der Replikation ist.
+
+Eine Veränderung kann auch die Einführung von Transaktionskosten sein, wobei diese direkt bei der Berechnung des Labels einbezogen und nicht erst am Ende in einer Simulation berücksichtigt werden sollten.
+
+Als Bestandteil einer Weiterführung wäre auch die Transformation der Merkmale in relative Werte eine sinnvolle Veränderung, da bei der Verwendung der absoluten Werte nur unzureichend generalisiert werden kann.
+Stattdessen könnten die betroffenen Merkmale relativ zum aktuellen Close-Kurs angegeben werden, wodurch auch länger zurückliegende Datenpunkte besser eingebunden werden könnten.
+\vspace{\baselineskip}
+
+Neben den weiteren Untersuchungen zur Replikation der Basisstudie zeigen sich auch viele verschiedene Forschungsthemen im Bereich der Kryptomärkte.
+Eines davon ist die Effizienz des Bitcoin-Markts, wobei insbesondere die Entwicklung interessant ist.
+Diese Replikation konnte zeigen, dass zum Teil starke Schwankungen zwischen den Ergebnissen über verschiedene Zeiträume vorliegen, wobei ein möglicher Zusammenhang zwischen dem Trend des Marktes und der Vorhersagegenauigkeit bestehen könnte.
+Da dies neben einem Bias im Modell auch an einer schwankenden Markteffizienz liegen könnte, wäre es interessant zu untersuchen, wie sich die Markteffizienz in unterschiedlichen Marktphasen verhält.
+In anderen Märkten konnte bereits gezeigt werden, dass temporäre Ineffizienzen auftreten können, wobei diese Effekte in den Kryptomärkten aufgrund größerer Marktbewegungen noch verstärkt werden könnten.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%Ende des Dokuments%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\input{settings/endofdocument}
+\end{document}
