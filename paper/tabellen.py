@@ -589,7 +589,7 @@ def table_sharpe_horizont():
 
 
 """
-Zählbilanz über alle 40 empirischen Läufe: wie oft ein Modell das
+Ergebnisse über alle 40 empirischen Läufe: wie oft ein Modell das
 1/N-Portfolio schlägt, wie oft ein dynamischer Schätzer die historische Matrix
 ökonomisch schlägt und wie oft er sie statistisch schlägt.
 """
@@ -637,7 +637,7 @@ def table_bilanz():
     rows = rows[:-1]
 
     write_table("tab_bilanz",
-                "Zählbilanz über alle empirischen Läufe",
+                "Ergebnisse über alle empirischen Läufe",
                 "tab:bilanz",
                 "llrrrr",
                 ["Modell & Kovarianz & vs.\\ 1/N & "
