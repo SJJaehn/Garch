@@ -234,11 +234,29 @@ def read_cov_mse(dataset, train, pred):
 # =============================================================================
 
 """
-Annualisierte Sharpe Ratio bei einem risikofreien Zins von null, identisch zur
-Spalte "Ann. Sharpe (rf=0)" in summary.csv.
+Der Kursstand der Fed Funds Rate wird nur einmal gelesen und danach
+wiederverwendet, weil die Sharpe Ratio fuer sehr viele Laeufe gebraucht wird.
 """
-def sharpe0(returns):
-    r = np.asarray(returns, dtype=float)
+RF_LEVEL = None
+
+
+"""
+Taegliche einfache risikofreie Rendite, ausgerichtet auf die uebergebenen Daten.
+"""
+def risk_free(dates):
+    global RF_LEVEL
+    if RF_LEVEL is None:
+        RF_LEVEL = backtest.read_risk_free_level()
+    return RF_LEVEL.reindex(dates).ffill().pct_change().fillna(0.0)
+
+
+"""
+Annualisierte Sharpe Ratio auf Ueberschussrenditen ueber die Fed Funds Rate,
+identisch zur Spalte "Ann. Sharpe" in summary.csv.
+"""
+def sharpe(returns):
+    excess = pd.Series(returns) - risk_free(pd.Series(returns).index)
+    r = np.asarray(excess, dtype=float)
     r = r[np.isfinite(r)]
     sd = r.std(ddof=1) * np.sqrt(TRADING_DAYS)
     return (r.mean() * TRADING_DAYS) / sd if sd > 0 else np.nan
@@ -254,7 +272,7 @@ def realized_vol(returns):
 
 
 """
-Diebold-Mariano-West-Test auf die mittlere Verlustdifferenz d_t = L_a - L_b.
+Diebold-Mariano-Test auf die mittlere Verlustdifferenz d_t = L_a - L_b.
 Die Langfristvarianz wird mit einem Bartlett-Kern (Newey-West) geschätzt, die
 Lag-Länge nach der ueblichen Faustregel 1,5*n^(1/3). Ein negativer Mittelwert
 bedeutet, dass Schätzer a den kleineren Verlust aufweist.
@@ -386,7 +404,7 @@ def table_statistik_basis():
 
 
 """
-Diebold-Mariano-West-Tests auf die paarweisen Verlustdifferenzen im Basisfall,
+Diebold-Mariano-Tests auf die paarweisen Verlustdifferenzen im Basisfall,
 getrennt für QLIKE und MSE.
 """
 def table_dmw():
@@ -407,7 +425,7 @@ def table_dmw():
     rows = rows[:-1]
 
     write_table("tab_dmw",
-                "Diebold-Mariano-West-Tests auf die Verlustdifferenzen (Basisfall)",
+                "Diebold-Mariano-Tests auf die Verlustdifferenzen (Basisfall)",
                 "tab:dmw",
                 "lrrr@{}lr",
                 ("Vergleich & $\\varnothing\\,\\Delta$ Verlust & $t$-Statistik & "
@@ -419,7 +437,7 @@ def table_dmw():
 
 """
 QLIKE und MSE über alle Trainingsfenster und Prognosehorizonte, bewertet auf dem
-gemeinsamen Zeitraum, jeweils mit der Differenz zur historischen Matrix.
+gemeinsamen Zeitraum.
 """
 def table_qlike_grid():
     rows = []
@@ -434,8 +452,8 @@ def table_qlike_grid():
         m = read_cov_mse(DATASET, train, pred).loc[COMMON_START:] * 1e7
         rows.append(" & ".join([label,
                                 num(q["Historical"].mean(), 1),
-                                num((q["GARCH"] - q["Historical"]).mean(), 2),
-                                num((q["DCC"] - q["Historical"]).mean(), 2),
+                                num(q["GARCH"].mean(), 1),
+                                num(q["DCC"].mean(), 1),
                                 num(m["Historical"].mean(), 2),
                                 num(m["GARCH"].mean(), 2),
                                 num(m["DCC"].mean(), 2)]))
@@ -445,12 +463,11 @@ def table_qlike_grid():
                 "lrrrrrr",
                 ["& \\multicolumn{3}{c}{QLIKE} & \\multicolumn{3}{c}{MSE ($\\times 10^{-7}$)} \\\\",
                  "\\cmidrule(lr){2-4}\\cmidrule(lr){5-7}",
-                 ("Spezifikation & Historisch & $\\Delta$ GARCH & $\\Delta$ DCC & "
+                 ("Spezifikation & Historisch & GARCH & DCC-GARCH & "
                   "Historisch & GARCH & DCC-GARCH \\\\")],
                 rows,
                 note=(f"Oberer Block: Trainingsfenster in Handelstagen ($h=1$), unterer Block:"
-                      f" Prognosehorizonte, bewertet ab {datum(COMMON_START)}; $\\Delta$ ist die"
-                      " Differenz zur historischen Matrix."))
+                      f" Prognosehorizonte, bewertet ab {datum(COMMON_START)}."))
 
 
 # =============================================================================
@@ -469,7 +486,6 @@ def table_oekonomie_basis():
             rows.append(" & ".join([model, COV_LABEL[cov],
                                     num(r["Ann. Return"] * 100, 2),
                                     num(r["Ann. Std"] * 100, 2),
-                                    num(r["Ann. Sharpe (rf=0)"], 3),
                                     num(r["Ann. Sharpe"], 3),
                                     num(r["Avg Turnover"], 3)]))
         rows.append("MIDRULE")
@@ -477,16 +493,15 @@ def table_oekonomie_basis():
     rows.append(" & ".join(["1/N", "--",
                             num(r["Ann. Return"] * 100, 2),
                             num(r["Ann. Std"] * 100, 2),
-                            num(r["Ann. Sharpe (rf=0)"], 3),
                             num(r["Ann. Sharpe"], 3),
                             num(r["Avg Turnover"], 3)]))
 
     write_table("tab_oekonomie_basis",
                 "Out-of-Sample-Performance im Basisfall",
                 "tab:oekonomie_basis",
-                "llrrrrr",
+                "llrrrr",
                 ("Modell & Kovarianz & Rendite (\\%) & Vola (\\%) & "
-                 "Sharpe ($r_f=0$) & Sharpe & Turnover"),
+                 "Sharpe & Turnover"),
                 rows,
                 note=(f"{DATASET}, Training {BASE_TRAIN} Handelstage, Prognosehorizont {BASE_PRED} Tag;"
                       " Rendite, Volatilität und Sharpe Ratio annualisiert, Turnover ohne Kosten."))
@@ -501,24 +516,26 @@ def table_jobson_korkie():
     rf = backtest.load_risk_free(returns.index).fillna(0.0)
     excess = returns.sub(rf, axis=0)
 
-    wanted = [("MVP Historical", "MVP DCC"), ("HRP Historical", "HRP DCC"),
-              ("ERC Historical", "ERC DCC"), ("MVP GARCH", "MVP DCC"),
-              ("MVP Historical", "Naive"), ("HRP Historical", "Naive"),
-              ("ERC Historical", "Naive")]
+    wanted = []
+    for model in MODEL_ORDER:
+        wanted.append((f"{model} Historical", f"{model} GARCH"))
+        wanted.append((f"{model} Historical", f"{model} DCC"))
+        wanted.append((f"{model} GARCH", f"{model} DCC"))
+    for model in MODEL_ORDER:
+        wanted.append((f"{model} Historical", "Naive"))
     rows = []
     n_obs = 0
     for a, b in wanted:
         pair = excess[[a, b]].dropna()
         sr_a, sr_b, z, p, n = jobson_korkie(pair[a].values, pair[b].values)
         n_obs = n
-        rows.append(" & ".join([f"{a} vs.\\ {b}",
-                                num(sr_a, 3), num(sr_b, 3), num(sr_a - sr_b, 4),
+        rows.append(" & ".join([f"{a} vs.\\ {b}", num(sr_a - sr_b, 4),
                                 num(z, 2), pval(p), stars(p)]))
     write_table("tab_jobson_korkie",
                 "Tests auf Unterschiede der Sharpe Ratios (Basisfall)",
                 "tab:jobson_korkie",
-                "lrrrrr@{}l",
-                ("Vergleich & Sharpe A & Sharpe B & Differenz & $z$-Statistik & "
+                "lrrr@{}l",
+                ("Vergleich & $\\Delta$ Sharpe & $z$-Statistik & "
                  "\\multicolumn{2}{c}{$p$-Wert}"),
                 rows,
                 note=("Auf Überschussrenditen über die Fed Funds Rate; $^{***}$, $^{**}$, $^{*}$ ="
@@ -535,8 +552,8 @@ def table_sharpe_train():
         cells = [str(train)]
         for model in MODEL_ORDER:
             for cov in COV_ORDER:
-                cells.append(num(sharpe0(r[f"{model} {cov}"]), 3))
-        cells.append(num(sharpe0(r["Naive"]), 3))
+                cells.append(num(sharpe(r[f"{model} {cov}"]), 3))
+        cells.append(num(sharpe(r["Naive"]), 3))
         rows.append(" & ".join(cells))
 
     header = [
@@ -551,7 +568,7 @@ def table_sharpe_train():
                 "tab:sharpe_train",
                 "r" + "r" * 10,
                 header, rows,
-                note=(f"Annualisierte Sharpe Ratio ($r_f=0$), bewertet ab {datum(COMMON_START)}."))
+                note=(f"Annualisierte Sharpe Ratio, bewertet ab {datum(COMMON_START)}."))
 
 
 """
@@ -562,29 +579,26 @@ def table_sharpe_horizont():
     for pred in PRED_WINDOWS:
         s = read_summary(DATASET, BASE_TRAIN, pred)
         r = read_returns(DATASET, BASE_TRAIN, pred).loc[COMMON_START:]
-        cells = [str(pred)]
-        for model in MODEL_ORDER:
-            for cov in ["Historical", "DCC"]:
-                cells.append(num(sharpe0(r[f"{model} {cov}"]), 3))
-        cells.append(num(sharpe0(r["Naive"]), 3))
-        cells.append(num(s.loc["MVP Historical", "Avg Turnover"], 3))
-        cells.append(num(s.loc["MVP DCC", "Avg Turnover"], 3))
-        rows.append(" & ".join(cells))
+        for k, cov in enumerate(COV_ORDER):
+            cells = [str(pred) if k == 0 else "",
+                     num(sharpe(r["Naive"]), 3) if k == 0 else "",
+                     COV_LABEL[cov]]
+            for model in MODEL_ORDER:
+                cells.append(num(sharpe(r[f"{model} {cov}"]), 3))
+            cells.append(num(s.loc[f"MVP {cov}", "Avg Turnover"], 3))
+            rows.append(" & ".join(cells))
+        rows.append("MIDRULE")
+    rows = rows[:-1]
 
-    header = [
-        ("$h$ (Tage) & \\multicolumn{2}{c}{MVP} & \\multicolumn{2}{c}{HRP} & "
-         "\\multicolumn{2}{c}{ERC} & 1/N & \\multicolumn{2}{c}{Turnover MVP} \\\\"),
-        "\\cmidrule(lr){2-3}\\cmidrule(lr){4-5}\\cmidrule(lr){6-7}\\cmidrule(lr){9-10}",
-        (" & Hist. & DCC & Hist. & DCC & Hist. & DCC & & Hist. & DCC \\\\"),
-    ]
+    header = "$h$ (Tage) & 1/N & Kovarianz & MVP & HRP & ERC & Turnover MVP"
 
     write_table("tab_sharpe_horizont",
                 "Sharpe Ratios und Turnover über die Prognosehorizonte "
                 f"(TRBC, Training {BASE_TRAIN} Tage)",
                 "tab:sharpe_horizont",
-                "r" + "r" * 9,
+                "rrlrrrr",
                 header, rows,
-                note=(f"Annualisierte Sharpe Ratio ($r_f=0$), bewertet ab {datum(COMMON_START)};"
+                note=(f"Annualisierte Sharpe Ratio, bewertet ab {datum(COMMON_START)};"
                       " Turnover je Rebalancierung, also nicht auf gleiche Frequenz normiert."))
 
 
@@ -606,15 +620,15 @@ def table_bilanz():
                 continue
             n_runs += 1
             r = read_returns(DATASET, train, pred).loc[COMMON_START:]
-            base = sharpe0(r["Naive"])
+            base = sharpe(r["Naive"])
             for model in MODEL_ORDER:
-                ref = sharpe0(r[f"{model} Historical"])
+                ref = sharpe(r[f"{model} Historical"])
                 for cov in COV_ORDER:
                     key = f"{model} {cov}"
-                    sharpe = sharpe0(r[key])
-                    beats_naive[key] = beats_naive.get(key, 0) + int(sharpe > base)
+                    wert = sharpe(r[key])
+                    beats_naive[key] = beats_naive.get(key, 0) + int(wert > base)
                     if cov != "Historical":
-                        beats_hist_sharpe[key] = beats_hist_sharpe.get(key, 0) + int(sharpe > ref)
+                        beats_hist_sharpe[key] = beats_hist_sharpe.get(key, 0) + int(wert > ref)
             q = read_qlike(DATASET, train, pred).loc[COMMON_START:].mean()
             m = read_cov_mse(DATASET, train, pred).loc[COMMON_START:].mean()
             for cov in ["GARCH", "DCC"]:
@@ -628,25 +642,19 @@ def table_bilanz():
             eco = beats_hist_sharpe.get(key)
             rows.append(" & ".join([model, COV_LABEL[cov],
                                     f"{beats_naive[key]}/{n_runs}",
-                                    "--" if eco is None else f"{eco}/{n_runs}",
-                                    "--" if cov == "Historical"
-                                    else f"{beats_qlike[cov]}/{n_runs}",
-                                    "--" if cov == "Historical"
-                                    else f"{beats_mse[cov]}/{n_runs}"]))
+                                    "--" if eco is None else f"{eco}/{n_runs}"]))
         rows.append("MIDRULE")
     rows = rows[:-1]
 
     write_table("tab_bilanz",
                 "Ergebnisse über alle empirischen Läufe",
                 "tab:bilanz",
-                "llrrrr",
-                ["Modell & Kovarianz & vs.\\ 1/N & "
-                 "\\multicolumn{3}{c}{vs.\\ historische Matrix} \\\\",
-                 "\\cmidrule(lr){4-6}",
-                 " & & Sharpe & Sharpe & QLIKE & MSE \\\\"],
+                "llrr",
+                "Modell & Kovarianz & vs.\\ 1/N & vs.\\ historischer Matrix",
                 rows,
                 note=(f"Alle {n_runs} Kombinationen aus Trainingsfenster und Prognosehorizont,"
-                      f" bewertet ab {datum(COMMON_START)}."))
+                      f" bewertet ab {datum(COMMON_START)}; ausgewiesen ist, wie oft die"
+                      f" Sharpe Ratio höher ausfällt als beim jeweiligen Vergleichsmaßstab."))
 
 
 """
@@ -685,7 +693,7 @@ def table_transaktionskosten():
                 "tab:transaktionskosten",
                 "llr" + "r" * len(COST_LEVELS),
                 header, rows,
-                note=("Sharpe Ratio ($r_f=0$) nach Abzug von $c$ Basispunkten auf das je"
+                note=("Sharpe Ratio nach Abzug von $c$ Basispunkten auf das je"
                       " Rebalancierung umgeschlagene Volumen."))
 
 
@@ -715,22 +723,26 @@ def table_strukturbruch_teilperioden(log_returns):
         rows.append(" & ".join([label,
                                 f"{int(n.min())}--{int(n.max())}",
                                 num(q["Historical"].mean(), 1),
-                                num((q["DCC"] - q["Historical"]).mean(), 2),
+                                num(q["GARCH"].mean(), 1),
+                                num(q["DCC"].mean(), 1),
                                 num(m["Historical"].mean(), 2),
+                                num(m["GARCH"].mean(), 2),
                                 num(m["DCC"].mean(), 2),
-                                num(sharpe0(r["MVP Historical"]), 3),
-                                num(sharpe0(r["MVP DCC"]), 3),
-                                num(sharpe0(r["Naive"]), 3)]))
+                                num(sharpe(r["MVP Historical"]), 3),
+                                num(sharpe(r["MVP GARCH"]), 3),
+                                num(sharpe(r["MVP DCC"]), 3),
+                                num(sharpe(r["Naive"]), 3)]))
     write_table("tab_strukturbruch_teilperioden",
                 "Teilperioden des Basisfalls: Universum, Prognosequalität und Performance",
                 "tab:strukturbruch_teilperioden",
-                "llrrrrrrr",
-                ["Periode & $N$ & \\multicolumn{2}{c}{QLIKE} & "
-                 "\\multicolumn{2}{c}{MSE ($\\times 10^{-7}$)} & "
-                 "\\multicolumn{3}{c}{Sharpe} \\\\",
-                 "\\cmidrule(lr){3-4}\\cmidrule(lr){5-6}\\cmidrule(lr){7-9}",
-                 (" & & Hist. & $\\Delta$ DCC & Hist. & DCC & MVP Hist. & MVP DCC & 1/N \\\\")],
-                rows,
+                "llrrrrrrrrrr",
+                ["Periode & $N$ & \\multicolumn{3}{c}{QLIKE} & "
+                 "\\multicolumn{3}{c}{MSE ($\\times 10^{-7}$)} & "
+                 "\\multicolumn{4}{c}{Sharpe} \\\\",
+                 "\\cmidrule(lr){3-5}\\cmidrule(lr){6-8}\\cmidrule(lr){9-12}",
+                 (" & & Hist. & GARCH & DCC & Hist. & GARCH & DCC"
+                  " & MVP Hist. & MVP GARCH & MVP DCC & 1/N \\\\")],
+                rows, wide=True,
                 note=("$N$ ist die Spannweite der investierbaren Sektoren; QLIKE-Niveaus sind"
                       " zwischen Perioden mit unterschiedlichem $N$ nicht vergleichbar."))
 
@@ -751,13 +763,16 @@ def table_strukturbruch_gemeinsam(log_returns):
         sizes = universe_sizes(log_returns, train)
         rows.append(" & ".join([str(train),
                                 num(sizes.loc[COMMON_START:].mean(), 1),
+                                num(q["GARCH"].mean(), 1), num(qc["GARCH"].mean(), 1),
                                 num(q["DCC"].mean(), 1), num(qc["DCC"].mean(), 1),
-                                num(sharpe0(r["MVP Historical"]), 3),
-                                num(sharpe0(rc["MVP Historical"]), 3),
-                                num(sharpe0(r["Naive"]), 3),
-                                num(sharpe0(rc["Naive"]), 3)]))
-        n_full.append(sharpe0(r["MVP Historical"]))
-        n_common.append(sharpe0(rc["MVP Historical"]))
+                                num(sharpe(r["MVP Historical"]), 3),
+                                num(sharpe(rc["MVP Historical"]), 3),
+                                num(sharpe(r["MVP GARCH"]), 3),
+                                num(sharpe(rc["MVP GARCH"]), 3),
+                                num(sharpe(r["Naive"]), 3),
+                                num(sharpe(rc["Naive"]), 3)]))
+        n_full.append(sharpe(r["MVP Historical"]))
+        n_common.append(sharpe(rc["MVP Historical"]))
 
     # Korrelation zwischen mittlerer Universumsgröße und QLIKE-Niveau
     sizes_mean = [universe_sizes(log_returns, t).loc[COMMON_START:].mean()
@@ -772,13 +787,118 @@ def table_strukturbruch_gemeinsam(log_returns):
     write_table("tab_strukturbruch_gemeinsam",
                 "Voller versus gemeinsamer Bewertungszeitraum (TRBC, $h=1$)",
                 "tab:strukturbruch_gemeinsam",
-                "rrrrrrrr",
-                ["Training & $\\varnothing\\,N$ & \\multicolumn{2}{c}{QLIKE DCC} & "
+                "rrrrrrrrrrrr",
+                ["Training & $\\varnothing\\,N$ & \\multicolumn{2}{c}{QLIKE GARCH} & "
+                 "\\multicolumn{2}{c}{QLIKE DCC} & "
                  "\\multicolumn{2}{c}{Sharpe MVP Hist.} & "
+                 "\\multicolumn{2}{c}{Sharpe MVP GARCH} & "
                  "\\multicolumn{2}{c}{Sharpe 1/N} \\\\",
-                 "\\cmidrule(lr){3-4}\\cmidrule(lr){5-6}\\cmidrule(lr){7-8}",
-                 (" & & voll & gem. & voll & gem. & voll & gem. \\\\")],
+                 "\\cmidrule(lr){3-4}\\cmidrule(lr){5-6}\\cmidrule(lr){7-8}"
+                 "\\cmidrule(lr){9-10}\\cmidrule(lr){11-12}",
+                 (" & & voll & gem. & voll & gem. & voll & gem. & voll & gem."
+                  " & voll & gem. \\\\")],
+                rows, note, wide=True)
+
+
+"""
+Kompakte Fassung des Vergleichs von vollem und gemeinsamem Bewertungszeitraum
+für den Fliesstext: je Kennzahl nur die Spannweite über die zehn
+Trainingsfenster. Die vollständige Tabelle steht im Anhang.
+"""
+def table_strukturbruch_kompakt(log_returns):
+    garch_full = []
+    garch_common = []
+    qlike_full = []
+    qlike_common = []
+    mvp_full = []
+    mvp_common = []
+    naive_full = []
+    naive_common = []
+    for train in TRAIN_WINDOWS:
+        q = read_qlike(DATASET, train, 1)
+        r = read_returns(DATASET, train, 1)
+        garch_full.append(q["GARCH"].mean())
+        garch_common.append(q.loc[COMMON_START:, "GARCH"].mean())
+        qlike_full.append(q["DCC"].mean())
+        qlike_common.append(q.loc[COMMON_START:, "DCC"].mean())
+        mvp_full.append(sharpe(r["MVP Historical"]))
+        mvp_common.append(sharpe(r.loc[COMMON_START:, "MVP Historical"]))
+        naive_full.append(sharpe(r["Naive"]))
+        naive_common.append(sharpe(r.loc[COMMON_START:, "Naive"]))
+
+    def spanne(werte):
+        a = np.asarray(werte, dtype=float)
+        return np.nanmax(a) - np.nanmin(a)
+
+    rows = [" & ".join(["QLIKE GARCH", num(spanne(garch_full), 1),
+                        num(spanne(garch_common), 1)]),
+            " & ".join(["QLIKE DCC-GARCH", num(spanne(qlike_full), 1),
+                        num(spanne(qlike_common), 1)]),
+            " & ".join(["Sharpe MVP (historisch)", num(spanne(mvp_full), 3),
+                        num(spanne(mvp_common), 3)]),
+            " & ".join(["Sharpe 1/N", num(spanne(naive_full), 3),
+                        num(spanne(naive_common), 3)])]
+
+    note = (f"Spannweite (Maximum minus Minimum) über die zehn Trainingsfenster."
+            f" \\emph{{voll}} bezeichnet die volle Historie des jeweiligen Fensters,"
+            f" \\emph{{gem.}} den gemeinsamen Zeitraum ab {datum(COMMON_START)}."
+            f" Die vollständigen Werte stehen in"
+            f" \\hyperref[tab:strukturbruch_gemeinsam]{{Tabelle~\\ref*{{tab:strukturbruch_gemeinsam}}}}.")
+
+    write_table("tab_strukturbruch_kompakt",
+                "Spannweite der Kennzahlen über die Trainingsfenster (TRBC, $h=1$)",
+                "tab:strukturbruch_kompakt",
+                "lrr",
+                "Kennzahl & voll & gem.",
                 rows, note)
+
+
+"""
+Auszählung über alle 40 Kombinationen: wie oft liefert welcher
+Kovarianzschätzer den besten Wert. Für die Sharpe Ratio je Portfoliomodell der
+höchste Wert, für QLIKE und den Kovarianz-MSE der niedrigste Verlust.
+"""
+def table_bestzaehlung():
+    zaehler = {}
+    for key in MODEL_ORDER + ["QLIKE", "MSE"]:
+        zaehler[key] = dict((cov, 0) for cov in COV_ORDER)
+
+    for train in TRAIN_WINDOWS:
+        for pred in PRED_WINDOWS:
+            ret = read_returns(DATASET, train, pred).loc[COMMON_START:]
+            for model in MODEL_ORDER:
+                werte = dict((cov, sharpe(ret[f"{model} {cov}"])) for cov in COV_ORDER)
+                zaehler[model][max(werte, key=werte.get)] += 1
+
+            q = read_qlike(DATASET, train, pred).loc[COMMON_START:].mean()
+            m = read_cov_mse(DATASET, train, pred).loc[COMMON_START:].mean()
+            zaehler["QLIKE"][min(COV_ORDER, key=lambda c: q[c])] += 1
+            zaehler["MSE"][min(COV_ORDER, key=lambda c: m[c])] += 1
+
+    n = len(TRAIN_WINDOWS) * len(PRED_WINDOWS)
+    beschriftung = dict((m, f"Sharpe {m}") for m in MODEL_ORDER)
+    beschriftung["QLIKE"] = "QLIKE"
+    beschriftung["MSE"] = "Kovarianz-MSE"
+
+    rows = []
+    for key in MODEL_ORDER:
+        rows.append(" & ".join([beschriftung[key]]
+                               + [f"{zaehler[key][cov]}/{n}" for cov in COV_ORDER]))
+    rows.append("MIDRULE")
+    for key in ["QLIKE", "MSE"]:
+        rows.append(" & ".join([beschriftung[key]]
+                               + [f"{zaehler[key][cov]}/{n}" for cov in COV_ORDER]))
+
+    write_table("tab_bestzaehlung",
+                "Häufigkeit des besten Kovarianzschätzers je Kennzahl",
+                "tab:bestzaehlung",
+                "lrrr",
+                "Kennzahl & " + " & ".join(COV_LABEL[c] for c in COV_ORDER),
+                rows,
+                note=(f"Alle {n} Kombinationen aus Trainingsfenster und Prognosehorizont,"
+                      f" bewertet ab {datum(COMMON_START)}. Ausgewiesen ist, wie oft der"
+                      f" jeweilige Schätzer die höchste Sharpe Ratio beziehungsweise den"
+                      f" niedrigsten Verlust liefert."))
 
 
 # =============================================================================
@@ -801,7 +921,7 @@ def table_synth_basis():
                                     num(mvp["Avg QLIKE"], 2),
                                     num(mse[cov], 2),
                                     num(mvp["Ann. Std"] * 100, 2),
-                                    num(mvp["Ann. Sharpe (rf=0)"], 3),
+                                    num(mvp["Ann. Sharpe"], 3),
                                     num(mvp["Avg Turnover"], 3)]))
         rows.append("MIDRULE")
     rows = rows[:-1]
@@ -817,7 +937,7 @@ def table_synth_basis():
 
 
 """
-DMW-Tests auf den synthetischen Datensätzen: bestätigt, dass der jeweils
+DM-Tests auf den synthetischen Datensätzen: bestätigt, dass der jeweils
 korrekt spezifizierte Schätzer gewinnt.
 """
 def table_synth_dmw():
@@ -832,7 +952,7 @@ def table_synth_dmw():
             cells.append(num(t, 2))
         rows.append(" & ".join(cells))
     write_table("tab_synth_dmw",
-                "Synthetische Validierung: DMW-Tests auf die QLIKE-Differenzen",
+                "Synthetische Validierung: DM-Tests auf die QLIKE-Differenzen",
                 "tab:synth_dmw",
                 "lr@{}lrr@{}lrr@{}lr",
                 ("Datensatz & \\multicolumn{2}{c}{$\\Delta$ G--H} & $t$ & "
@@ -863,24 +983,28 @@ def table_synth_stabilitaet():
             rows.append(" & ".join([SYNTH_LABEL[dataset] if train == TRAIN_WINDOWS[0] else "",
                                     str(train), "20",
                                     num(q["Historical"].mean(), 1),
-                                    num((q["DCC"] - q["Historical"]).mean(), 2),
+                                    num(q["GARCH"].mean(), 1),
+                                    num(q["DCC"].mean(), 1),
                                     num(m["Historical"].mean(), 2),
+                                    num(m["GARCH"].mean(), 2),
                                     num(m["DCC"].mean(), 2),
-                                    num(sharpe0(r["MVP Historical"]), 3),
-                                    num(sharpe0(r["MVP DCC"]), 3)]))
+                                    num(sharpe(r["MVP Historical"]), 3),
+                                    num(sharpe(r["MVP GARCH"]), 3),
+                                    num(sharpe(r["MVP DCC"]), 3)]))
         spans[dataset] = max(levels) - min(levels)
         rows.append("MIDRULE")
     rows = rows[:-1]
     write_table("tab_synth_stabilitaet",
                 "Synthetische Validierung: Stabilität über die Trainingsfenster",
                 "tab:synth_stabilitaet",
-                "lrrrrrrrr",
-                ["Datensatz & Training & $N$ & \\multicolumn{2}{c}{QLIKE} & "
-                 "\\multicolumn{2}{c}{MSE ($\\times 10^{-8}$)} & "
-                 "\\multicolumn{2}{c}{Sharpe MVP} \\\\",
-                 "\\cmidrule(lr){4-5}\\cmidrule(lr){6-7}\\cmidrule(lr){8-9}",
-                 (" & & & Hist. & $\\Delta$ DCC & Hist. & DCC & Hist. & DCC \\\\")],
-                rows,
+                "lrrrrrrrrrrr",
+                ["Datensatz & Training & $N$ & \\multicolumn{3}{c}{QLIKE} & "
+                 "\\multicolumn{3}{c}{MSE ($\\times 10^{-8}$)} & "
+                 "\\multicolumn{3}{c}{Sharpe MVP} \\\\",
+                 "\\cmidrule(lr){4-6}\\cmidrule(lr){7-9}\\cmidrule(lr){10-12}",
+                 (" & & & Hist. & GARCH & DCC & Hist. & GARCH & DCC"
+                  " & Hist. & GARCH & DCC \\\\")],
+                rows, wide=True,
                 note=(f"Bewertet ab {datum(COMMON_START)}; das Universum ist mit 20 Anlagen konstant."))
 
 
@@ -911,6 +1035,8 @@ def main():
 
     print("Strukturbruch:")
     table_strukturbruch_teilperioden(log_returns)
+    table_strukturbruch_kompakt(log_returns)
+    table_bestzaehlung()
     table_strukturbruch_gemeinsam(log_returns)
 
     print("Anhang (synthetische Validierung):")

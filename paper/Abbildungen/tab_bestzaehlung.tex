@@ -1,0 +1,22 @@
+% automatisch erzeugt von paper/tabellen.py -- nicht von Hand editieren
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \begin{tabular}{lrrr}
+    \toprule
+    Kennzahl & Historisch & GARCH & DCC-GARCH \\
+    \midrule
+    Sharpe MVP & 14/40 & 6/40 & 20/40 \\
+    Sharpe HRP & 36/40 & 1/40 & 3/40 \\
+    Sharpe ERC & 40/40 & 0/40 & 0/40 \\
+    \midrule
+    QLIKE & 3/40 & 0/40 & 37/40 \\
+    Kovarianz-MSE & 0/40 & 1/40 & 39/40 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Häufigkeit des besten Kovarianzschätzers je Kennzahl}
+  \label{tab:bestzaehlung}
+  \begin{minipage}{\linewidth}\vspace{0.4em}\centering\footnotesize
+  Alle 40 Kombinationen aus Trainingsfenster und Prognosehorizont, bewertet ab 01.01.2010. Ausgewiesen ist, wie oft der jeweilige Schätzer die höchste Sharpe Ratio beziehungsweise den niedrigsten Verlust liefert.
+  \end{minipage}
+\end{table}

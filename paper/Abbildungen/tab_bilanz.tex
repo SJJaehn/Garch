@@ -2,28 +2,26 @@
 \begin{table}[htbp]
   \centering
   \footnotesize
-  \begin{tabular}{llrrrr}
+  \begin{tabular}{llrr}
     \toprule
-    Modell & Kovarianz & vs.\ 1/N & \multicolumn{3}{c}{vs.\ historische Matrix} \\
-    \cmidrule(lr){4-6}
-     & & Sharpe & Sharpe & QLIKE & MSE \\
+    Modell & Kovarianz & vs.\ 1/N & vs.\ historischer Matrix \\
     \midrule
-    MVP & Historisch & 20/40 & -- & -- & -- \\
-    MVP & GARCH & 19/40 & 22/40 & 36/40 & 40/40 \\
-    MVP & DCC-GARCH & 20/40 & 25/40 & 37/40 & 40/40 \\
+    MVP & Historisch & 8/40 & -- \\
+    MVP & GARCH & 15/40 & 22/40 \\
+    MVP & DCC-GARCH & 17/40 & 26/40 \\
     \midrule
-    HRP & Historisch & 40/40 & -- & -- & -- \\
-    HRP & GARCH & 32/40 & 3/40 & 36/40 & 40/40 \\
-    HRP & DCC-GARCH & 31/40 & 3/40 & 37/40 & 40/40 \\
+    HRP & Historisch & 35/40 & -- \\
+    HRP & GARCH & 16/40 & 2/40 \\
+    HRP & DCC-GARCH & 19/40 & 3/40 \\
     \midrule
-    ERC & Historisch & 40/40 & -- & -- & -- \\
-    ERC & GARCH & 31/40 & 0/40 & 36/40 & 40/40 \\
-    ERC & DCC-GARCH & 32/40 & 0/40 & 37/40 & 40/40 \\
+    ERC & Historisch & 36/40 & -- \\
+    ERC & GARCH & 17/40 & 0/40 \\
+    ERC & DCC-GARCH & 20/40 & 0/40 \\
     \bottomrule
   \end{tabular}
   \caption{Ergebnisse über alle empirischen Läufe}
   \label{tab:bilanz}
   \begin{minipage}{\linewidth}\vspace{0.4em}\centering\footnotesize
-  Alle 40 Kombinationen aus Trainingsfenster und Prognosehorizont, bewertet ab 01.01.2010.
+  Alle 40 Kombinationen aus Trainingsfenster und Prognosehorizont, bewertet ab 01.01.2010; ausgewiesen ist, wie oft die Sharpe Ratio höher ausfällt als beim jeweiligen Vergleichsmaßstab.
   \end{minipage}
 \end{table}
