@@ -49,12 +49,17 @@ def load_prices(dataset):
 
 """
 Calculates the log returns r_t = ln(P_t / P_{t-1}). Assets that show no price
-movement on more than 50% of the days (stale series) are dropped.
+movement on more than 50% of the days (stale series) are dropped. Dates where
+no remaining asset moves at all are calendar holidays that Datastream fills
+with the previous close rather than true trading days, so those dates are
+dropped as well.
 """
 def to_log_returns(prices):
     log_returns = np.log(prices / prices.shift(1)).iloc[1:]
     zero_frac = (log_returns == 0).sum() / log_returns.notna().sum()
-    return log_returns.loc[:, zero_frac < 0.5]
+    log_returns = log_returns.loc[:, zero_frac < 0.5]
+    any_move = ((log_returns != 0) & log_returns.notna()).any(axis=1)
+    return log_returns.loc[any_move]
 
 
 """
