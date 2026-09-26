@@ -1,0 +1,123 @@
+\usepackage[utf8]{inputenc} % Kodierung
+\usepackage[T1]{fontenc} % Explizite Nennung des Fonts
+% Use Times-like font (text + math)
+\usepackage{newtxtext,newtxmath}
+\usepackage[ngerman]{babel} % Sprache (Deutsch)
+\usepackage{graphicx} % immer benötigt für das Einbinden von Graphiken
+\usepackage{blindtext} % Wenn man das Layout prüfen will, kann hier mit \blindtext Text eingfügt werden.
+%\usepackage{parskip} % Für den Abstand zwischen 2 Absätzen.
+%\setlength{\parskip}{7pt plus20pt minus10pt} % Genaue Einstellung von parskip
+\usepackage{subcaption}
+\usepackage{easy-todo} % Mit \todo{} Todos einfügen
+\usepackage{csquotes} % Für ordentlichen Anführungszeichen
+\usepackage[iso, ngerman]{isodate} % Deutsche Datumsformatierung
+\usepackage[style=apa, 
+backend=biber, 
+bibencoding=utf8, 
+language=ngerman, 
+mincitenames=1, 
+maxcitenames=2]{biblatex}
+\addbibresource{literatur/bibliography.bib} % Einbinden der Literatur.
+\AtEveryBibitem{\clearfield{annotation}} % Unterdrückt "Article." aus den annote-Feldern der .bib-Datei
+\usepackage{amsmath}
+
+\DefineBibliographyStrings{ngerman}{%
+  urlseen = {Abgerufen am},
+  % APA verlangt "et al." statt der deutschen Abkuerzung "u. a."
+  andothers = {et\addabbrvspace al\adddot},
+}
+
+\DeclareLanguageMapping{ngerman}{ngerman-apa} % Bibliographie-Sprache fuer APA
+\usepackage{float} % Grafik bleibt dort wo man sie im Code platziert hat
+
+\usepackage[activate={true,nocompatibility},
+	final,
+	tracking=true,
+	kerning=true,
+	expansion=true,
+	spacing=true,
+	factor=1050,
+	stretch=25,
+	shrink=10]{microtype} % Für die Feineinstellung der Zeichensetzung.
+\usepackage{booktabs}
+\usepackage{appendix}
+\usepackage[rflt]{floatflt}
+\usepackage{fancyvrb}
+\usepackage[hidelinks]{hyperref} % Klickbare aber nicht markierte Links im PDF
+\usepackage{setspace}
+\usepackage{fancyhdr} % Für schönere Kopf-/Fußzeilen und Fußnoten.
+\usepackage[left=3cm, right=2cm, top=2.5cm, bottom=2cm]{geometry} % Seitenränder
+\usepackage{pbox}
+\usepackage{tabulary}
+\usepackage{outlines}
+\usepackage{matlab-prettifier}
+\usepackage{listings}
+\usepackage{color} %red, green, blue, yellow, cyan, magenta, black, white
+
+% Für die Abbildung
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{width=0.7*\textwidth,compat=1.9}
+
+% Für Tabellen
+\usepackage{csvsimple}
+\usepackage{longtable}
+\usepackage{rotating}
+\usepackage{pdflscape} % Querformat-Seiten (inkl. gedrehter Überschrift)
+\usepackage{multirow}
+
+\definecolor{mygreen}{RGB}{28,172,0} % color values Red, Green, Blue
+\definecolor{mylilas}{RGB}{170,55,241}
+
+%Kein Schusterjunge/Hurenkind im Text
+\widowpenalty10000
+\clubpenalty10000
+\usepackage[justification=centering]{caption}
+
+\usepackage{titlesec}
+
+% --- Formatierung für \section ---
+
+% Aussehen der Überschrift
+\titleformat{\section}
+  {\normalfont\LARGE\bfseries} % Hier die Größe anpassen (z. B. \Large, \LARGE, \huge)
+  {\thesection}                % Die Nummerierung (z.B. "1")
+  {1em}                        % Abstand zwischen Nummerierung und Text
+  {}                           % Zusätzlicher Code vor der Überschrift (hier leer)
+
+% Abstände der Überschrift
+\titlespacing*{\section}
+  {0pt}      % Einzug von links
+  {18pt}     % Abstand nach oben (vor der Überschrift)
+  {18pt}     % Abstand nach unten (nach der Überschrift)
+  \titlespacing*{\subsection}
+  {0pt}      % Einzug von links
+  {12pt}     % Abstand nach oben (vor der Überschrift)
+  {12pt}     % Abstand nach unten (nach der Überschrift)
+% Aussehen der \paragraph-Ueberschrift (eigene Zeile statt Fliesstext)
+\titleformat{\paragraph}[hang]
+  {\normalfont\normalsize\bfseries}
+  {\theparagraph}
+  {1em}
+  {}
+\titlespacing*{\paragraph}
+  {0pt}
+  {10pt}
+  {6pt}
+
+% Abstand ueber und unter abgesetzten Formeln.
+% Standard sind 12pt ueber und unter dem Block, waehrend einzelne Gleichungen nach
+% einer kurzen Zeile mit \abovedisplayshortskip = 0pt gesetzt werden. Dadurch stehen
+% align-Bloecke deutlich lockerer als \begin{equation}. Die Werte unten gleichen das an.
+% \normalsize setzt die Laengen bei jedem Schriftgroessenwechsel auf die Klassenwerte
+% zurueck, deshalb werden sie dort angehaengt.
+\makeatletter
+\newcommand{\FormelAbstaende}{%
+  \setlength{\abovedisplayskip}{5pt plus 2pt minus 2pt}%
+  \setlength{\belowdisplayskip}{8pt plus 2pt minus 3pt}%
+  \setlength{\abovedisplayshortskip}{6pt plus 2pt minus 1pt}%
+  \setlength{\belowdisplayshortskip}{8pt plus 2pt minus 3pt}%
+}
+\g@addto@macro\normalsize{\FormelAbstaende}
+\makeatother
+\AtBeginDocument{\FormelAbstaende}

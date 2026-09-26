@@ -1,0 +1,30 @@
+% automatisch erzeugt von paper/tabellen.py -- nicht von Hand editieren
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \resizebox{\ifdim\width>\linewidth \linewidth\else \width\fi}{!}{%
+  \begin{tabular}{rrrrrrrr}
+    \toprule
+    Training & $\varnothing\,N$ & \multicolumn{2}{c}{Historisch} & \multicolumn{2}{c}{GARCH} & \multicolumn{2}{c}{DCC-GARCH} \\
+    \cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}
+     & & voll & gem. & voll & gem. & voll & gem. \\
+    \midrule
+    252 & 20,3 & -161,5 & -176,1 & -161,8 & -175,9 & -162,0 & -176,1 \\
+    504 & 19,7 & -159,2 & -171,0 & -160,4 & -171,4 & -160,8 & -171,8 \\
+    756 & 19,1 & -156,0 & -165,2 & -157,9 & -166,1 & -158,4 & -166,8 \\
+    1008 & 18,5 & -152,8 & -159,7 & -155,4 & -161,1 & -156,1 & -161,9 \\
+    1260 & 17,9 & -149,1 & -154,3 & -152,2 & -156,1 & -153,1 & -157,1 \\
+    1512 & 17,4 & -146,1 & -150,1 & -149,2 & -151,8 & -150,2 & -152,9 \\
+    1764 & 16,9 & -143,0 & -146,0 & -145,9 & -147,7 & -147,0 & -148,8 \\
+    2016 & 16,4 & -139,6 & -142,0 & -142,4 & -143,8 & -143,7 & -144,9 \\
+    2268 & 16,2 & -138,3 & -140,6 & -141,0 & -142,5 & -142,3 & -143,7 \\
+    2520 & 16,2 & -139,1 & -140,0 & -141,3 & -142,0 & -142,7 & -143,3 \\
+    \bottomrule
+  \end{tabular}
+  }
+  \caption{QLIKE über vollen und gemeinsamen Bewertungszeitraum (TRBC, $h=1$)}
+  \label{tab:strukturbruch_qlike}
+  \begin{minipage}{\linewidth}\vspace{0.4em}\centering\footnotesize
+  \emph{voll} bezeichnet die volle Historie des jeweiligen Fensters, \emph{gem.} den gemeinsamen Zeitraum ab 01.01.2010. $\varnothing\,N$ ist die mittlere Zahl investierbarer Sektoren im gemeinsamen Zeitraum.
+  \end{minipage}
+\end{table}

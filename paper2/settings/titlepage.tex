@@ -1,0 +1,65 @@
+\newgeometry{margin=2.5cm}
+\begin{titlepage}
+\thispagestyle{empty}
+% Deckblatt zaehlt als Seite 0 und damit nicht mit
+\setcounter{page}{0}
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+\hspace{1cm}
+\center
+
+\textsc{\huge Universität Bremen}\\[1.6cm]
+\textsc{\Large Fachbereich 07 -- Wirtschaftswissenschaften}\\[0.8cm]
+\MSonehalfspacing
+\textsc{\Large Hausarbeit}\\[0.8cm]
+
+\HRule\\[1cm]
+\MSdoublespacing
+{ \huge \bfseries Risikobasierte Portfoliooptimierung mit GARCH-Modellen}\\[0.2cm]
+\HRule \\[0.8cm]
+\MSonehalfspacing
+
+	\begin{tabular}{ll}
+		\large{Verfasser:}		& \large{Simon Johannes Jähn} \\
+		& \normalsize{jaehn1@uni-bremen.de} \\
+		& 6186771 \\[0.3cm]
+		& \large{Angela Nikoyan}
+		\vspace{0.6cm}\\
+			\large{Veranstaltung:}	& \large{Portfoliotheorie und Asset Management} \\
+		& \normalsize{07-M37-4-02-01}
+		\vspace{0.6cm}\\
+			\large{Dozent:}		& \large{Prof. Dr. Thorsten Poddig}
+		\vspace{0.6cm}\\
+			\large{Studiengang:}		& \large{Master Betriebswirtschaftslehre}
+		\vspace{0.6cm}\\
+			\large{Abgabedatum:}		& \large{\ifnum\day<10 0\fi\the\day.\ifnum\month<10 0\fi\the\month.\the\year}
+	\end{tabular}
+
+
+\end{titlepage}
+\restoregeometry
+
+% Das Deckblatt zaehlt nicht mit. Die roemische Nummerierung beginnt erst hier,
+% sodass das Inhaltsverzeichnis Seite I ist (\pagenumbering setzt den Zaehler auf 1).
+\pagenumbering{Roman}
+\pagestyle{fancy}
+
+% Etwas enger als der Fliesstext, damit das Inhaltsverzeichnis auf eine Seite passt
+\setstretch{1.15}
+\microtypesetup{protrusion=false}
+\setcounter{tocdepth}{2}
+\tableofcontents
+\addtocontents{toc}{\protect\enlargethispage*{\baselineskip}}
+
+\newpage
+\addcontentsline{toc}{section}{\listfigurename}
+\listoffigures
+
+\newpage
+\addcontentsline{toc}{section}{\listtablename}
+\listoftables
+\microtypesetup{protrusion=true}
+
+\MSonehalfspacing
+\newpage
+% Ab hier arabische Nummerierung, beginnend bei 1
+\pagenumbering{arabic}

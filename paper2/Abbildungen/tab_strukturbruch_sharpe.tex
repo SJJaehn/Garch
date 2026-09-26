@@ -1,0 +1,30 @@
+% automatisch erzeugt von paper/tabellen.py -- nicht von Hand editieren
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \resizebox{\ifdim\width>\linewidth \linewidth\else \width\fi}{!}{%
+  \begin{tabular}{rrrrrrrrr}
+    \toprule
+    Training & \multicolumn{2}{c}{MVP Historisch} & \multicolumn{2}{c}{MVP GARCH} & \multicolumn{2}{c}{MVP DCC-GARCH} & \multicolumn{2}{c}{1/N} \\
+    \cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}
+     & voll & gem. & voll & gem. & voll & gem. & voll & gem. \\
+    \midrule
+    252 & 0,419 & 0,515 & 0,377 & 0,505 & 0,384 & 0,518 & 0,400 & 0,592 \\
+    504 & 0,406 & 0,495 & 0,453 & 0,627 & 0,452 & 0,633 & 0,406 & 0,601 \\
+    756 & 0,432 & 0,525 & 0,427 & 0,561 & 0,425 & 0,564 & 0,422 & 0,593 \\
+    1008 & 0,567 & 0,606 & 0,532 & 0,599 & 0,543 & 0,620 & 0,488 & 0,594 \\
+    1260 & 0,496 & 0,613 & 0,458 & 0,592 & 0,470 & 0,620 & 0,412 & 0,573 \\
+    1512 & 0,445 & 0,574 & 0,424 & 0,562 & 0,440 & 0,587 & 0,407 & 0,576 \\
+    1764 & 0,403 & 0,535 & 0,429 & 0,563 & 0,437 & 0,578 & 0,373 & 0,537 \\
+    2016 & 0,363 & 0,525 & 0,398 & 0,545 & 0,398 & 0,547 & 0,378 & 0,545 \\
+    2268 & 0,375 & 0,550 & 0,427 & 0,581 & 0,416 & 0,574 & 0,395 & 0,551 \\
+    2520 & 0,556 & 0,521 & 0,606 & 0,582 & 0,600 & 0,580 & 0,603 & 0,563 \\
+    \bottomrule
+  \end{tabular}
+  }
+  \caption{Sharpe Ratio über vollen und gemeinsamen Bewertungszeitraum (TRBC, $h=1$)}
+  \label{tab:strukturbruch_sharpe}
+  \begin{minipage}{\linewidth}\vspace{0.4em}\centering\footnotesize
+  \emph{voll} bezeichnet die volle Historie des jeweiligen Fensters, \emph{gem.} den gemeinsamen Zeitraum ab 01.01.2010. Ausgewiesen ist die annualisierte Sharpe Ratio.
+  \end{minipage}
+\end{table}

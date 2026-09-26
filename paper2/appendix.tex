@@ -1,0 +1,124 @@
+%Nicht anfassen, so ist der Dokumentenaufbau
+\addtocontents{toc}{\protect\setcounter{tocdepth}{16}}
+
+\addappheadtotoc
+
+\MSonehalfspacing
+\appendices
+\appendixpage
+\appendixtitleoff
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%Ab hier Inhalt einfügen%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Voller und gemeinsamer Bewertungszeitraum}\label{sec:anhang_strukturbruch}
+Sämtliche im Ergebnisteil berichteten Vergleiche über Trainingsfenster hinweg wurden auf dem gemeinsamen Zeitraum ab 2010 gerechnet.
+Dieser Anhang begründet, warum diese Einschränkung nötig ist, und zeigt, was ohne sie gemessen würde.
+
+Ohne die Einschränkung bewertet jedes Trainingsfenster einen anderen Zeitraum, da der Out-of-Sample-Beginn von März~2000 beim kürzesten auf November~2008 beim längsten Fenster wandert.
+Der Lauf mit einem Jahr Training enthält damit das Platzen der Dotcom-Blase, während der Lauf mit zehn Jahren Training erst nach der Finanzkrise beginnt und nur die Erholung abdeckt, wodurch dessen Kennzahlen angehoben werden, ohne dass dies etwas über die Schätzqualität aussagt.
+Wie stark der Effekt wiegt, zeigt \hyperref[abb:sharpe_zeitraum]{Abbildung~\ref*{abb:sharpe_zeitraum}}, in der die Sharpe Ratio über die Trainingsfenster einmal über die volle Historie und einmal über den gemeinsamen Zeitraum aufgetragen ist.
+Der Sprung beim längsten Fenster tritt links auch beim 1/N-Portfolio auf, obwohl dieses überhaupt keine Schätzung vornimmt, und verschwindet rechts vollständig.
+Es handelt sich somit um einen reinen Stichprobeneffekt.
+
+\input{Abbildungen/abb_sharpe_zeitraum}
+
+\hyperref[tab:strukturbruch_qlike]{Tabelle~\ref*{tab:strukturbruch_qlike}} und \hyperref[tab:strukturbruch_sharpe]{Tabelle~\ref*{tab:strukturbruch_sharpe}} stellen je Trainingsfenster die Kennzahlen über die volle Historie denen über den gemeinsamen Zeitraum ab 2010 gegenüber.
+Die erste Tabelle weist neben der mittleren Größe des Anlageuniversums den QLIKE-Verlust der historischen Matrix und der beiden dynamischen Kovarianzschätzer aus, die zweite die Sharpe Ratio des MVP mit allen drei Kovarianzschätzern sowie die des 1/N-Portfolios.
+Die 90-\%-Verfügbarkeitsregel lässt die zuletzt hinzugekommenen Sektoren in langen Fenstern erst spät oder gar nicht zu, weshalb die Fensterlänge über die Dimension der Kovarianzmatrix auch das QLIKE-Niveau mitbestimmt.
+
+\input{Abbildungen/tab_strukturbruch_qlike}
+
+\input{Abbildungen/tab_strukturbruch_sharpe}
+
+Wie oft welcher Schätzer über alle 40~Kombinationen vorne liegt, weist \hyperref[tab:bestzaehlung]{Tabelle~\ref*{tab:bestzaehlung}} aus, getrennt nach der Sharpe Ratio je Portfoliomodell und den beiden Verlustmaßen.
+Dass die Rangfolge der Schätzer nicht am Basisfall hängt, zeigt sich dort deutlich, da unter beiden Verlustmaßen DCC-GARCH nahezu durchgängig vorne liegt, während ökonomisch bei HRP und ERC die historische Matrix dominiert.
+
+\input{Abbildungen/tab_bestzaehlung}
+
+Zeitlich lokalisieren lässt sich der Bruch über die Teilperioden des Basisfalls in \hyperref[tab:strukturbruch_teilperioden]{Tabelle~\ref*{tab:strukturbruch_teilperioden}}.
+Das QLIKE-Niveau springt ab 2022 deutlich nach unten, wobei dieser Sprung exakt mit der Erweiterung des Universums von 17 auf 25~Sektoren im September~2022 zusammenfällt.
+Innerhalb der Periode 2022--2026 wächst das Universum anschließend nochmals von 25 auf 27~Sektoren, da zwei erst 2019 gestartete Reihen die 90-\%-Verfügbarkeitsregel im 1008-Tage-Fenster erst 2024 beziehungsweise Ende 2024 erfüllen.
+Die Tabellenspanne 17--27 für diese Periode bildet somit beide Schritte ab.
+Der MSE zeigt an dieser Stelle keinen vergleichbaren Bruch, folgt dafür aber dem Volatilitätsniveau der Periode und steigt in der Finanzkrise auf mehr als das Siebzigfache des Werts der ruhigen Phase 2003--2007.
+Beide Kennzahlen sind über Perioden hinweg somit nur eingeschränkt vergleichbar, wenn auch aus unterschiedlichen Gründen.
+
+\input{Abbildungen/tab_strukturbruch_teilperioden}
+
+Aussagekräftig bleibt die Differenz zwischen den Schätzern innerhalb einer Periode, die erheblich variiert.
+In der Finanzkrise 2008/09 und im COVID-Zeitraum fällt sie um ein Vielfaches größer aus als in den ruhigen Phasen.
+Der Mehrwert der dynamischen Modellierung konzentriert sich damit auf Phasen mit ausgeprägten Volatilitätsschocks, in denen eine statische Matrix dem Risikoniveau am stärksten nachläuft.
+
+Ökonomisch ist die Rangfolge ebenfalls periodenabhängig, da das MVP mit DCC-Kovarianz und ebenso mit GARCH-Kovarianz die historische Variante in der Phase 2010--2019 klar schlägt, in allen übrigen Teilperioden jedoch zurückliegt.
+Der Basisfall umfasst die volle Historie ab 2003 und mittelt über gegenläufige Teilperioden, weshalb dort die historische Matrix vorne liegt, während die auf 2010 eingeschränkten Tabellen für das MVP zugunsten von DCC ausfallen.
+Beide Rechnungen sind korrekt, messen aber Unterschiedliches, wobei die Unterschiede in beide Richtungen durchgängig insignifikant sind und daher keine starke Aussage zulassen.
+
+\section{Tests auf Sharpe-Differenzen}\label{sec:anhang_sharpetests}
+\hyperref[tab:jobson_korkie]{Tabelle~\ref*{tab:jobson_korkie}} weist den Test von \textcite{jobson1981} in der Korrektur von \textcite{memmel2003} für sämtliche paarweisen Vergleiche des Basisfalls aus, sowohl zwischen den Kovarianzschätzern innerhalb eines Portfoliomodells als auch gegenüber dem 1/N-Portfolio.
+Kein einziger Vergleich erreicht auch nur das 10-\%-Niveau.
+
+\input{Abbildungen/tab_jobson_korkie}
+
+\section{Transaktionskosten}\label{sec:anhang_kosten}
+\hyperref[tab:transaktionskosten]{Tabelle~\ref*{tab:transaktionskosten}} weist die Sharpe Ratios des Basisfalls nach Abzug proportionaler Transaktionskosten auf das je Rebalancierung umgeschlagene Volumen aus.
+
+\input{Abbildungen/tab_transaktionskosten}
+
+\section{Synthetische Validierung}\label{sec:anhang_synth}
+Ob die Modelle korrekt implementiert sind, lässt sich an echten Daten nicht prüfen, da der wahre datengenerierende Prozess unbekannt ist.
+Stattdessen werden drei simulierte Datensätze mit jeweils 20~Anlagen und 6.000~Handelstagen verwendet, die dieselbe unbedingte Risikostruktur besitzen (annualisierte Volatilitäten zwischen 15\,\% und 35\,\%, durchschnittliche Korrelation 0,35) und sich ausschließlich in der Dynamik der zweiten Momente unterscheiden.
+Der Monte-Carlo-Datensatz enthält unabhängige Ziehungen mit konstanter Kovarianz, in denen die historische Matrix korrekt spezifiziert ist.
+Beim GARCH-Datensatz kommt eine GARCH(1,1)-Dynamik je Anlage mit $\alpha = 0{,}08$ und $\beta = 0{,}90$ bei konstanter Korrelation hinzu, während der DCC-Datensatz zusätzlich eine DCC-Rekursion mit $a = 0{,}03$ und $b = 0{,}96$ enthält.
+Obwohl die wahre bedingte Kovarianzmatrix hier bekannt wäre, wird die Prognosegüte auch in der Simulation gegen den realisierten Proxy aus \hyperref[eq:proxy]{Gleichung~\ref*{eq:proxy}} gemessen, damit die Ergebnisse mit denen auf den realen Daten vergleichbar sind.
+
+Die Ergebnisse des Basisfalls zeigen \hyperref[tab:synth_basis]{Tabelle~\ref*{tab:synth_basis}} und die DM-Tests in \hyperref[tab:synth_dmw]{Tabelle~\ref*{tab:synth_dmw}}.
+Im Monte-Carlo-Fall unterscheiden sich die drei Schätzer praktisch nicht, denn die Verlustdifferenz der dynamischen Schätzer gegenüber der historischen Matrix ist zwar signifikant, in der Höhe aber verschwindend gering.
+Im GARCH-Fall schlagen beide dynamischen Schätzer die historische Matrix signifikant, auch in Sharpe Ratio und realisierter Volatilität, unterscheiden sich untereinander aber nicht, da die Korrelation dort konstant ist.
+Erst im DCC-Fall ist DCC dem GARCH-Schätzer signifikant überlegen, sodass die Implementierung jeweils genau die Struktur erkennt, die tatsächlich vorhanden ist.
+
+\input{Abbildungen/tab_synth_basis}
+
+\input{Abbildungen/tab_synth_dmw}
+
+Wie stabil dieses Bild über die Länge des Trainingsfensters ist, zeigt \hyperref[tab:synth_stabilitaet]{Tabelle~\ref*{tab:synth_stabilitaet}}.
+Da das Universum konstant 20~Anlagen umfasst und die Parameter des Prozesses über die gesamte Stichprobe unverändert bleiben, verschiebt sich das Niveau der Prognosekennzahlen kaum, denn das QLIKE-Niveau der historischen Matrix schwankt über alle zehn Fenster um höchstens gut zwei Punkte und das MSE-Niveau bleibt praktisch konstant.
+Auch die Rangfolge kehrt sich in keinem Fenster um, da DCC in allen 20~Läufen unter beiden Verlustmaßen besser prognostiziert als die historische Matrix.
+
+Der Vorsprung der dynamischen Schätzer wächst dabei mit der Länge des Trainingsfensters und stabilisiert sich erst bei den längeren Fenstern.
+Im DCC-Datensatz steigt der QLIKE-Abstand zwischen DCC und historischer Matrix von 4,1~Punkten bei einem Jahr Training auf 8,5~Punkte bei zehn Jahren, im GARCH-Datensatz von 2,1 auf 2,8~Punkte.
+Auch wenn die Modelle also korrekt spezifiziert sind und der Prozess sich nicht verändert, zahlt sich eine breitere Datenbasis für die dynamischen Schätzer weiterhin aus, weil deren zusätzliche Parameter mit mehr Beobachtungen präziser geschätzt werden, während sich das Niveau der historischen Matrix kaum verändert.
+
+\input{Abbildungen/tab_synth_stabilitaet}
+
+Die ökonomischen Kennzahlen schwanken dagegen auch hier spürbar, obwohl der Prozess vollkommen stabil ist.
+
+\begin{landscape}
+\section{Dokumentation KI-Nutzung}
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}c|>{\raggedright\arraybackslash}p{2.5cm}|>{\raggedright\arraybackslash}p{2.4cm}|>{\raggedright\arraybackslash}p{2.9cm}|>{\raggedright\arraybackslash}p{6.6cm}|>{\raggedright\arraybackslash}p{6.6cm}@{}}
+\toprule
+\textbf{Nr.} & \textbf{KI-Hilfsmittel} & \textbf{Einsatzform} & \textbf{Betroffene Teile} & \textbf{Beschreibung der KI-Verwendung} & \textbf{Bemerkung} \\
+\midrule
+1 & Claude & Code & Implementierung & Verwendung von Claude zum Verbessern der Implementierung und Dokumentation & Verwendung zum \enquote{Aufräumen} und Kommentieren des Codes sowie Hilfe bei einzelnen Bugs \\
+\hline\addlinespace
+2 & Claude \& ChatGPT & Formulierung & Ausformulierung und Stil & Verbesserung der sprachlichen Qualität durch Reduktion von Wortwiederholungen und Korrekturlesen & Hauptsächlich um den Ton einer wissenschaftlichen Arbeit besser zu treffen \\
+\hline\addlinespace
+3 & Claude & LaTeX & Gesamtes Dokument & Verwendung zur Formatierung in LaTeX & --- \\
+\hline\addlinespace
+4 & NotebookLM & Analyse von Literatur & Literatur\-auswertung & Verwendung von KI zur Validierung von selbst recherchierten Aussagen aus der Literatur & Literatur wurde selbst recherchiert und selbstständig ausgewertet. KI wurde ausschließlich zur Validierung dieser Aussagen und einer besseren Verknüpfung verschiedener Paper verwendet \\
+\bottomrule
+\end{tabular}
+\caption{Dokumentation der Nutzung von KI-basierten Anwendungen und Werkzeugen}
+\label{tab:ki-nutzung}
+\end{table}
+\end{landscape}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%Ende des Dokuments%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\MSonehalfspacing
+\newpage
+\restoreapp
