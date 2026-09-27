@@ -24,72 +24,53 @@ Code und Daten liegen im begleitenden Repository.
 
 % =============================================================================
 \section{Einleitung}\label{sec:einleitung}
-Investitionen bilden einen wesentlichen Bestandteil des Finanzsystems und spielen sowohl für Privatpersonen als auch für Unternehmen und staatliche Institutionen eine wichtige Rolle.
-Im Mittelpunkt von Anlageentscheidungen steht das Ziel, das verfügbare Kapital unter Berücksichtigung eines angemessenen Verhältnisses zwischen Rendite und Risiko zu vermehren.
-Eine zentrale Herausforderung besteht dabei darin, das Kapital so auf verschiedene Vermögenswerte zu verteilen, dass eine möglichst hohe Rendite bei gleichzeitig begrenztem Risiko erzielt wird.
+Investitionen bilden einen wesentlichen Bestandteil des Finanzsystems und spielen für Privatpersonen, Unternehmen und staatliche Institutionen eine wichtige Rolle.
+Im Mittelpunkt von Anlageentscheidungen steht die Frage, wie verfügbares Kapital auf verschiedene Vermögenswerte verteilt werden kann, um ein angemessenes Verhältnis zwischen Rendite und Risiko zu erreichen.
 Zur Lösung dieses Problems werden unterschiedliche Verfahren der Portfoliooptimierung eingesetzt.
-Mit der modernen Portfoliotheorie von \textcite{markowitz1952} wurde erstmals ein quantitativer Rahmen geschaffen, der die erwartete Rendite und das Risiko verschiedener Anlagen systematisch miteinander verknüpft.
-Die Zusammenstellung eines Portfolios wird dabei als Optimierungsproblem formuliert, bei dem diejenigen Portfoliogewichte ermittelt werden, die für eine vorgegebene erwartete Rendite die geringste Portfoliovarianz aufweisen.
+Mit der modernen Portfoliotheorie von \textcite{markowitz1952} wurde erstmals ein quantitativer Rahmen geschaffen, der erwartete Rendite und Risiko verschiedener Anlagen systematisch miteinander verknüpft.
+Die Zusammenstellung eines Portfolios wird dabei als Optimierungsproblem formuliert, bei dem für eine vorgegebene erwartete Rendite diejenigen Portfoliogewichte ermittelt werden, die die Portfoliovarianz minimieren.
 Der Markowitz-Ansatz bildet bis heute eine wesentliche Grundlage moderner Portfoliooptimierungsverfahren.
-Seine praktische Anwendung ist jedoch mit erheblichen Herausforderungen verbunden, da die für die Optimierung benötigten erwarteten Renditen sowie Varianzen und Kovarianzen aus historischen Daten geschätzt werden müssen.
-Die damit verbundenen Unsicherheiten können die resultierende Portfolioallokation erheblich beeinflussen.
-Insbesondere neigen klassische Optimierungsverfahren dazu, Anlagen mit zufällig überschätzten erwarteten Renditen überzugewichten und solche mit unterschätzten Renditen unterzugewichten.
-Dadurch werden bestehende Schätzfehler im Optimierungsprozess verstärkt, anstatt ausgeglichen zu werden.
-\textcite{michaud1989} bezeichnet die Markowitz-Optimierung aus diesem Grund als Fehlermaximierung.
-Allerdings wirken sich Ungenauigkeiten bei den einzelnen Eingangsparametern unterschiedlich stark auf das Optimierungsergebnis aus.
-\textcite{broadie1993} zeigt anhand einer Simulationsstudie, dass Schätzfehler bei den erwarteten Renditen die Lage der effizienten Grenze deutlich stärker verzerren als Fehler bei den geschätzten Varianzen und Kovarianzen.
-Während sich zukünftige Renditen aus historischen Kursdaten nur mit erheblicher Unsicherheit prognostizieren lassen, können Risikoparameter vergleichsweise zuverlässiger geschätzt werden.
-Welche Bedeutung diese Problematik für die praktische Portfolioallokation besitzt, verdeutlichen \textcite{demiguel2009}.
-In ihrem empirischen Vergleich verschiedener Optimierungsverfahren konnte keine der untersuchten Strategien das naive, gleichgewichtete 1/N-Portfolio über die betrachteten Datensätze hinweg durchgängig übertreffen.
-Der potenzielle Nutzen einer Optimierung hängt somit wesentlich davon ab, ob die erzielten Vorteile die negativen Auswirkungen der zugrunde liegenden Schätzfehler übersteigen.
+Seine praktische Anwendung ist jedoch mit Herausforderungen verbunden, da die benötigten erwarteten Renditen sowie Varianzen und Kovarianzen aus historischen Daten geschätzt werden müssen.
+Schätzfehler können dadurch verstärkt werden und die resultierende Portfolioallokation erheblich beeinflussen.
+Während zukünftige Renditen nur mit erheblicher Unsicherheit prognostiziert werden können, lassen sich Risikoparameter vergleichsweise zuverlässiger schätzen.
 
 Vor diesem Hintergrund haben risikobasierte Portfolioverfahren zunehmend an Bedeutung gewonnen.
-Im Gegensatz zu klassischen Optimierungsansätzen verzichten diese auf die Prognose erwarteter Renditen und bestimmen die Portfoliogewichte ausschließlich anhand von Risikoparametern.
-Zu den entsprechenden Ansätzen zählen das Minimum-Varianz-Portfolio (MVP), das Equal-Risk-Contribution-Portfolio (ERC) sowie das von \textcite{deprado2016} entwickelte Hierarchical-Risk-Parity-Verfahren (HRP).
-Während das MVP die Gesamtvarianz des Portfolios minimiert, strebt ERC eine gleichmäßige Verteilung der Risikobeiträge auf die einzelnen Anlagen an.
-HRP nutzt hingegen die hierarchische Struktur der Abhängigkeiten zwischen den Vermögenswerten, um das Kapital schrittweise auf verschiedene Anlagegruppen zu verteilen.
-Die Verfahren unterscheiden sich somit sowohl hinsichtlich ihrer Allokationsprinzipien als auch darin, wie sie die geschätzten Varianzen und Kovarianzen zur Bestimmung der Portfoliogewichte verwenden.
-Daraus ergibt sich die Frage, in welchem Umfang sich die Qualität der zugrunde liegenden Risikoschätzungen auf die Ergebnisse der einzelnen Strategien auswirkt.
-Für eine zuverlässige Portfolioallokation ist daher eine möglichst präzise Erfassung der Varianzen und Abhängigkeiten zwischen den einzelnen Anlagen von besonderer Bedeutung.
-Der übliche historische Stichprobenschätzer berücksichtigt jedoch keine zeitlichen Veränderungen der Risikoparameter innerhalb des betrachteten Schätzfensters.
-Tatsächlich unterliegen die Finanzmärkte einer dynamischen Entwicklung, bei der sich Phasen geringer und hoher Volatilität abwechseln und große Kursausschläge häufig von weiteren starken Schwankungen gefolgt werden.
-Dieses als Volatilitätsclustering bezeichnete Phänomen wurde von \textcite{engle1982} mithilfe des Autoregressive-Conditional-Heteroskedasticity-Modells (ARCH) ökonometrisch erfasst.
-Darauf aufbauend entwickelte \textcite{bollerslev1986} das Generalized-Autoregressive-Conditional-Heteroskedasticity-Modell (GARCH), das die zeitliche Dynamik der bedingten Varianz unter Berücksichtigung vergangener Schocks und Varianzwerte modelliert.
-Für die Risikoanalyse eines Portfolios reicht es allerdings nicht aus, die zeitliche Entwicklung der einzelnen Varianzen zu berücksichtigen, da auch die Abhängigkeitsstruktur zwischen den Vermögenswerten Veränderungen unterliegt.
-Insbesondere können Korrelationen zwischen Anlagen in turbulenten Marktphasen ansteigen und dadurch die Wirksamkeit der Diversifikation einschränken.
-Modelle mit konstanten Korrelationen können diese zeitliche Dynamik nur unzureichend erfassen.
-\textcite{engle2002} entwickelte deshalb das Dynamic-Conditional-Correlation-Modell (DCC), das die Modellierung bedingter Varianzen um zeitvariable Korrelationen erweitert und damit die Prognose einer dynamischen Kovarianzmatrix ermöglicht.
-Die Bedeutung einer angemessenen Modellierung der Kovarianzstruktur für die Portfolioallokation wird unter anderem von \textcite{ardia2017} hervorgehoben, die zeigen, dass eine Fehlspezifikation der Kovarianzmatrix zu erheblichen Verzerrungen der Portfoliogewichte risikobasierter Strategien führen kann.
-Allerdings lässt sich aus einer höheren statistischen Prognosegenauigkeit nicht unmittelbar ableiten, dass ein Kovarianzmodell auch zu einer besseren Anlageentscheidung führt.
-\textcite{engle2006} weisen darauf hin, dass die Sharpe Ratio als alleiniges Kriterium zur Auswahl eines Kovarianzschätzers irreführend sein kann, da sie maßgeblich von den realisierten Renditen beeinflusst wird, während die Kovarianzmatrix in erster Linie die Risikostruktur des Portfolios bestimmt.
-Zur statistischen Beurteilung von Risikoprognosen bietet \textcite{patton2011} einen Ansatz auf Grundlage robuster Verlustfunktionen, deren Rangfolge auch bei Verwendung eines fehlerbehafteten Proxys für die nicht direkt beobachtbare wahre Varianz erhalten bleibt.
-\textcite{laurent2013} übertragen dieses Konzept auf die Bewertung vollständiger Kovarianzmatrizen.
-Dass statistische Prognosequalität und ökonomischer Nutzen zu unterschiedlichen Ergebnissen führen können, verdeutlichen zudem \textcite{moura2020} bei der Untersuchung hochdimensionaler bedingter Kovarianzmatrizen.
-Für eine umfassende Bewertung von Kovarianzprognosen ist es daher erforderlich, sowohl ihre statistische Genauigkeit als auch ihre Auswirkungen auf die tatsächlich realisierte Portfolioperformance zu untersuchen.
-Die Verbindung risikobasierter Allokationsverfahren, einschließlich neuerer Ansätze wie HRP, mit multivariaten GARCH-basierten Kovarianzprognosen wurde bislang nur vereinzelt untersucht.
-Insbesondere ist unklar, in welchem Umfang eine verbesserte Modellierung der zeitlichen Dynamik von Varianzen und Korrelationen zu einer höheren Prognosequalität führt und ob sich daraus auch ein ökonomischer Vorteil für die unterschiedlichen Portfoliostrategien ergibt.
-Vor diesem Hintergrund verfolgt die vorliegende Arbeit zwei zentrale Forschungsfragen:
-Zum einen erzielen risikobasierte Portfoliostrategien wie MVP, ERC und HRP eine höhere risikoadjustierte Out-of-Sample-Performance als das naive, gleichgewichtete 1/N-Portfolio?
-Zum anderen verbessert die Verwendung von GARCH- und DCC-GARCH-basierten Risiko- und Kovarianzprognosen die Performance dieser Portfoliostrategien gegenüber einer Modellierung auf Grundlage historischer Varianzen und Kovarianzen?
+Dazu zählen das Minimum-Varianz-Portfolio (MVP), das Equal-Risk-Contribution-Portfolio (ERC) sowie das von \textcite{deprado2016} entwickelte Hierarchical-Risk-Parity-Verfahren (HRP).
+Während das MVP die Gesamtvarianz des Portfolios minimiert, strebt ERC eine gleichmäßige Verteilung der Risikobeiträge an.
+HRP nutzt hingegen die hierarchische Abhängigkeitsstruktur der Vermögenswerte, um das Kapital schrittweise auf verschiedene Anlagegruppen zu verteilen.
+Die Verfahren unterscheiden sich damit sowohl hinsichtlich ihrer Allokationsprinzipien als auch in der Verwendung der geschätzten Varianzen und Kovarianzen.
+
+Für die Portfolioallokation ist daher eine möglichst präzise Erfassung der Risikostruktur von besonderer Bedeutung.
+Der übliche historische Stichprobenschätzer berücksichtigt jedoch keine zeitlichen Veränderungen innerhalb des betrachteten Schätzfensters.
+Finanzmärkte weisen vielmehr wechselnde Phasen hoher und niedriger Volatilität auf, wobei große Kursbewegungen häufig von weiteren starken Schwankungen gefolgt werden.
+Dieses als Volatilitätsclustering bezeichnete Phänomen wurde von \textcite{engle1982} mit dem ARCH-Modell erfasst und von \textcite{bollerslev1986} durch das GARCH-Modell weiterentwickelt.
+GARCH-Modelle ermöglichen es, die zeitliche Dynamik bedingter Varianzen unter Berücksichtigung vergangener Schocks und Varianzwerte abzubilden.
+
+Für die Risikoanalyse eines Portfolios reicht die Modellierung einzelner Varianzen jedoch nicht aus, da sich auch die Abhängigkeiten zwischen Vermögenswerten im Zeitverlauf verändern können.
+Insbesondere in turbulenten Marktphasen können Korrelationen ansteigen und damit die Diversifikationswirkung eines Portfolios einschränken.
+\textcite{engle2002} entwickelte deshalb das Dynamic-Conditional-Correlation-Modell (DCC), das zeitvariable Korrelationen berücksichtigt und die Prognose einer dynamischen Kovarianzmatrix ermöglicht.
+Die Bedeutung einer angemessenen Modellierung der Kovarianzstruktur wird unter anderem von \textcite{ardia2017} hervorgehoben, die zeigen, dass Fehlspezifikationen der Kovarianzmatrix die Portfoliogewichte risikobasierter Strategien erheblich beeinflussen können.
+Die Verbindung risikobasierter Allokationsverfahren, insbesondere neuerer Ansätze wie HRP, mit multivariaten GARCH-basierten Kovarianzprognosen wurde bislang nur vereinzelt untersucht.
+Insbesondere ist unklar, in welchem Umfang die Berücksichtigung zeitvariabler Varianzen und Korrelationen die Prognosequalität verbessert und ob daraus zugleich ein ökonomischer Vorteil für unterschiedliche Portfoliostrategien entsteht.
+Vor diesem Hintergrund untersucht die vorliegende Arbeit zwei zentrale Forschungsfragen:
+Erzielen risikobasierte Portfoliostrategien wie MVP, ERC und HRP eine höhere risikoadjustierte Out-of-Sample-Performance als das naive, gleichgewichtete 1/N-Portfolio?
+Verbessert die Verwendung von GARCH- und DCC-GARCH-basierten Risiko- und Kovarianzprognosen die Performance dieser Portfoliostrategien gegenüber einer Modellierung auf Grundlage historischer Varianzen und Kovarianzen?
 
 Die empirische Untersuchung basiert auf täglichen Renditen von 27~US-Sektorindizes über einen Zeitraum von mehr als 27~Jahren.
-Durch die Kombination von zehn Trainingsfenstern und vier Prognosehorizonten ergeben sich insgesamt 40~Untersuchungskonstellationen, in denen drei unterschiedliche Kovarianzschätzverfahren mit jeweils vier Allokationsstrategien verglichen werden.
-Die Bewertung der statistischen Prognosequalität erfolgt anhand des QLIKE-Loss und des mittleren quadratischen Fehlers der Kovarianzschätzung (MSE).
-Zur Beurteilung der ökonomischen Performance werden die Sharpe Ratio, die realisierte Portfoliovolatilität sowie der Portfolioumschlag (Turnover) herangezogen.
-Ergänzend werden drei simulierte Datensätze mit bekanntem datengenerierendem Prozess untersucht, um die Fähigkeit der Prognosemodelle zur Erfassung der zugrunde liegenden Risikodynamik unter kontrollierten Bedingungen zu überprüfen.
+Durch die Kombination von zehn Trainingsfenstern und vier Prognosehorizonten ergeben sich 40~Untersuchungskonstellationen, in denen drei Kovarianzschätzverfahren mit jeweils vier Allokationsstrategien verglichen werden.
+Die statistische Prognosequalität wird anhand des QLIKE-Loss und des mittleren quadratischen Fehlers der Kovarianzschätzung (MSE) bewertet.
+Zur Beurteilung der ökonomischen Performance werden die Sharpe Ratio, die realisierte Portfoliovolatilität und der Portfolioumschlag (Turnover) herangezogen.
+Ergänzend werden drei simulierte Datensätze mit bekanntem datengenerierendem Prozess untersucht, um die Prognosemodelle unter kontrollierten Bedingungen zu überprüfen.
 
-Der weitere Aufbau der Arbeit orientiert sich an diesem Untersuchungsansatz.
-Zunächst wird im \hyperref[sec:daten]{\ref*{sec:daten}.~Abschnitt} die zugrunde liegende Datenbasis beschrieben, bevor der \hyperref[sec:theorie]{\ref*{sec:theorie}.~Abschnitt} das methodische Vorgehen, die verglichenen Kovarianzschätzer und die Portfoliomodelle erläutert.
-Der \hyperref[sec:kriterien]{\ref*{sec:kriterien}.~Abschnitt} legt die statistischen und ökonomischen Bewertungskriterien dar.
-Anschließend werden im \hyperref[sec:ergebnisse]{\ref*{sec:ergebnisse}.~Abschnitt} die empirischen Ergebnisse hinsichtlich der statistischen Prognosequalität und der ökonomischen Portfolioperformance dargestellt, ihre Stabilität über unterschiedliche Untersuchungszeiträume und Anlageuniversen hinweg analysiert und die Befunde in den bestehenden Forschungsstand eingeordnet.
-Der \hyperref[sec:limitationen]{\ref*{sec:limitationen}.~Abschnitt} diskutiert die Limitationen der Untersuchung und den sich daraus ergebenden weiteren Forschungsbedarf.
-Abschließend werden die zentralen Ergebnisse zusammengefasst und die daraus resultierenden Schlussfolgerungen dargestellt.
+Der weitere Aufbau der Arbeit folgt diesem Untersuchungsansatz.
+\hyperref[sec:daten]{Abschnitt~\ref*{sec:daten}} beschreibt die Datenbasis, bevor \hyperref[sec:theorie]{Abschnitt~\ref*{sec:theorie}} das methodische Vorgehen und das Untersuchungsdesign erläutert.
+\hyperref[sec:kriterien]{Abschnitt~\ref*{sec:kriterien}} legt die statistischen und ökonomischen Bewertungskriterien dar.
+\hyperref[sec:ergebnisse]{Abschnitt~\ref*{sec:ergebnisse}} stellt die empirischen Ergebnisse zur statistischen Prognosequalität und ökonomischen Portfolioperformance dar, untersucht deren Stabilität über unterschiedliche Untersuchungszeiträume und Anlageuniversen und ordnet die Befunde in den bestehenden Forschungsstand ein.
+\hyperref[sec:limitationen]{Abschnitt~\ref*{sec:limitationen}} diskutiert die Limitationen der Untersuchung und den sich daraus ergebenden weiteren Forschungsbedarf.
+Abschließend werden die zentralen Ergebnisse und Schlussfolgerungen zusammengefasst.
 
 % =============================================================================
 \section{Daten}\label{sec:daten}
-In diesem Abschnitt wird die Datengrundlage der empirischen Untersuchung beschrieben.
-Dabei wird zwischen den empirischen Sektordaten und den simulierten Datensätzen unterschieden.
-
 \subsection{Sektorindizes}\label{sec:sektorindizes}
 Verwendet werden tägliche Kurse US-amerikanischer Sektorindizes, die über Datastream bezogen wurden.
 Als Sektorabgrenzung dienen die Business Groups der Refinitiv Business Classification (TRBC), wobei für die Vereinigten Staaten nur Daten für 28 der insgesamt 32~Business Groups verfügbar sind.
@@ -97,7 +78,6 @@ Eine davon zeigt an rund zwei Dritteln ihrer Datenpunkte keine Kursbewegung und 
 Der Beobachtungszeitraum reicht vom 02.04.1999 bis zum 09.06.2026 und umfasst 7.087 Handelstage, wobei nur für 16~Sektorindizes Daten über die gesamte Historie vorliegen, während die übrigen Datenreihen erst zu späteren Zeitpunkten starten.
 Die Querschnittsverteilung der Sektorrenditen ist in \hyperref[tab:daten_deskriptiv]{Tabelle~\ref*{tab:daten_deskriptiv}} dargestellt.
 Auffällig ist dabei die durchschnittliche paarweise Korrelation von 0,562, die aufgrund der Begrenzung auf den US-Aktienmarkt erwartungsgemäß hoch ausfällt und die Diversifikationsmöglichkeiten innerhalb des Universums von vornherein einschränkt.
-
 \input{Abbildungen/tab_daten_deskriptiv}
 
 \subsection{Risikofreier Zins}\label{sec:risikofrei}
@@ -121,7 +101,6 @@ Die Kovarianzmatrix wird dabei auf einem Trainingsfenster der Länge $T$ geschä
 Variiert werden beide Größen, wobei das Trainingsfenster zwischen einem und zehn Jahren liegt und der Prognosehorizont 1, 5, 10 oder 21 Handelstage beträgt.
 Der Vergleich der daraus resultierenden 40~Kombinationen zeigt zum einen, ob die Befunde robust gegenüber der Wahl von Trainings- und Prognosefenster sind, und zum anderen, bei welcher Fensterlänge sich Schätzfehler aus zu wenigen Beobachtungen und Fehlspezifikation aus sich ändernden Parametern am besten ausgleichen.
 Als Basisfall werden durchgängig $T = 1008$ (vier Jahre) und $h = 1$ berichtet und von da ausgehend die Robustheit der Ergebnisse überprüft.
-
 Je Zeitfenster werden dabei nur Sektoren berücksichtigt, die an mindestens 90\,\% der Handelstage verfügbar sind, um so eine ausreichende Datenbasis für die Schätzung zu gewährleisten und zugleich nicht ganze Anlagen wegen einzelner fehlender Datenpunkte auszuschließen.
 Das investierbare Universum wird somit in jedem Fenster neu bestimmt und variiert sowohl über die Zeit als auch über die Fensterlänge.
 
@@ -140,7 +119,6 @@ Da jeder Schritt genau eine Annahme aufhebt, lässt sich der Beitrag der jeweili
 
 \subsubsection{Historische Kovarianzmatrix}
 Verwendet wird zunächst die Stichprobenkovarianz der Trainingsrenditen, in der die Annahme konstanter Varianzen und Korrelationen über das gesamte Fenster unverändert erhalten bleibt.
-
 Der Vorteil dieses Schätzers liegt in seiner Einfachheit, da er keine Parameterschätzung im engeren Sinn benötigt und deshalb weder von Konvergenzproblemen noch von einer Fehlspezifikation der Dynamik betroffen sein kann.
 Dem steht seine Trägheit gegenüber, weil ein Volatilitätsschock nur mit einem geringen Gewicht in die Schätzung eingeht und erst nach $T$ Handelstagen wieder aus ihr verschwindet.
 Aus diesen Gründen dient die historische Matrix in dieser Arbeit als statischer Referenzpunkt, gegen den der Mehrwert der beiden dynamischen Modelle gemessen wird.
@@ -174,7 +152,6 @@ Weil der erwartete quadrierte Schock der bedingten Varianz entspricht, vereinfac
 \end{align}
 
 Die horizontgemittelte Varianzprognose $\bar{h}_{t,h}$ aus \hyperref[eq:garch-fc-2]{Gleichung~\ref*{eq:garch-fc-2}} geht als Diagonalelement in die Kovarianzmatrix ein.
-
 Für ein Portfolio genügt die Modellierung der einzelnen Varianzen allerdings nicht, da für die Gewichte die vollständige Kovarianzmatrix benötigt wird.
 Die Umsetzung folgt deshalb dem Constant-Conditional-Correlation-Ansatz (CCC) von \textcite{bollerslev1990}, bei dem für jeden Sektor ein eigenes GARCH(1,1) geschätzt, die Korrelationsmatrix dagegen konstant gehalten wird:
 \begin{equation}
@@ -190,7 +167,6 @@ Gegenüber der historischen Matrix ändert sich damit ausschließlich die Behand
 \subsubsection{Dynamic Conditional Correlation (DCC-GARCH)}
 Da das GARCH-Modell weiterhin von einer konstanten Korrelation ausgeht, die in der Realität nur selten vorliegt, entwickelte \textcite{engle2002} mit dem DCC-GARCH-Modell eine Erweiterung, die auch diese Restriktion aufhebt.
 \citeauthor{engle2002} überträgt dafür die Rekursion aus \hyperref[eq:garch-3]{Gleichung~\ref*{eq:garch-3}} auf die Korrelation selbst und erhält so eine vollständig zeitvariable Kovarianzprognose.
-
 Modelliert wird dabei zunächst eine Hilfsmatrix $Q_t$, die anschließend zu einer gültigen Korrelationsmatrix normiert wird.
 \begin{align}
 	\label{eq:dcc-1}
@@ -206,10 +182,8 @@ Wie stark die Korrelationen auf neue gemeinsame Schocks reagieren, misst der Par
 Analog zum univariaten Fall müssen dafür $a, b \geq 0$ und $a + b < 1$ gelten.
 Da $Q_t$ auf der Diagonale keine Einsen aufweisen muss, ist die Normierung in \hyperref[eq:dcc-2]{Gleichung~\ref*{eq:dcc-2}} nötig, um eine Korrelationsmatrix zu erhalten.
 Aus dieser und den prognostizierten Standardabweichungen ergibt sich die Kovarianzmatrix schließlich nach \hyperref[eq:dcc-3]{Gleichung~\ref*{eq:dcc-3}}.
-
 Geschätzt wird das Modell in zwei Schritten, indem zuerst die univariaten GARCH-Modelle und anschließend die beiden Parameter $a$ und $b$ per Maximum-Likelihood auf den standardisierten Residuen bestimmt werden.
 Für $h > 1$ wird die Korrelationsprognose gemäß \textcite{engle2001} auf $\bar{Q}$ zurückgeführt und über den Horizont gemittelt, damit sie zur ebenfalls horizontgemittelten Varianzprognose passt.
-
 Da GARCH- und DCC-Schätzer dieselben Varianzprognosen und dieselben standardisierten Residuen verwenden, isoliert ihr Vergleich exakt den Beitrag der dynamischen Korrelation.
 Die drei Schätzer bilden somit die eingangs beschriebene Leiter, deren Stufen sich um jeweils genau eine Annahme unterscheiden.
 
@@ -218,36 +192,9 @@ Die drei Schätzer bilden somit die eingangs beschriebene Leiter, deren Stufen s
 Die moderne Portfoliotheorie (MPT), eingeführt von \textcite{markowitz1952}, beschäftigt sich mit der optimalen Aufteilung eines bestimmten Vermögens (Budgets) auf mindestens zwei Vermögensgegenstände.
 Als Pionier dieser Theorie bietet \citeauthor{markowitz1952} einen Lösungsansatz für das Auswahl- oder Entscheidungsproblem bei der Portfoliozusammenstellung.
 Die erwartete Rendite dient als Maß für die Rentabilität einer Anlage, während die Varianz das Risiko repräsentiert.
-Alternativ kann das Risiko einer Anlage auch durch die Standardabweichung ausgedrückt werden, wobei sich die qualitativen Ergebnisse nicht ändern.
 Durch die Fokussierung auf die beiden Kriterien erwartete Rendite und Varianz wird das Auswahlproblem auf eine Teilmenge von Portfolios, die als effizient gelten, begrenzt.
 Das Hauptziel besteht darin, eine optimale Vermögensallokation über verschiedene Vermögenswerte zu finden, um die besten Ergebnisse für den Investor zu erzielen und sein Vermögen über einen bestimmten Zeitraum zu maximieren.
-
-Die erwartete Rendite $\mu_p$ ergibt sich aus der Summe der gewichteten erwarteten Renditen aller Anlageklassen im Portfolio.
-Dabei werden die erwarteten Renditen jeder Anlageklasse $\mu_i$ mit ihren entsprechenden Portfoliogewichten $w_i$ multipliziert und addiert:
-\begin{equation}
-	\mu_p = \sum_{i=1}^{N} \mu_i\,w_i
-	\label{eq:mpt-rendite}
-\end{equation}
-
-Die Varianz des Portfolios wird durch die folgende Formel definiert:
-\begin{equation}
-	\sigma_p = \sum_{i=1}^{N}\sum_{k=1}^{N} \operatorname{Cov}(r_i; r_k)\,w_i w_k
-	\label{eq:mpt-varianz}
-\end{equation}
-
-und wird mit $\operatorname{Cov}(r_i; r_k)$ der Renditen der verschiedenen Anlageklassen $i$ und $k$ bestimmt.
-Wird die Korrelation zwischen zwei Anlageklassen $i$ und $k$, die sich aus ihrer Kovarianz $\operatorname{Cov}(r_i; r_k)$ und den jeweiligen Standardabweichungen $\sigma_i$ und $\sigma_k$ der Renditen ergibt, berücksichtigt, so wird die Formel des Portfoliorisikos wie folgt formuliert:
-\begin{equation}
-	\sigma_p = \sum_{i=1}^{N}\sum_{k=1}^{N} \sigma_i\,\sigma_k\,\operatorname{Cor}(r_i; r_k)\,w_i w_k
-	\label{eq:mpt-korrelation}
-\end{equation}
-
-Die Portfoliovarianz ergibt sich aus einer Kombination der Standardabweichungen und der Korrelationen zwischen den Anlageklassen, wobei niedrige Korrelationen eine wirksame Risikoreduzierung ermöglichen.
-Bei der Umsetzung der Portfoliooptimierung nach Markowitz ist es unerlässlich, die zugehörigen Varianzen und Kovarianzen zu schätzen.
-Eine ausschließliche Verwendung von Zeitreihendaten für diese Schätzungen kann jedoch dazu führen, dass das resultierende Portfolio deutlich vom optimalen entfernt ist.
-Daher gibt es zahlreiche Ansätze in der Literatur, um das Schätzrisiko bei der Portfoliooptimierung zu reduzieren.
-
-Untersuchungen wie die von Memmel (2004)\todo{Quelle Memmel (2004) fehlt in literatur/bibliography.bib -- Eintrag ergaenzen und \textbackslash textcite\{\} setzen} haben gezeigt, dass Schätzfehler in den erwarteten Renditen einen größeren Einfluss auf die Abweichungen von den optimalen Gewichten und damit auf den Anlageerfolg haben als Schätzfehler in den Varianzen und Kovarianzen.
+Untersuchungen wie die von Memmel (2004)\todo{Quelle Memmel (2004) fehlt in literatur/bibliography.bib} haben gezeigt, dass Schätzfehler in den erwarteten Renditen einen größeren Einfluss auf die Abweichungen von den optimalen Gewichten und damit auf den Anlageerfolg haben als Schätzfehler in den Varianzen und Kovarianzen.
 Gleichzeitig ist die Schätzung der erwarteten Renditen deutlich ungenauer als die Schätzung der Varianzen und Kovarianzen, wie von Merton (1980)\todo{Quelle Merton (1980) fehlt in literatur/bibliography.bib} gezeigt wurde.
 Demzufolge besteht eine weitgehende Einigkeit in der Literatur darüber, dass die Schätzung der erwarteten Renditen die primäre Herausforderung bei der Umsetzung der Markowitz-Optimierung darstellt, im Gegensatz zur Schätzung der Varianz-Kovarianz-Matrix, die weniger problematisch ist.
 
@@ -258,7 +205,7 @@ In diesem Zusammenhang werden im weiteren Verlauf verschiedene Methoden wie das 
 \paragraph{Das Minimum-Varianz-Portfolio}
 Das Minimum-Varianz-Portfolio (MVP), auch als Global Minimum-Variance Portfolio (GMV) bezeichnet, nimmt innerhalb der modernen Portfoliotheorie nach Markowitz eine zentrale Stellung ein.
 Es beschreibt dasjenige Portfolio aus einem gegebenen Universum risikobehafteter Vermögenswerte, das die geringstmögliche Gesamtvarianz und damit die niedrigste Volatilität aufweist.
-Im Risiko-Rendite-Diagramm bildet das MVP den linksäußersten Punkt der Minimum-Varianz-Grenze und markiert zugleich den Übergang zwischen ihrem effizienten und ineffizienten Abschnitt, siehe \hyperref[abb:effizienzlinie]{Abbildung~\ref*{abb:effizienzlinie}}.
+Im Risiko-Rendite-Diagramm bildet das MVP den linksäußersten Punkt der Minimum-Varianz-Grenze und markiert zugleich den Übergang zwischen ihrem effizienten und ineffizienten Abschnitt (siehe \hyperref[abb:effizienzlinie]{Abbildung~\ref*{abb:effizienzlinie}}).
 Auf dem effizienten Abschnitt der Grenze befinden sich Portfolios, die bei höherem Risiko eine höhere erwartete Rendite ermöglichen, während Portfolios auf dem ineffizienten Abschnitt bei höherem Risiko eine geringere erwartete Rendite als das MVP aufweisen.
 Die Konstruktion des MVP erfolgt ausschließlich auf Grundlage der Kovarianzmatrix der Vermögenswerte, sodass keine Schätzungen der erwarteten Renditen erforderlich sind.
 Ziel der Optimierung ist es, die Portfoliogewichte unter der Bedingung einer vollständigen Investition des verfügbaren Kapitals so zu bestimmen, dass die Gesamtvarianz minimiert wird.
@@ -286,34 +233,26 @@ Daraus folgt, dass der prozentuale Beitrag eines Vermögenswerts zum Gesamtrisik
 Darüber hinaus ist die Kovarianz jedes einzelnen Vermögenswerts mit dem MVP gleich der Varianz des MVP, sodass das Beta sämtlicher Vermögenswerte in Bezug auf dieses Portfolio den Wert eins annimmt.
 Diese Zusammenhänge gelten für die unbeschränkte Optimierung und müssen bei zusätzlichen Gewichtsbeschränkungen nicht mehr für sämtliche Vermögenswerte erfüllt sein.
 
-Ein wesentlicher Vorteil des MVP liegt in der Vermeidung von Schätzfehlern, die mit der Bestimmung erwarteter Renditen verbunden sind.
-Merton (1980)\todo{Quelle Merton (1980) fehlt in literatur/bibliography.bib} verdeutlicht die statistischen Schwierigkeiten bei der Schätzung von Renditeerwartungen.
-Durch den Verzicht auf diese Schätzungen kann die Robustheit der Portfoliooptimierung verbessert werden.
-Allerdings bleibt das MVP gegenüber Fehlschätzungen der Varianzen und Korrelationen empfindlich.
-Insbesondere bei einer unbeschränkten Optimierung können bereits geringe Veränderungen der geschätzten Kovarianzmatrix zu erheblichen Verschiebungen der Portfoliogewichte führen.
+Ein wesentlicher Vorteil des MVP liegt darin, dass keine erwarteten Renditen geschätzt werden müssen, deren zuverlässige Bestimmung mit erheblichen statistischen Schwierigkeiten verbunden ist (Merton, 1980)\todo{Quelle Merton (1980) fehlt in literatur/bibliography.bib}.
+Dadurch kann eine zentrale Quelle von Schätzfehlern vermieden werden.
+Allerdings bleibt das Verfahren empfindlich gegenüber Fehlschätzungen der Varianzen und Korrelationen.
+Insbesondere bei einer unbeschränkten Optimierung können bereits geringe Veränderungen der geschätzten Kovarianzmatrix zu deutlichen Verschiebungen der Portfoliogewichte führen.
+Empirische Hinweise auf die praktische Bedeutung der Minimum-Varianz-Strategie liefern \textcite{behr2008}.
+Für den US-Aktienmarkt im Zeitraum von 1968 bis 2007 zeigen sie, dass Minimum-Varianz-Portfolios insbesondere in Phasen hoher Marktvolatilität und Unsicherheit positive und signifikante Renditen erzielen können.
+Gegenüber einem wertgewichteten Benchmark zeigte sich eine höhere Performance, während gegenüber einem gleichgewichteten Portfolio keine statistisch signifikante Verbesserung der Sharpe Ratio festgestellt wurde.
+Die Ergebnisse sprechen damit vor allem für das Potenzial des MVP zur Risikoreduzierung, nicht zwangsläufig für eine höhere risikoadjustierte Rendite.
 
-Die empirische Untersuchung von \textcite{behr2008} liefert Hinweise auf die praktische Bedeutung der Minimum-Varianz-Strategie.
-Die Autoren analysierten das US-Aktienuniversum im Zeitraum von April 1968 bis Dezember 2007 und stellten fest, dass Minimum-Varianz-Portfolios insbesondere in Phasen hoher Marktvolatilität und Unsicherheit positive und signifikante Renditen erzielen können.
-Im Vergleich zu einem wertgewichteten Benchmark zeigte die Strategie eine höhere Performance.
-Gegenüber einem gleichgewichteten Portfolio konnte jedoch keine statistisch signifikante Verbesserung der Sharpe Ratio nachgewiesen werden.
-Die Ergebnisse deuten darauf hin, dass die Minimum-Varianz-Strategie zur Risikoreduzierung beitragen kann, ohne dabei zwangsläufig eine höhere risikoadjustierte Rendite als alternative Portfolioansätze zu erzielen.
+Eine zentrale Schwäche des MVP ist die mögliche Konzentration auf wenige Vermögenswerte.
+Da ausschließlich die Gesamtvarianz minimiert wird, können einzelne Positionen hohe Gewichte erhalten, während andere vollständig ausgeschlossen werden.
+\textcite{lee2011} zeigt dies anhand von zehn Sektoren des Russell-1000-Universums, bei denen unter der Beschränkung auf nicht negative Gewichte vier Sektoren ein Gewicht von null erhielten.
+Auch \textcite{maillard2010} weisen auf diese Konzentrationsanfälligkeit hin.
+Die Portfoliozusammensetzung wird dabei nicht allein von den individuellen Volatilitäten bestimmt, sondern ebenso von den Korrelationen zwischen den Vermögenswerten.
+Daher können auch Anlagen mit höherer Einzelvolatilität das Gesamtrisiko reduzieren, wenn sie günstige Diversifikationseigenschaften aufweisen.
+Gewichtsbeschränkungen können einer übermäßigen Konzentration entgegenwirken und zugleich einen regulierenden Effekt auf Schätzfehler der Kovarianzmatrix haben (Jagannathan \& Ma, 2003)\todo{Quelle Jagannathan \& Ma (2003) fehlt in literatur/bibliography.bib}.
 
-Eine zentrale Schwäche des MVP besteht in seiner potenziell hohen Konzentration auf einzelne Vermögenswerte.
-Da die Optimierung ausschließlich auf die Minimierung der Gesamtvarianz ausgerichtet ist, können bestimmte Positionen stark gewichtet werden, während andere vollständig aus dem Portfolio ausgeschlossen werden.
-Dies verdeutlicht die Untersuchung von \textcite{lee2011}, in der zehn Sektoren des Russell-1000-Universums anhand historischer monatlicher Renditen analysiert wurden.
-Unter der Nebenbedingung nicht negativer Portfoliogewichte erhielten vier der zehn Sektoren im optimierten Portfolio ein Gewicht von null.
-Ohne diese Beschränkung hätten die betreffenden Sektoren negative Gewichte aufgewiesen.
-Auch \textcite{maillard2010} weisen auf die Konzentrationsanfälligkeit von Minimum-Varianz-Portfolios hin.
-
-Die Portfoliozusammensetzung wird dabei nicht allein durch die individuellen Volatilitäten der Vermögenswerte bestimmt, sondern auch durch deren gegenseitige Korrelationen.
-Daher können selbst Vermögenswerte mit vergleichsweise hoher Einzelvolatilität zur Reduzierung des Gesamtrisikos beitragen, sofern sie günstige Diversifikationseigenschaften aufweisen.
-Um einer übermäßigen Konzentration entgegenzuwirken, können zusätzliche Gewichtsbeschränkungen eingeführt werden.
-Jagannathan und Ma (2003)\todo{Quelle Jagannathan \& Ma (2003) fehlt in literatur/bibliography.bib} zeigen, dass solche Beschränkungen zugleich einen regulierenden Effekt auf die Verwendung geschätzter Kovarianzen haben können.
-
-Eine weitere theoretische Besonderheit des MVP ergibt sich unter der Annahme identischer erwarteter Renditen aller Vermögenswerte.
-In diesem Fall besitzen sämtliche vollständig investierten Portfolios dieselbe erwartete Rendite, sodass das MVP aufgrund seines geringsten Risikos zugleich das optimale Portfolio im Sinne der Mean-Variance-Optimierung darstellt.
-Liegt die gemeinsame erwartete Rendite oberhalb des risikofreien Zinssatzes, entspricht das MVP zudem dem Tangentialportfolio mit der höchsten Sharpe Ratio.
-\textcite{lee2011} sowie \textcite{chaves2011} befassen sich mit diesem Zusammenhang und untersuchen die Bedeutung gleicher erwarteter Renditen für die Konstruktion risikobasierter Portfolios.
+Eine weitere theoretische Besonderheit ergibt sich unter der Annahme identischer erwarteter Renditen aller Vermögenswerte.
+Da in diesem Fall sämtliche vollständig investierten Portfolios dieselbe erwartete Rendite aufweisen, stellt das MVP aufgrund seines geringsten Risikos zugleich das optimale Mean-Variance-Portfolio dar.
+Liegt die gemeinsame erwartete Rendite oberhalb des risikofreien Zinssatzes, entspricht es zudem dem Tangentialportfolio mit der höchsten Sharpe Ratio \parencite{lee2011,chaves2011}.
 
 \paragraph{Gleichgewichtetes Portfolio (1/N-Portfolio)}
 Das 1/N-Portfolio, auch bekannt als gleichgewichtete Portfoliostrategie, ist eine einfache Anlagestrategie, bei der jeder der $n$ risikoreichen Vermögenswerte im Portfolio mit einem gleichmäßigen Gewicht gehalten wird.
@@ -324,44 +263,38 @@ Die Formel zur Berechnung der Gewichte im 1/N-Portfolio lautet:
 \end{equation}
 
 Hierbei repräsentiert $w$ das Gewicht des Vermögenswerts und $n$ die Gesamtanzahl der Vermögenswerte im Portfolio.
-Durch diese Strategie wird sichergestellt, dass alle Vermögenswerte im Portfolio gleichbehandelt werden und jeder einen gleichwertigen Beitrag zum Gesamtrisiko leistet.
+Ein wesentlicher Vorteil der 1/N-Strategie liegt in ihrer einfachen und robusten Konstruktion.
 Für die Bestimmung der Portfoliogewichte müssen weder erwartete Renditen noch Varianzen oder Kovarianzen geschätzt werden.
-Darüber hinaus kann die gleichmäßige Kapitalverteilung einer übermäßigen Konzentration auf einzelne Positionen entgegenwirken.
+Dadurch werden Schätzfehler vermieden, die bei optimierungsbasierten Verfahren die Portfolioallokation erheblich beeinflussen können.
+Gleichzeitig wirkt die gleichmäßige Kapitalverteilung einer starken Konzentration auf einzelne Positionen entgegen.
 
-Die empirische Untersuchung von \textcite{demiguel2009} verdeutlicht die praktische Bedeutung der 1/N-Strategie.
-Die Autoren verglichen die Out-of-Sample-Performance von 14 optimierten Portfoliomodellen, darunter klassische Mean-Variance-Modelle, bayesianische Ansätze und Modelle mit Gewichtsbeschränkungen, anhand von sieben empirischen Datensätzen mit der gleichgewichteten Strategie.
-Dabei konnte keines der untersuchten Optimierungsmodelle die 1/N-Strategie hinsichtlich der Sharpe Ratio, der risikoadjustierten Nutzenkennzahl (Certainty-Equivalent Return, CEQ) und des Portfolioumschlags konsistent übertreffen.
-Als wesentlichen Grund identifizierten die Autoren die Anfälligkeit komplexer Optimierungsverfahren gegenüber Schätzfehlern, insbesondere bei der Bestimmung erwarteter Renditen und der Kovarianzmatrix.
-Diese können dazu führen, dass Vermögenswerte mit überschätzten Renditeerwartungen oder unterschätzten Risiken überproportional gewichtet werden.
-Um den Einfluss solcher Schätzfehler ausreichend zu reduzieren, wären bei klassischen Mean-Variance-Modellen teilweise außergewöhnlich lange historische Beobachtungszeiträume erforderlich.
-Die Ergebnisse verdeutlichen somit, dass eine höhere mathematische Komplexität nicht zwangsläufig mit einer besseren tatsächlichen Portfolioperformance einhergeht.
+Die praktische Bedeutung der 1/N-Strategie zeigen \textcite{demiguel2009}.
+Die Autoren verglichen die Out-of-Sample-Performance von 14 optimierten Portfoliomodellen, darunter klassische Mean-Variance-Modelle, bayesianische Ansätze und Modelle mit Gewichtsbeschränkungen, anhand von sieben empirischen Datensätzen mit der Gleichgewichtung.
+Keines der untersuchten Modelle konnte die 1/N-Strategie hinsichtlich Sharpe Ratio, Certainty-Equivalent Return (CEQ) und Portfolioumschlag konsistent übertreffen.
+Als wesentliche Ursache identifizieren die Autoren Schätzfehler bei erwarteten Renditen und der Kovarianzmatrix, die zu ungünstigen Portfoliogewichten führen können.
+Um diese ausreichend zu reduzieren, wären teilweise sehr lange historische Beobachtungszeiträume erforderlich.
+Die Ergebnisse zeigen damit, dass eine höhere mathematische Komplexität nicht zwangsläufig zu einer besseren Out-of-Sample-Performance führt.
 
-Die Befunde von \textcite{demiguel2009} wurden in der nachfolgenden Literatur jedoch differenziert betrachtet.
-Kritzman et al. (2010)\todo{Quelle Kritzman et al. (2010) fehlt in literatur/bibliography.bib} argumentieren, dass die Ergebnisse zugunsten der 1/N-Strategie unter anderem durch die Verwendung kurzer historischer Schätzfenster beeinflusst werden können.
-Bei der Berücksichtigung langfristiger Renditeannahmen können optimierte Portfolios hingegen bessere Ergebnisse erzielen.
-Kirby und Ostdiek (2012)\todo{Quelle Kirby \& Ostdiek (2012) fehlt in literatur/bibliography.bib} zeigen zudem, dass die Leistungsfähigkeit der Optimierungsverfahren von der Wahl der zugrunde liegenden Zielrenditen und Gewichtungsbeschränkungen abhängt.
-Durch die Berücksichtigung geeigneter Zielrenditen oder alternativer Gewichtungsansätze, beispielsweise auf Grundlage von Volatilitäts- oder Rendite-Risiko-Signalen, können optimierte Strategien die gleichgewichtete Portfoliokonstruktion auch unter Berücksichtigung von Transaktionskosten übertreffen.
-Einen weiteren Ansatz verfolgen Tu und Zhou (2011)\todo{Quelle Tu \& Zhou (2011) fehlt in literatur/bibliography.bib}, indem sie die 1/N-Strategie mit optimierten Portfolios kombinieren.
-Ziel dieser Kombination ist es, die Robustheit der Gleichgewichtung mit den Vorteilen einer risikoorientierten Optimierung zu verbinden und dadurch die Auswirkungen von Schätzfehlern zu reduzieren.
+Die Befunde von \textcite{demiguel2009} werden in der nachfolgenden Literatur jedoch differenziert betrachtet.
+\textcite{kritzman2010} argumentieren, dass die Ergebnisse zugunsten der 1/N-Strategie unter anderem von kurzen historischen Schätzfenstern beeinflusst werden können und optimierte Portfolios bei langfristigeren Renditeannahmen bessere Ergebnisse erzielen können.
+\textcite{kirby2012} zeigen ebenfalls, dass die relative Performance von der Modellgestaltung abhängt.
+Geeignete Zielrenditen sowie alternative Gewichtungsansätze auf Grundlage von Volatilitäts- oder Rendite-Risiko-Signalen können der Gleichgewichtung auch unter Berücksichtigung von Transaktionskosten überlegen sein.
+\textcite{tu2011} verfolgen einen kombinierten Ansatz, bei dem die 1/N-Strategie mit optimierten Portfolios verbunden wird, um die Robustheit der Gleichgewichtung mit den Vorteilen einer risikoorientierten Optimierung zu vereinen.
 
-Trotz ihrer einfachen Konstruktion weist die 1/N-Strategie Einschränkungen hinsichtlich der Risikodiversifizierung auf.
-Da die individuellen Volatilitäten und Korrelationen der Vermögenswerte bei der Gewichtung unberücksichtigt bleiben, können insbesondere Positionen mit hoher Volatilität einen überproportionalen Beitrag zum Gesamtrisiko leisten.
-In Phasen ausgeprägter Marktturbulenzen kann sich diese ungleiche Risikoverteilung zusätzlich auf die Portfolioentwicklung auswirken.
-Risikoorientierte Optimierungsverfahren, wie das Minimum-Varianz-Portfolio, können in solchen Marktphasen Vorteile hinsichtlich der Begrenzung des Gesamtrisikos bieten.
-
-In dieser Arbeit dient das 1/N-Portfolio als Vergleichsmaßstab, das jeder im Fenster verfügbaren Anlage denselben Anteil zuweist.
-Es bildet den relevanten Maßstab für die erste Forschungsfrage, da ein Optimierungsverfahren seinen Aufwand nur rechtfertigt, wenn dessen Gewinn den Verlust durch Schätzfehler übersteigt.
+Trotz ihrer Robustheit weist die 1/N-Strategie Einschränkungen hinsichtlich der Risikodiversifizierung auf.
+Da unterschiedliche Volatilitäten und Korrelationen bei der Gewichtung nicht berücksichtigt werden, können besonders volatile Vermögenswerte einen überproportionalen Anteil am Gesamtrisiko ausmachen.
+Dies kann insbesondere in turbulenten Marktphasen relevant sein.
+Risikoorientierte Verfahren wie das Minimum-Varianz-Portfolio berücksichtigen diese Risikostruktur gezielt und können dadurch Vorteile bei der Begrenzung des Portfoliorisikos bieten \parencite[vgl.][S.~165]{savona2019}.
 
 \paragraph{Das Equal-Risk-Contribution-Portfolio}
 Das Equal-Risk-Contribution-Portfolio (ERC) stellt einen risikobasierten Ansatz zur Portfoliooptimierung dar, dessen Grundlagen unter anderem von Qian (2005)\todo{Quelle Qian (2005) fehlt in literatur/bibliography.bib} und Neukirch (2008)\todo{Quelle Neukirch (2008) fehlt in literatur/bibliography.bib} entwickelt und von \textcite{maillard2010} näher untersucht wurden.
-Im Gegensatz zum gleichgewichteten Portfolio (1/N), bei dem das Kapital gleichmäßig auf sämtliche Vermögenswerte verteilt wird, und zum Minimum-Varianz-Portfolio (MVP), das auf die Minimierung der Gesamtvarianz ausgerichtet ist, verfolgt die ERC-Strategie das Ziel einer gleichmäßigen Verteilung der Risikobeiträge.
-Hierbei werden die Portfoliogewichte so bestimmt, dass jeder Vermögenswert unabhängig von seinem Kapitalanteil den gleichen Beitrag zum Gesamtrisiko leistet.
+Im Gegensatz zum gleichgewichteten Portfolio (1/N), bei dem das Kapital gleichmäßig auf sämtliche Vermögenswerte verteilt wird, und zum Minimum-Varianz-Portfolio (MVP), das die Gesamtvarianz minimiert, strebt ERC eine gleichmäßige Verteilung der Risikobeiträge an.
+Die Portfoliogewichte werden so bestimmt, dass jeder Vermögenswert unabhängig von seinem Kapitalanteil den gleichen Beitrag zum Gesamtrisiko leistet.
 Dabei werden sowohl die individuellen Volatilitäten als auch die Korrelationen zwischen den Vermögenswerten berücksichtigt.
 
-Die ERC-Portfoliokonstruktion beginnt damit, das Produkt des Gewichts eines Vermögenswerts mit seinem marginalen Risikobeitrag zu berechnen.
-Der marginale Risikobeitrag wird durch die Veränderung des Gesamtrisikos des Portfolios infolge einer Erhöhung des Bestands des Vermögenswerts definiert.
-Diese marginalen Risikobeiträge (MRC) geben Aufschluss darüber, wie sehr sich die Volatilität des Portfolios verändert, wenn das Gewicht eines Vermögenswerts leicht erhöht wird.
-Die Berechnung der MRC basiert hauptsächlich auf der Portfoliovolatilität und den Gewichtungen der Vermögenswerte:
+Grundlage der ERC-Portfoliokonstruktion ist der Risikobeitrag eines Vermögenswerts, der sich aus seinem Portfoliogewicht und seinem marginalen Risikobeitrag (Marginal Risk Contribution, MRC) ergibt.
+Der MRC beschreibt, wie sich das Gesamtrisiko des Portfolios verändert, wenn das Gewicht eines Vermögenswerts geringfügig erhöht wird.
+Die Portfoliogewichte werden anschließend so gewählt, dass die daraus resultierenden Risikobeiträge aller Vermögenswerte übereinstimmen.
 \begin{equation}
 	\mathrm{MRC}_i = \frac{\partial \sigma(w)}{\partial w_i} = \frac{(V w)_i}{\sigma(w)}
 	\label{eq:erc-mrc}
@@ -384,62 +317,56 @@ Dies geschieht durch die Lösung eines Optimierungsproblems, bei dem das Ziel is
 \end{equation}
 
 Dabei ist $f(w)$ die Zielfunktion, die die Quadratsumme der Differenzen zwischen den ARC-Werten aller Vermögenswerte im Portfolio darstellt.
-Das ERC-Portfolio strebt somit eine gleichmäßige Verteilung des Risikos auf alle Vermögenswerte im Portfolio an, was zu einer ausgewogeneren Risikoposition führt.
-Durch diese ausgewogene Risikoverteilung wird die Stabilität des Portfolios verbessert und die Abhängigkeit von einzelnen Vermögenswerten verringert.
 Anders als das MVP nutzt ERC die Kovarianzmatrix somit nur über das Produkt $V w$ und nicht über ihre Inverse, weshalb Schätzfehler weniger stark durchschlagen.
 
-\textcite{maillard2010} beschreiben das ERC-Portfolio als einen Ansatz, der Eigenschaften des gleichgewichteten Portfolios und des Minimum-Varianz-Portfolios miteinander verbindet.
-Während das MVP zu einer hohen Konzentration auf einzelne Vermögenswerte neigen kann, werden bei der ERC-Methode unter den üblichen Annahmen einer positiv definiten Kovarianzmatrix und nicht negativer Portfoliogewichte sämtliche Vermögenswerte des Anlageuniversums berücksichtigt.
-Allerdings weist das ERC-Portfolio im Vergleich zum MVP eine mindestens ebenso hohe Gesamtvarianz auf, da die gleichmäßige Risikoverteilung nicht zwangsläufig mit der Minimierung des Gesamtrisikos einhergeht.
-Die Untersuchung von \textcite{lee2011} verdeutlicht zudem, dass Vermögenswerte mit niedriger Volatilität innerhalb eines ERC-Portfolios häufig höhere Kapitalgewichte erhalten, um die Risikobeiträge der einzelnen Positionen anzugleichen.
+\textcite{maillard2010} beschreiben ERC als einen Ansatz, der Eigenschaften des gleichgewichteten Portfolios und des Minimum-Varianz-Portfolios miteinander verbindet.
+Während das MVP zu einer starken Konzentration auf einzelne Vermögenswerte führen kann, werden bei ERC unter den üblichen Annahmen einer positiv definiten Kovarianzmatrix und nicht negativer Gewichte sämtliche Vermögenswerte berücksichtigt.
+Die Gesamtvarianz des ERC-Portfolios ist jedoch mindestens so hoch wie die des MVP, da die gleichmäßige Risikoverteilung nicht auf eine Minimierung des Gesamtrisikos ausgerichtet ist.
+\textcite{lee2011} zeigt zudem, dass Vermögenswerte mit niedriger Volatilität häufig höhere Kapitalgewichte erhalten, um die Risikobeiträge der einzelnen Positionen anzugleichen.
 
-Die empirische Untersuchung von \textcite{chaves2011} liefert weitere Erkenntnisse zur Leistungsfähigkeit der ERC-Strategie.
-Die Autoren verglichen unterschiedliche Asset-\hspace{0pt}Allokationsverfahren anhand eines breit gefächerten Anlageuniversums, das unter anderem US-Staatsanleihen, Unternehmensanleihen verschiedener Bonitätsklassen, internationale Anleihen, Aktien aus Industrie- und Schwellenländern, Rohstoffe sowie börsennotierte Immobilien umfasste.
-Dabei zeigte sich, dass die ERC-Strategie hinsichtlich ihrer Performance nicht durchgehend bessere Ergebnisse als das gleichgewichtete Portfolio erzielte.
-Gegenüber dem Minimum-Varianz-Portfolio und klassischen Mean-Variance-optimierten Portfolios wurden hingegen in den untersuchten Konstellationen günstigere Ergebnisse beobachtet.
-Die Autoren verdeutlichen zugleich, dass die Leistungsfähigkeit risikobasierter Allokationsstrategien von der Zusammensetzung des Anlageuniversums abhängt.
-Insbesondere die hohe Gewichtung von Anleihen kann die historische Performance solcher Strategien in Phasen sinkender Zinsen begünstigen.
+Empirische Untersuchungen liefern unterschiedliche Ergebnisse zur Leistungsfähigkeit der ERC-Strategie.
+\textcite{chaves2011} vergleichen verschiedene Allokationsverfahren anhand eines breit diversifizierten Anlageuniversums aus Anleihen, Aktien, Rohstoffen und Immobilien.
+ERC erzielte dabei nicht durchgehend bessere Ergebnisse als das 1/N-Portfolio, zeigte jedoch gegenüber dem MVP und klassischen Mean-Variance-Portfolios in den untersuchten Konstellationen günstigere Ergebnisse.
+Gleichzeitig verdeutlichen die Autoren, dass die Performance risikobasierter Strategien von der Zusammensetzung des Anlageuniversums abhängt.
+Insbesondere eine hohe Gewichtung von Anleihen kann deren historische Performance in Phasen sinkender Zinsen begünstigen.
 
-Auch Savona und Orsini (2019)\todo{Quelle Savona \& Orsini (2019) fehlt in literatur/bibliography.bib} untersuchten die Leistungsfähigkeit der ERC-Strategie anhand empirischer Daten aus dem Zeitraum von Januar 2001 bis August 2013.
-Hierzu verglichen sie ERC-Portfolios im Rahmen eines rollierenden Backtests mit klassischen Markowitz-, Minimum-Varianz- und gleichgewichteten Portfolios.
-Ergänzend führten sie Monte-Carlo-Simulationen und Bootstrap-Analysen durch, um die Robustheit der Ergebnisse und die statistische Signifikanz der beobachteten Renditeunterschiede zu überprüfen.
-Die Untersuchung zeigte, dass die dynamische ERC-Strategie gegenüber einzelnen Vergleichsstrategien, insbesondere dem MVP und dem 1/N-Portfolio, eine statistisch signifikante Überrendite erzielen konnte.
-Gleichzeitig wies das Tangentialportfolio in mehreren untersuchten Konstellationen eine höhere Performance und Diversifizierung auf.
-Weitere empirische Erkenntnisse liefert Bastin (2018)\todo{Quelle Bastin (2018) fehlt in literatur/bibliography.bib}, der verschiedene risikobasierte Portfoliostrategien anhand des deutschen Aktienmarktes im Zeitraum von 2002 bis 2015 untersuchte.
-Innerhalb des betrachteten CDAX-Anlageuniversums erzielte das ERC-Portfolio eine Sharpe Ratio von 0,32 und wies damit den höchsten Wert unter den untersuchten Strategien auf.
-Darüber hinaus wurde eine gegenüber dem Gesamtmarkt um etwa 50\,\% reduzierte Volatilität sowie ein statistisch signifikantes positives CAPM-Alpha von 7,5\,\% pro Jahr festgestellt.
+\textcite{savona2019} vergleichen ERC anhand von Daten aus dem Zeitraum von 2001 bis 2013 mit Markowitz-, Minimum-Varianz- und gleichgewichteten Portfolios.
+Ergänzende Monte-Carlo- und Bootstrap-Analysen dienten der Überprüfung der Robustheit der Ergebnisse.
+Die dynamische ERC-Strategie erzielte gegenüber einzelnen Vergleichsstrategien, insbesondere dem MVP und dem 1/N-Portfolio, statistisch signifikante Überrenditen.
+Das Tangentialportfolio wies jedoch in mehreren Konstellationen eine höhere Performance und Diversifizierung auf.
+Auch \textcite{bastin2018} findet für den deutschen Aktienmarkt von 2002 bis 2015 günstige Ergebnisse.
+Im untersuchten CDAX-Anlageuniversum erreichte ERC mit 0,32 die höchste Sharpe Ratio der betrachteten Strategien, eine gegenüber dem Gesamtmarkt um etwa 50\,\% geringere Volatilität sowie ein statistisch signifikantes positives CAPM-Alpha von 7,5\,\% pro Jahr.
 
-Die Leistungsfähigkeit der ERC-Strategie kann zudem in Abhängigkeit von der jeweiligen Marktsituation variieren.
-Escobar et al. (2013)\todo{Quelle Escobar et al. (2013) fehlt in literatur/bibliography.bib} untersuchten das Verhalten unterschiedlicher Portfolioallokationsstrategien während ruhiger und turbulenter Marktphasen.
-Dabei zeigten sich in ruhigeren Marktphasen insbesondere für das gleichgewichtete Portfolio und die Minimum-Varianz-Strategie günstige Ergebnisse.
-Während ausgeprägter Marktturbulenzen gewannen hingegen risikoorientierte Allokationsverfahren an Bedeutung, wobei ERC- und Minimum-Varianz-Portfolios gegenüber der 1/N-Strategie Vorteile hinsichtlich der risikoadjustierten Performance aufweisen konnten.
-Die Autoren zeigen zudem, dass eine Anpassung der Portfolioallokation an unterschiedliche Marktregime zu höheren Sharpe Ratios führen kann als die ausschließliche Verwendung einer statischen Gewichtungsstrategie.
+Die relative Leistungsfähigkeit von ERC kann zudem von der jeweiligen Marktphase abhängen.
+\textcite{escobar2013} zeigen, dass während turbulenter Marktphasen risikoorientierte Verfahren wie ERC und MVP gegenüber der 1/N-Strategie Vorteile hinsichtlich der risikoadjustierten Performance aufweisen können.
+Zudem kann eine Anpassung der Portfolioallokation an unterschiedliche Marktregime höhere Sharpe Ratios ermöglichen als eine ausschließlich statische Gewichtungsstrategie.
 
-Neben der erzielten Risiko-Rendite-Performance ist die Robustheit gegenüber Schätzfehlern ein weiterer wichtiger Aspekt bei der Bewertung der ERC-Strategie.
-\textcite{ardia2017} untersuchten die Sensitivität verschiedener risikobasierter Portfolioansätze gegenüber Fehlspezifikationen der Kovarianzmatrix.
-Dabei erwiesen sich die ERC-Strategie und die Inverse-Volatility-Methode in den untersuchten Konstellationen als vergleichsweise robust, während das Minimum-Varianz-Portfolio eine höhere Empfindlichkeit gegenüber Schätzfehlern aufwies.
-Allerdings reagiert auch die ERC-Methode auf Ungenauigkeiten in den geschätzten Risikoparametern, wobei Fehler in den individuellen Varianzen einen stärkeren Einfluss auf die Portfoliozusammensetzung haben können als Fehler in den Korrelationen.
-
-Insgesamt verdeutlichen die empirischen Untersuchungen, dass die ERC-Strategie in unterschiedlichen Anlageuniversen und Marktphasen sowohl hinsichtlich der Risikodiversifizierung als auch der risikoadjustierten Performance günstige Ergebnisse erzielen kann.
-Ihre tatsächliche Leistungsfähigkeit hängt jedoch von den jeweiligen Marktbedingungen, der Zusammensetzung des Anlageuniversums und der Qualität der geschätzten Risikoparameter ab.
+Neben der Performance ist die Robustheit gegenüber Schätzfehlern von Bedeutung.
+\textcite{ardia2017} untersuchen die Sensitivität risikobasierter Strategien gegenüber Fehlspezifikationen der Kovarianzmatrix.
+ERC und die Inverse-Volatility-Methode erwiesen sich dabei als vergleichsweise robust, während das MVP stärker auf Schätzfehler reagierte.
+Allerdings ist auch ERC von der Qualität der Risikoschätzungen abhängig, wobei Fehler in den individuellen Varianzen die Portfoliozusammensetzung stärker beeinflussen können als Fehler in den Korrelationen.
+Insgesamt bietet ERC einen Mittelweg zwischen der einfachen Gleichgewichtung und der konsequenten Varianzminimierung des MVP.
+Durch die Gleichverteilung der Risikobeiträge wird eine stärkere Risikodiversifizierung angestrebt, ohne erwartete Renditen schätzen zu müssen.
+Die empirischen Ergebnisse zeigen jedoch, dass die Performance von den Marktbedingungen, dem Anlageuniversum und der Qualität der geschätzten Risikoparameter abhängt.
 
 \paragraph{Die Hierarchical Risk Parity}
 Der Hierarchical-Risk-Parity-Algorithmus (HRP) wurde von \textcite{deprado2016} als alternativer Ansatz zur Portfolioallokation entwickelt.
-Er kombiniert Methoden der Graphentheorie mit hierarchischen Clustering-Verfahren des unüberwachten maschinellen Lernens, um die bei klassischen Portfoliooptimierungsverfahren auftretenden Probleme zu reduzieren.
-Insbesondere die Mean-Variance-Optimierung nach Markowitz kann aufgrund von Schätzfehlern in den erwarteten Renditen und der Kovarianzmatrix zu instabilen Portfoliogewichten und einer hohen Konzentration auf einzelne Vermögenswerte führen.
+Er kombiniert Methoden der Graphentheorie mit hierarchischen Clustering-Verfahren des unüberwachten maschinellen Lernens.
+Ziel ist es, Schwächen klassischer Portfoliooptimierungsverfahren zu reduzieren.
+Insbesondere die Mean-Variance-Optimierung kann aufgrund von Schätzfehlern in den erwarteten Renditen und der Kovarianzmatrix zu instabilen Portfoliogewichten und einer hohen Konzentration auf einzelne Vermögenswerte führen.
+HRP berücksichtigt die Abhängigkeitsstrukturen zwischen den Vermögenswerten, ohne dass eine Invertierung der Kovarianzmatrix erforderlich ist.
+Dadurch kann das Verfahren auch bei schlecht konditionierten oder singulären Kovarianzmatrizen eingesetzt werden.
 
-HRP verfolgt daher einen hierarchischen Ansatz, bei dem die Abhängigkeitsstrukturen zwischen den Vermögenswerten berücksichtigt werden, ohne dass eine Invertierung der Kovarianzmatrix erforderlich ist.
-Dadurch kann der Algorithmus auch bei schlecht konditionierten oder singulären Kovarianzmatrizen angewendet werden.
-Die Konstruktion des HRP-Portfolios erfolgt in drei aufeinanderfolgenden Schritten.
-Zunächst werden die Vermögenswerte mithilfe eines hierarchischen Clustering-Verfahrens anhand ihrer Ähnlichkeiten gruppiert.
+Die Konstruktion des HRP-Portfolios erfolgt in drei aufeinanderfolgenden Schritten: hierarchisches Clustering, Quasi-Diagonalisierung und hierarchische Zweiteilung.
+Im ersten Schritt werden die Vermögenswerte anhand ihrer Ähnlichkeiten hierarchisch gruppiert.
 Als Grundlage dient ein Distanzmaß, das üblicherweise aus den Pearson-Korrelationskoeffizienten der Vermögenswertrenditen abgeleitet wird.
-Auf diese Weise entsteht eine hierarchische Baumstruktur, das sogenannte Dendrogramm (siehe \hyperref[abb:dendrogramm]{Abbildung~\ref*{abb:dendrogramm}}), in dem Vermögenswerte mit ähnlichen Renditeverläufen zu Clustern zusammengefasst werden.
-Anschließend erfolgt eine Quasi-Diagonalisierung, bei der die Kovarianzmatrix entsprechend der ermittelten Clusterstruktur umgeordnet wird.
-Dadurch werden eng miteinander verbundene Vermögenswerte innerhalb der Matrix nebeneinander angeordnet, sodass die Zusammenhänge zwischen den einzelnen Clustern deutlicher hervortreten.
-Im abschließenden Schritt, der hierarchischen Zweiteilung, wird das verfügbare Kapital schrittweise entlang der Baumstruktur aufgeteilt.
-Dabei werden die Cluster auf jeder Ebene in zwei Teilgruppen unterteilt, deren Kapitalanteile anhand ihrer jeweiligen Varianzen bestimmt werden.
-Cluster mit einer höheren Varianz erhalten einen geringeren Kapitalanteil, während risikoärmere Cluster entsprechend stärker gewichtet werden.
-Auf diese Weise entsteht eine Portfolioallokation, die sowohl die individuellen Risikoeigenschaften der Vermögenswerte als auch deren Abhängigkeitsstrukturen berücksichtigt.
+Dadurch entsteht eine hierarchische Baumstruktur, das sogenannte Dendrogramm (siehe \hyperref[abb:dendrogramm]{Abbildung~\ref*{abb:dendrogramm}}), in der Vermögenswerte mit ähnlichen Renditeverläufen zu Clustern zusammengefasst werden.
+Anschließend wird die Kovarianzmatrix im Rahmen der Quasi-Diagonalisierung entsprechend der ermittelten Clusterstruktur umgeordnet.
+Eng miteinander verbundene Vermögenswerte werden dadurch innerhalb der Matrix nebeneinander angeordnet und die Abhängigkeitsstruktur wird sichtbar gemacht.
+Im abschließenden Schritt, der hierarchischen Zweiteilung, wird das verfügbare Kapital schrittweise entlang der Baumstruktur verteilt.
+Die Cluster werden auf jeder Ebene in zwei Teilgruppen aufgeteilt, deren Kapitalanteile anhand ihrer jeweiligen Varianzen bestimmt werden.
+Cluster mit höherer Varianz erhalten einen geringeren Kapitalanteil, während risikoärmere Cluster stärker gewichtet werden.
+Auf diese Weise berücksichtigt HRP sowohl die Risikoeigenschaften der Vermögenswerte als auch deren Abhängigkeitsstruktur.
 
 \begin{figure}[htbp]
   \centering
@@ -451,39 +378,34 @@ Auf diese Weise entsteht eine Portfolioallokation, die sowohl die individuellen 
   \end{minipage}
 \end{figure}
 
-\textcite{deprado2016} untersuchte die Leistungsfähigkeit des HRP-Algorithmus anhand von Out-of-Sample-Monte-Carlo-Simulationen mit 10.000 Durchläufen, in denen unterschiedliche Marktschocks berücksichtigt wurden.
-Als Vergleichsmaßstäbe dienten ein mithilfe des Critical Line Algorithm (CLA) optimiertes Minimum-Varianz-Portfolio sowie ein nach inverser Volatilität gewichtetes Portfolio (Inverse Volatility Portfolio, IVP).
-Die Ergebnisse zeigten, dass HRP in den untersuchten Simulationen eine geringere Out-of-Sample-Varianz aufwies und gegenüber dem CLA-Ansatz eine um etwa 31,3\,\% höhere Sharpe Ratio erzielte.
-Darüber hinaus zeigte sich, dass die hierarchische Allokation die Auswirkungen unterschiedlicher Schockarten auf das Portfolio begrenzen konnte.
-Während der CLA-Ansatz aufgrund seiner teilweise hohen Positionskonzentration insbesondere gegenüber idiosynkratischen Schocks einzelner Vermögenswerte anfällig war, berücksichtigte das IVP die Korrelationsstrukturen zwischen den Vermögenswerten nicht unmittelbar.
-Der HRP-Algorithmus ermöglichte hingegen durch die Einbeziehung der Clusterstruktur eine breitere Verteilung des Portfoliorisikos und zeigte sich in den untersuchten Szenarien gegenüber beiden Schockarten vergleichsweise robust.
+\textcite{deprado2016} untersuchte die Leistungsfähigkeit des HRP-Algorithmus anhand von Out-of-Sample-Monte-Carlo-Simulationen mit 10.000 Durchläufen und unterschiedlichen Marktschocks.
+Als Vergleich dienten ein mit dem Critical Line Algorithm (CLA) konstruiertes Minimum-Varianz-Portfolio sowie ein nach inverser Volatilität gewichtetes Portfolio (IVP).
+HRP wies in den Simulationen eine geringere Out-of-Sample-Varianz auf und erzielte gegenüber dem CLA eine um etwa 31,3\,\% höhere Sharpe Ratio.
+Während der CLA aufgrund hoher Positionskonzentrationen insbesondere gegenüber idiosynkratischen Schocks anfällig war und das IVP die Korrelationsstruktur nicht unmittelbar berücksichtigte, zeigte sich HRP durch die Einbeziehung der Clusterstruktur gegenüber den untersuchten Schocks vergleichsweise robust.
 
-Weitere empirische Erkenntnisse liefert \textcite{sen2022}, der den HRP-Algorithmus mit dem CLA-Ansatz am indischen Aktienmarkt verglich.
-Die Untersuchung umfasste den Nifty~50 sowie acht Branchensektoren und basierte auf einem Trainingszeitraum von 2016 bis 2020 und einem anschließenden Out-of-Sample-Test im Jahr 2021.
-Dabei erzielte das HRP-Portfolio in sieben der acht untersuchten Sektoren eine höhere Sharpe Ratio als das mittels CLA konstruierte Portfolio.
-Darüber hinaus wies HRP eine ausgewogenere Verteilung der Kapitalgewichte auf, während der CLA-Ansatz teilweise zu einer ausgeprägten Konzentration auf einzelne Vermögenswerte führte.
-Die Ergebnisse verdeutlichen, dass die Berücksichtigung hierarchischer Abhängigkeitsstrukturen unter den untersuchten Marktbedingungen sowohl die Risikodiversifizierung als auch die risikoadjustierte Portfolioperformance verbessern kann.
+Weitere empirische Erkenntnisse liefert \textcite{sen2022}, der HRP mit dem CLA am indischen Aktienmarkt verglich.
+Die Untersuchung umfasste den Nifty~50 sowie acht Branchensektoren mit einem Trainingszeitraum von 2016 bis 2020 und einem Out-of-Sample-Test im Jahr 2021.
+HRP erzielte in sieben der acht untersuchten Sektoren eine höhere Sharpe Ratio und führte zu einer ausgewogeneren Verteilung der Kapitalgewichte.
+Der CLA wies dagegen teilweise eine stärkere Konzentration auf einzelne Vermögenswerte auf.
 
-Neben diesen Ergebnissen wurden in weiteren Untersuchungen, unter anderem von Lohre et al.\todo{Quelle Lohre et al. fehlt in literatur/bibliography.bib -- Jahreszahl ebenfalls ergaenzen}, die Eigenschaften des HRP-Algorithmus in Multi-Asset- und Multi-Faktor-Anlageuniversen sowie die Auswirkungen alternativer Distanzmaße und von Transaktionskosten analysiert.
-Dabei zeigte sich, dass die auf Pearson-Korrelationen basierende HRP-Strategie aufgrund von Veränderungen der geschätzten Clusterstrukturen eine vergleichsweise hohe Umschlagshäufigkeit aufweisen kann.
+Neben der Performance stellt der Portfolioumschlag eine praktische Herausforderung des HRP-Ansatzes dar.
+Untersuchungen von \textcite{lohre2020} zeigen, dass Veränderungen der geschätzten Clusterstruktur bei einer auf Pearson-Korrelationen basierenden HRP-Strategie zu häufigeren Portfolioanpassungen führen können.
 In den untersuchten Backtests lag der jährliche Portfolioumschlag bei etwa 18\,\% bis 23\,\%, während traditionelle Risk-Parity-Portfolios Werte zwischen 3,5\,\% und 5\,\% erreichten.
-Die damit verbundenen Transaktionskosten können die Nettoperformance der HRP-Strategie beeinträchtigen und stellen somit eine praktische Einschränkung des Verfahrens dar.
+Die daraus entstehenden Transaktionskosten können die Nettoperformance von HRP reduzieren.
 
-Zur Berücksichtigung extremer Marktrisiken wurden darüber hinaus Erweiterungen des ursprünglichen HRP-Algorithmus entwickelt.
-Ein Beispiel ist die Verwendung des Lower Tail Dependence Coefficient (LTDC) als alternatives Distanzmaß.
-Im Gegensatz zur Pearson-Korrelation, die den linearen Zusammenhang zwischen den Renditen beschreibt, berücksichtigt der LTDC die gemeinsame Abhängigkeit der Vermögenswerte bei extrem negativen Renditeentwicklungen.
-Durch die Einbeziehung dieser sogenannten Tail-Risiken kann die Clusterbildung stärker auf das gemeinsame Verlustverhalten der Vermögenswerte ausgerichtet werden.
-In den untersuchten Bootstrap-Simulationen erzielten LTDC-basierte HRP-Portfolios geringere maximale Kursverluste (Maximum Drawdowns) als die herangezogenen Vergleichsstrategien.
-Darüber hinaus wiesen sie eine stabilere Clusterstruktur und eine moderatere Umschlagshäufigkeit auf als die auf Pearson-Korrelationen basierende HRP-Variante.
+Darüber hinaus wurden Erweiterungen entwickelt, um extreme Marktrisiken stärker zu berücksichtigen.
+Ein Ansatz verwendet den Lower Tail Dependence Coefficient (LTDC) als alternatives Distanzmaß.
+Während die Pearson-Korrelation vor allem lineare Zusammenhänge zwischen Renditen erfasst, berücksichtigt der LTDC die gemeinsame Abhängigkeit der Vermögenswerte bei extrem negativen Renditeentwicklungen.
+Dadurch kann die Clusterbildung stärker am gemeinsamen Verlustverhalten ausgerichtet werden.
+In Bootstrap-Simulationen wiesen LTDC-basierte HRP-Portfolios geringere Maximum Drawdowns sowie eine stabilere Clusterstruktur und moderatere Umschlagshäufigkeit als die auf Pearson-Korrelationen basierende Variante auf.
 
-Insgesamt stellt HRP einen alternativen Ansatz zur risikobasierten Portfolioallokation dar, der die Abhängigkeitsstrukturen zwischen Vermögenswerten durch hierarchisches Clustering in die Gewichtungsentscheidung einbezieht.
-Die empirischen Untersuchungen zeigen, dass das Verfahren unter bestimmten Marktbedingungen Vorteile hinsichtlich der Risikodiversifizierung, der Stabilität der Portfoliogewichte und der risikoadjustierten Performance bieten kann.
-Allerdings hängt seine tatsächliche Leistungsfähigkeit von der Qualität der geschätzten Risikoparameter, dem verwendeten Distanzmaß und der Stabilität der ermittelten Clusterstruktur ab.
-Insbesondere Veränderungen der Abhängigkeitsverhältnisse zwischen den Vermögenswerten können häufige Portfolioanpassungen erforderlich machen und dadurch die erzielten Renditevorteile nach Berücksichtigung der Transaktionskosten reduzieren.
+Insgesamt stellt HRP einen risikobasierten Allokationsansatz dar, der Abhängigkeitsstrukturen zwischen Vermögenswerten durch hierarchisches Clustering unmittelbar in die Portfoliokonstruktion einbezieht und ohne Invertierung der Kovarianzmatrix auskommt.
+Empirische Untersuchungen weisen auf mögliche Vorteile hinsichtlich Risikodiversifizierung, Gewichtungsstabilität und risikoadjustierter Performance hin.
+Die tatsächliche Leistungsfähigkeit hängt jedoch von der Qualität der Risikoschätzungen, dem verwendeten Distanzmaß und der Stabilität der Clusterstruktur ab.
+Veränderungen der Abhängigkeitsstrukturen können zudem häufigere Portfolioanpassungen und damit höhere Transaktionskosten verursachen.
 
 % =============================================================================
 \section{Bewertungskriterien}\label{sec:kriterien}
-Die Bewertung trennt zwischen der Prognosequalität der Kovarianzmatrix und der ökonomischen Performance der daraus abgeleiteten Portfolios.
 
 \subsection{Statistische Verlustmaße}
 Die Prognosequalität wird über zwei Verlustmaße gemessen, den multivariaten Quasi-Likelihood-Verlust (QLIKE), oder auch Stein-Loss genannt \parencite{laurent2013}, und den Mean Squared Error (MSE) der Kovarianzmatrix.
