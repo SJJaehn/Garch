@@ -91,6 +91,9 @@ Auch wenn die Modelle also korrekt spezifiziert sind und der Prozess sich nicht 
 \input{Abbildungen/tab_synth_stabilitaet}
 
 Die ökonomischen Kennzahlen schwanken dagegen auch hier spürbar, obwohl der Prozess vollkommen stabil ist.
+Im GARCH-Datensatz erzielt die falsch spezifizierte historische Matrix in den beiden kürzesten Fenstern eine höhere Sharpe Ratio als der DCC-Schätzer.
+Im DCC-Datensatz liefert der korrekt spezifizierte DCC-Schätzer in allen zehn Fenstern den besseren QLIKE-Verlust und die niedrigere realisierte Volatilität, beim MVP-Sharpe liegt er jedoch nur in sieben Fenstern vorn und unterliegt in den übrigen dem falsch spezifizierten GARCH-Modell.
+Selbst bei bekanntem datengenerierendem Prozess ist die Sharpe Ratio damit zu verrauscht, um Kovarianzschätzer zuverlässig zu ordnen, während die Prognosekennzahlen ein klares und über alle Fenster stabiles Signal liefern.
 
 \begin{landscape}
 \section{Dokumentation KI-Nutzung}
